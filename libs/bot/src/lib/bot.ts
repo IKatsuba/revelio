@@ -106,8 +106,6 @@ bot.command('resend', async (ctx) => {
     ctx.session.messages.indexOf(lastUserMessage) + 1
   ));
 
-  console.log(messages);
-
   const result = await generateText({
     model: openai('gpt-4o-mini', {
       structuredOutputs: true,
