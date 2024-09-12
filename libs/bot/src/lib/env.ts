@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const openaiConfigSchema = z.object({
+const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
   SHOW_USAGE: z
     .string()
@@ -10,13 +10,13 @@ const openaiConfigSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
-  PROXY: z.string().nullable(),
+  PROXY: z.string().nullable().optional(),
   MAX_HISTORY_SIZE: z.coerce.number().int().default(15),
   MAX_CONVERSATION_AGE_MINUTES: z.coerce.number().int().default(180),
   ASSISTANT_PROMPT: z.string().default('You are a helpful assistant.'),
-  MAX_TOKENS: z.coerce.number().int(),
+  MAX_TOKENS: z.coerce.number().int().default(2048),
   N_CHOICES: z.coerce.number().int().default(1),
-  TEMPERATURE: z.coerce.number().default(1.0),
+  TEMPERATURE: z.coerce.number().default(0),
   IMAGE_MODEL: z.string().default('dall-e-2'),
   IMAGE_QUALITY: z.string().default('standard'),
   IMAGE_STYLE: z.string().default('vivid'),
@@ -50,10 +50,6 @@ const openaiConfigSchema = z.object({
   ADMIN_USER_IDS: z
     .string()
     .default('')
-    .transform((value) => value.split(',')),
-  ALLOWED_TELEGRAM_USER_IDS: z
-    .string()
-    .default('*')
     .transform((value) => value.split(',')),
   ENABLE_QUOTING: z
     .string()
@@ -119,6 +115,6 @@ const openaiConfigSchema = z.object({
   BOT_SESSION_REDIS_TOKEN: z.string(),
 });
 
-export const env = openaiConfigSchema.parse({
+export const env = envSchema.parse({
   ...process.env,
 });

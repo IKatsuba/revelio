@@ -3,6 +3,9 @@ import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis';
 import { env } from './env';
 import { BotContext, SessionData } from './context';
+import { convertToCoreMessages, generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { telegramify } from './telegramify';
 
 const redis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
@@ -17,14 +20,21 @@ bot.use(
     storage: enhanceStorage({
       storage: new RedisAdapter({ instance: redis }),
     }),
-    initial: () => ({} as SessionData),
+    initial: () =>
+      ({
+        messages: [],
+        usage: {
+          total: {
+            promptTokens: 0,
+            completionTokens: 0,
+          },
+        },
+      } as SessionData),
     getSessionKey: (ctx) => `session:${ctx.chatId?.toString()}`,
   })
 );
 
-bot.command('start', async (ctx) => {});
-
-bot.command('help', async (ctx) => {
+async function help(ctx: BotContext) {
   await ctx.reply(`I'm a ChatGPT bot, talk to me!
 
 /help - Show this message
@@ -45,10 +55,33 @@ ${Context.has.chatType('group')(ctx) ? '/chat - Chat with the bot!\n' : ''}
 
 Send me a voice message or file and I'll transcribe it for you!
 `);
-});
+}
+
+bot.command('start', help);
+
+bot.command('help', help);
 
 bot.command('reset', async (ctx) => {});
-bot.command('stats', async (ctx) => {});
+
+bot.command('stats', async (ctx) => {
+  console.log(
+    `User ${ctx.from?.username} (id: ${ctx.from?.id}) requested their usage statistics`
+  );
+
+  const totalPromptTokens = ctx.session.usage.total.promptTokens;
+  const totalCompletionTokens = ctx.session.usage.total.completionTokens;
+
+  await ctx.reply(
+    `📊 *Usage Statistics*
+
+Total Prompt Tokens: ${totalPromptTokens}
+Total Completion Tokens: ${totalCompletionTokens}
+`,
+    {
+      parse_mode: 'MarkdownV2',
+    }
+  );
+});
 bot.command('resend', async (ctx) => {});
 
 bot
@@ -58,3 +91,45 @@ bot
 bot.filter(() => env.ENABLE_TTS_GENERATION).command('tts', async (ctx) => {});
 
 bot.filter(Context.has.chatType('group')).command('chat', async (ctx) => {});
+
+bot.on('message:text', async (ctx) => {
+  console.log(
+    `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`
+  );
+
+  await ctx.replyWithChatAction('typing');
+
+  const prompt = ctx.message.text.replace(/^\/chat/, '').trim();
+
+  const messages = [
+    ...ctx.session.messages,
+    ...convertToCoreMessages([
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]),
+  ];
+
+  const result = await generateText({
+    model: openai('gpt-4o-mini', {
+      structuredOutputs: true,
+    }),
+    temperature: env.TEMPERATURE,
+    messages,
+    system: env.ASSISTANT_PROMPT,
+    maxToolRoundtrips: 2,
+    tools: {},
+  });
+
+  ctx.session.messages = [...messages, ...result.responseMessages].slice(
+    -env.MAX_HISTORY_SIZE
+  );
+
+  ctx.session.usage.total.promptTokens += result.usage.promptTokens;
+  ctx.session.usage.total.completionTokens += result.usage.completionTokens;
+
+  await ctx.reply(telegramify(result.text), {
+    parse_mode: 'MarkdownV2',
+  });
+});
