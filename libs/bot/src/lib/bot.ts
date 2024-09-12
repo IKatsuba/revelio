@@ -306,27 +306,25 @@ bot
 
     const fileData = await ctx.api.getFile(file!.file_id);
 
-    const response = await openaiClient.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await generateText({
+      model: openai('gpt-4o-mini'),
       messages: [
         {
           role: 'user',
           content: [
             { type: 'text', text: 'What’s in this image?' },
             {
-              type: 'image_url',
-              image_url: {
-                url: `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
-              },
+              type: 'image',
+              image: new URL(
+                `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`
+              ),
             },
           ],
         },
       ],
     });
 
-    for (const chunk of splitTextIntoChunks(
-      response.choices?.[0].message.content ?? ''
-    )) {
+    for (const chunk of splitTextIntoChunks(response.text)) {
       await ctx.reply(chunk);
     }
   });
