@@ -114,6 +114,9 @@ const openaiConfigSchema = z.object({
     .string()
     .default('')
     .transform((value) => value.split(',')),
+
+  BOT_SESSION_REDIS_URL: z.string(),
+  BOT_SESSION_REDIS_TOKEN: z.string(),
 });
 
 export const env = openaiConfigSchema.parse({
