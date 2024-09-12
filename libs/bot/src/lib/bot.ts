@@ -3,11 +3,12 @@ import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis';
 import { env } from './env';
 import { BotContext, SessionData } from './context';
-import { convertToCoreMessages, generateText } from 'ai';
+import { convertToCoreMessages, generateText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { telegramify } from './telegramify';
 import OpenAI from 'openai';
 import * as fs from 'node:fs';
+import { z } from 'zod';
 
 const redis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
@@ -216,16 +217,31 @@ bot.filter(
       messages,
       system: env.ASSISTANT_PROMPT,
       maxToolRoundtrips: 2,
-      tools: {},
+      tools: {
+        getCryptoRate: tool({
+          description: 'get the current rate of a cryptocurrency',
+          parameters: z.object({
+            currency: z.string().describe('the currency code'),
+          }),
+          execute: async ({ currency }) => {
+            const response = await fetch(
+              `https://api.coindesk.com/v1/bpi/currentprice/${currency}.json`
+            );
+            return response.json();
+          },
+        }),
+      },
     });
 
     ctx.session.messages = [...messages, ...result.responseMessages].slice(
       -env.MAX_HISTORY_SIZE
     );
 
-    await ctx.reply(telegramify(result.text), {
-      parse_mode: 'MarkdownV2',
-    });
+    for (const chunk of splitTextIntoChunks(result.text)) {
+      await ctx.reply(telegramify(chunk), {
+        parse_mode: 'MarkdownV2',
+      });
+    }
   }
 );
 
