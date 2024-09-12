@@ -18,9 +18,11 @@ const envSchema = z.object({
   N_CHOICES: z.coerce.number().int().default(1),
   TEMPERATURE: z.coerce.number().default(0),
   IMAGE_MODEL: z.string().default('dall-e-2'),
-  IMAGE_QUALITY: z.string().default('standard'),
-  IMAGE_STYLE: z.string().default('vivid'),
-  IMAGE_SIZE: z.string().default('512x512'),
+  IMAGE_QUALITY: z.enum(['standard', 'hd']).default('standard'),
+  IMAGE_STYLE: z.enum(['vivid', 'natural']).default('vivid'),
+  IMAGE_SIZE: z
+    .enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'])
+    .default('512x512'),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   ENABLE_FUNCTIONS: z
     .string()
@@ -44,7 +46,9 @@ const envSchema = z.object({
   VISION_DETAIL: z.string().default('auto'),
   VISION_MAX_TOKENS: z.coerce.number().int().default(300),
   TTS_MODEL: z.string().default('tts-1'),
-  TTS_VOICE: z.string().default('alloy'),
+  TTS_VOICE: z
+    .enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'])
+    .default('alloy'),
 
   BOT_TOKEN: z.string(),
   ADMIN_USER_IDS: z

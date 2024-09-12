@@ -47,6 +47,7 @@
     "ai": "^3.3.35",
     "grammy": "^1.30.0",
     "next": "14.2.3",
+    "openai": "^4.59.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "telegramify-markdown": "^1.2.2",

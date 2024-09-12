@@ -1,4 +1,4 @@
-import { Bot, Context, enhanceStorage, session } from 'grammy';
+import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis';
 import { env } from './env';
@@ -6,11 +6,17 @@ import { BotContext, SessionData } from './context';
 import { convertToCoreMessages, generateText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { telegramify } from './telegramify';
+import OpenAI from 'openai';
+import * as fs from 'node:fs';
 
 const redis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
   token: env.BOT_SESSION_REDIS_TOKEN,
   automaticDeserialization: false,
+});
+
+const openaiClient = new OpenAI({
+  apiKey: env.OPENAI_API_KEY,
 });
 
 export const bot = new Bot<BotContext>(process.env.BOT_TOKEN!);
@@ -131,50 +137,206 @@ bot.command('resend', async (ctx) => {
 
 bot
   .filter(() => env.ENABLE_IMAGE_GENERATION)
-  .command('image', async (ctx) => {});
+  .command('image', async (ctx) => {
+    await ctx.replyWithChatAction('typing');
 
-bot.filter(() => env.ENABLE_TTS_GENERATION).command('tts', async (ctx) => {});
+    const prompt = ctx.message?.text.replace(/^\/image/, '').trim();
 
-bot.filter(Context.has.chatType('group')).command('chat', async (ctx) => {});
+    if (!prompt) {
+      await ctx.reply('Please provide a prompt for the image generation');
+      return;
+    }
 
-bot.on('message:text', async (ctx) => {
-  console.log(
-    `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`
-  );
+    const result = await openaiClient.images.generate({
+      prompt,
+      n: 1,
+      model: env.IMAGE_MODEL,
+      quality: env.IMAGE_QUALITY,
+      style: env.IMAGE_STYLE,
+      size: env.IMAGE_SIZE,
+    });
 
-  await ctx.replyWithChatAction('typing');
+    const url = result.data[0].url;
 
-  const prompt = ctx.message.text.replace(/^\/chat/, '').trim();
+    if (!url) {
+      await ctx.reply('Failed to generate image');
+      return;
+    }
 
-  const messages = [
-    ...ctx.session.messages,
-    ...convertToCoreMessages([
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ]),
-  ];
-
-  const result = await generateText({
-    model: openai('gpt-4o-mini', {
-      structuredOutputs: true,
-    }),
-    temperature: env.TEMPERATURE,
-    messages,
-    system: env.ASSISTANT_PROMPT,
-    maxToolRoundtrips: 2,
-    tools: {},
+    await ctx.replyWithPhoto(url);
   });
 
-  ctx.session.messages = [...messages, ...result.responseMessages].slice(
-    -env.MAX_HISTORY_SIZE
+bot
+  .filter(() => env.ENABLE_TTS_GENERATION)
+  .command('tts', async (ctx) => {
+    await ctx.replyWithChatAction('typing');
+
+    const prompt = ctx.message?.text.replace(/^\/tts/, '').trim();
+
+    if (!prompt) {
+      await ctx.reply('Please provide a prompt for the speech generation');
+      return;
+    }
+
+    const result = await openaiClient.audio.speech.create({
+      input: prompt,
+      voice: env.TTS_VOICE,
+      model: env.TTS_MODEL,
+      response_format: 'opus',
+    });
+
+    const blob = Buffer.from(await result.arrayBuffer());
+
+    if (!blob) {
+      await ctx.reply('Failed to generate speech');
+      return;
+    }
+
+    await ctx.replyWithVoice(new InputFile(fs.ReadStream.from(blob)));
+  });
+
+function onlyPrivateChatAndTextMessage(ctx: BotContext) {
+  return (
+    Context.has.chatType('private')(ctx) &&
+    Context.has.filterQuery('message:text')(ctx)
+  );
+}
+
+function onlyGroupChatAndCommandChat(ctx: BotContext) {
+  return (
+    Context.has.chatType(['group', 'supergroup'])(ctx) &&
+    Context.has.command('chat')(ctx)
+  );
+}
+
+bot.filter(
+  (ctx) =>
+    onlyPrivateChatAndTextMessage(ctx) || onlyGroupChatAndCommandChat(ctx),
+  async (ctx) => {
+    console.log(
+      `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`
+    );
+
+    await ctx.replyWithChatAction('typing');
+
+    const prompt = ctx.message.text.replace(/^\/chat/, '').trim();
+
+    const messages = [
+      ...ctx.session.messages,
+      ...convertToCoreMessages([
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ]),
+    ];
+
+    const result = await generateText({
+      model: openai('gpt-4o-mini', {
+        structuredOutputs: true,
+      }),
+      temperature: env.TEMPERATURE,
+      messages,
+      system: env.ASSISTANT_PROMPT,
+      maxToolRoundtrips: 2,
+      tools: {},
+    });
+
+    ctx.session.messages = [...messages, ...result.responseMessages].slice(
+      -env.MAX_HISTORY_SIZE
+    );
+
+    ctx.session.usage.total.promptTokens += result.usage.promptTokens;
+    ctx.session.usage.total.completionTokens += result.usage.completionTokens;
+
+    await ctx.reply(telegramify(result.text), {
+      parse_mode: 'MarkdownV2',
+    });
+  }
+);
+
+bot
+  .filter(() => env.ENABLE_TRANSCRIPTION)
+  .on(
+    ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
+    async (ctx) => {
+      await ctx.replyWithChatAction('typing');
+
+      const file =
+        ctx.message.voice ??
+        ctx.message.audio ??
+        ctx.message.video_note ??
+        ctx.message.video;
+
+      if (!file) {
+        await ctx.reply('Failed to transcribe audio');
+      }
+
+      console.log(file);
+
+      const fileData = await ctx.api.getFile(file!.file_id);
+
+      const result = await openaiClient.audio.transcriptions.create({
+        model: 'whisper-1',
+        file: await fetch(
+          `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`
+        ),
+        prompt: env.WHISPER_PROMPT,
+      });
+
+      for (const chunk of splitTextIntoChunks(result.text)) {
+        await ctx.reply(chunk);
+      }
+    }
   );
 
-  ctx.session.usage.total.promptTokens += result.usage.promptTokens;
-  ctx.session.usage.total.completionTokens += result.usage.completionTokens;
+bot
+  .filter(() => env.ENABLE_VISION)
+  .on(['message:photo', 'message:document'], async (ctx) => {
+    await ctx.replyWithChatAction('typing');
 
-  await ctx.reply(telegramify(result.text), {
-    parse_mode: 'MarkdownV2',
+    const file = ctx.message.photo?.[0] ?? ctx.message.document;
+
+    if (
+      !file ||
+      ('mime_type' in file && !file.mime_type?.startsWith('image/'))
+    ) {
+      await ctx.reply('Failed to transcribe image');
+    }
+
+    const fileData = await ctx.api.getFile(file!.file_id);
+
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'What’s in this image?' },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    for (const chunk of splitTextIntoChunks(
+      response.choices?.[0].message.content ?? ''
+    )) {
+      await ctx.reply(chunk);
+    }
   });
-});
+
+function splitTextIntoChunks(text: string, chunkSize = 4096) {
+  const chunks = [];
+
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize));
+  }
+
+  return chunks;
+}
