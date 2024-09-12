@@ -230,6 +230,14 @@ bot.filter(
             return response.json();
           },
         }),
+        moderateContent: tool({
+          description: 'moderate the content',
+          parameters: z.object({
+            text: z.string().describe('the text to moderate'),
+          }),
+          execute: async ({ text }) =>
+            openaiClient.moderations.create({ input: text }),
+        }),
       },
     });
 
