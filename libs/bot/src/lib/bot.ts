@@ -19,7 +19,7 @@ const openaiClient = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
 
-export const bot = new Bot<BotContext>(process.env.BOT_TOKEN!);
+export const bot = new Bot<BotContext>(env.BOT_TOKEN!);
 
 bot.use(
   session({
@@ -73,26 +73,6 @@ bot.command('reset', async (ctx) => {
   await ctx.reply('Conversation reset');
 });
 
-bot.command('stats', async (ctx) => {
-  console.log(
-    `User ${ctx.from?.username} (id: ${ctx.from?.id}) requested their usage statistics`
-  );
-
-  const totalPromptTokens = ctx.session.usage.total.promptTokens;
-  const totalCompletionTokens = ctx.session.usage.total.completionTokens;
-
-  await ctx.reply(
-    `📊 *Usage Statistics*
-
-Total Prompt Tokens: ${totalPromptTokens}
-Total Completion Tokens: ${totalCompletionTokens}
-`,
-    {
-      parse_mode: 'MarkdownV2',
-    }
-  );
-});
-
 bot.command('resend', async (ctx) => {
   await ctx.replyWithChatAction('typing');
 
@@ -126,9 +106,6 @@ bot.command('resend', async (ctx) => {
   ctx.session.messages = [...messages, ...result.responseMessages].slice(
     -env.MAX_HISTORY_SIZE
   );
-
-  ctx.session.usage.total.promptTokens += result.usage.promptTokens;
-  ctx.session.usage.total.completionTokens += result.usage.completionTokens;
 
   await ctx.reply(telegramify(result.text), {
     parse_mode: 'MarkdownV2',
@@ -246,9 +223,6 @@ bot.filter(
       -env.MAX_HISTORY_SIZE
     );
 
-    ctx.session.usage.total.promptTokens += result.usage.promptTokens;
-    ctx.session.usage.total.completionTokens += result.usage.completionTokens;
-
     await ctx.reply(telegramify(result.text), {
       parse_mode: 'MarkdownV2',
     });
@@ -272,8 +246,6 @@ bot
         await ctx.reply('Failed to transcribe audio');
       }
 
-      console.log(file);
-
       const fileData = await ctx.api.getFile(file!.file_id);
 
       const result = await openaiClient.audio.transcriptions.create({
@@ -284,8 +256,35 @@ bot
         prompt: env.WHISPER_PROMPT,
       });
 
-      for (const chunk of splitTextIntoChunks(result.text)) {
-        await ctx.reply(chunk);
+      const messages = [
+        ...ctx.session.messages,
+        ...convertToCoreMessages([
+          {
+            role: 'user',
+            content: result.text,
+          },
+        ]),
+      ];
+
+      const response = await generateText({
+        model: openai('gpt-4o-mini', {
+          structuredOutputs: true,
+        }),
+        temperature: env.TEMPERATURE,
+        messages,
+        system: env.ASSISTANT_PROMPT,
+        maxToolRoundtrips: 2,
+        tools: {},
+      });
+
+      ctx.session.messages = [...messages, ...response.responseMessages].slice(
+        -env.MAX_HISTORY_SIZE
+      );
+
+      for (const chunk of splitTextIntoChunks(response.text)) {
+        await ctx.reply(telegramify(chunk), {
+          parse_mode: 'MarkdownV2',
+        });
       }
     }
   );
