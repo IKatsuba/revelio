@@ -1,0 +1,31 @@
+{
+  "name": "revelio",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "nx dev web",
+            "prefix": "[bot]"
+          },
+          {
+            "command": "npx -y -p localtunnel lt --port 3000 -s revelio",
+            "prefix": "[bot-proxy]"
+          },
+          {
+            "command": "docker-compose up",
+            "prefix": "[docker-compose]"
+          }
+        ],
+        "parallel": true
+      }
+    },
+    "bind:webhook": {
+      "command": "tsx ./scripts/bind-webhook.ts",
+      "envFile": ".env"
+    }
+  }
+}
