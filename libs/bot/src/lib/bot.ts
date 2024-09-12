@@ -61,7 +61,11 @@ bot.command('start', help);
 
 bot.command('help', help);
 
-bot.command('reset', async (ctx) => {});
+bot.command('reset', async (ctx) => {
+  ctx.session.messages = [];
+
+  await ctx.reply('Conversation reset');
+});
 
 bot.command('stats', async (ctx) => {
   console.log(
@@ -82,7 +86,50 @@ Total Completion Tokens: ${totalCompletionTokens}
     }
   );
 });
-bot.command('resend', async (ctx) => {});
+
+bot.command('resend', async (ctx) => {
+  await ctx.replyWithChatAction('typing');
+
+  // find the last user message
+  const lastUserMessage = ctx.session.messages
+    .slice()
+    .reverse()
+    .find((message) => message.role === 'user');
+
+  if (!lastUserMessage) {
+    await ctx.reply('No messages to resend');
+    return;
+  }
+
+  const messages = (ctx.session.messages = ctx.session.messages.slice(
+    0,
+    ctx.session.messages.indexOf(lastUserMessage) + 1
+  ));
+
+  console.log(messages);
+
+  const result = await generateText({
+    model: openai('gpt-4o-mini', {
+      structuredOutputs: true,
+    }),
+    temperature: env.TEMPERATURE,
+    messages,
+    system: env.ASSISTANT_PROMPT,
+    maxToolRoundtrips: 2,
+    tools: {},
+  });
+
+  ctx.session.messages = [...messages, ...result.responseMessages].slice(
+    -env.MAX_HISTORY_SIZE
+  );
+
+  ctx.session.usage.total.promptTokens += result.usage.promptTokens;
+  ctx.session.usage.total.completionTokens += result.usage.completionTokens;
+
+  await ctx.reply(telegramify(result.text), {
+    parse_mode: 'MarkdownV2',
+  });
+});
 
 bot
   .filter(() => env.ENABLE_IMAGE_GENERATION)
