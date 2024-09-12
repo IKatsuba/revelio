@@ -245,6 +245,10 @@ bot.filter(
       -env.MAX_HISTORY_SIZE
     );
 
+    if (!result.text) {
+      return;
+    }
+
     for (const chunk of splitTextIntoChunks(result.text)) {
       await ctx.reply(telegramify(chunk), {
         parse_mode: 'MarkdownV2',
