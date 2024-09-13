@@ -9,6 +9,7 @@ import { telegramify } from './telegramify';
 import OpenAI from 'openai';
 import * as fs from 'node:fs';
 import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
 
 const redis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
@@ -19,6 +20,8 @@ const redis = new Redis({
 const openaiClient = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
+
+const prisma = new PrismaClient();
 
 export const bot = new Bot<BotContext>(env.BOT_TOKEN!);
 
@@ -36,9 +39,9 @@ bot.use(
             completionTokens: 0,
           },
         },
-      } as SessionData),
+      }) as SessionData,
     getSessionKey: (ctx) => `session:${ctx.chatId?.toString()}`,
-  })
+  }),
 );
 
 async function help(ctx: BotContext) {
@@ -90,7 +93,7 @@ bot.command('resend', async (ctx) => {
 
   const messages = (ctx.session.messages = ctx.session.messages.slice(
     0,
-    ctx.session.messages.indexOf(lastUserMessage) + 1
+    ctx.session.messages.indexOf(lastUserMessage) + 1,
   ));
 
   const result = await generateText({
@@ -105,7 +108,7 @@ bot.command('resend', async (ctx) => {
   });
 
   ctx.session.messages = [...messages, ...result.responseMessages].slice(
-    -env.MAX_HISTORY_SIZE
+    -env.MAX_HISTORY_SIZE,
   );
 
   await ctx.reply(telegramify(result.text), {
@@ -192,7 +195,7 @@ bot.filter(
     onlyPrivateChatAndTextMessage(ctx) || onlyGroupChatAndCommandChat(ctx),
   async (ctx) => {
     console.log(
-      `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`
+      `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`,
     );
 
     await ctx.replyWithChatAction('typing');
@@ -225,7 +228,7 @@ bot.filter(
           }),
           execute: async ({ currency }) => {
             const response = await fetch(
-              `https://api.coindesk.com/v1/bpi/currentprice/${currency}.json`
+              `https://api.coindesk.com/v1/bpi/currentprice/${currency}.json`,
             );
             return response.json();
           },
@@ -242,7 +245,7 @@ bot.filter(
     });
 
     ctx.session.messages = [...messages, ...result.responseMessages].slice(
-      -env.MAX_HISTORY_SIZE
+      -env.MAX_HISTORY_SIZE,
     );
 
     if (!result.text) {
@@ -254,7 +257,7 @@ bot.filter(
         parse_mode: 'MarkdownV2',
       });
     }
-  }
+  },
 );
 
 bot
@@ -279,7 +282,7 @@ bot
       const result = await openaiClient.audio.transcriptions.create({
         model: 'whisper-1',
         file: await fetch(
-          `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`
+          `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
         ),
         prompt: env.WHISPER_PROMPT,
       });
@@ -306,7 +309,7 @@ bot
       });
 
       ctx.session.messages = [...messages, ...response.responseMessages].slice(
-        -env.MAX_HISTORY_SIZE
+        -env.MAX_HISTORY_SIZE,
       );
 
       for (const chunk of splitTextIntoChunks(response.text)) {
@@ -314,7 +317,7 @@ bot
           parse_mode: 'MarkdownV2',
         });
       }
-    }
+    },
   );
 
 bot
@@ -343,7 +346,7 @@ bot
             {
               type: 'image',
               image: new URL(
-                `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`
+                `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
               ),
             },
           ],
@@ -365,3 +368,11 @@ function splitTextIntoChunks(text: string, chunkSize = 4096) {
 
   return chunks;
 }
+
+// Paywall middleware function
+async function paywall(ctx: BotContext, next: () => Promise<void>) {
+  await next();
+}
+
+// Integrate the paywall middleware into the existing bot setup
+bot.use(paywall);
