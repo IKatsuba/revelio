@@ -94,3 +94,22 @@ And join the Nx community:
 - [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
 - [Our Youtube channel](https://www.youtube.com/@nxdevtools)
 - [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+
+## Stripe Integration
+
+### Setting up Stripe API keys and environment variables
+
+1. Sign up for a Stripe account at [Stripe](https://stripe.com).
+2. Obtain your Stripe API keys from the Stripe Dashboard.
+3. Add the following environment variables to your `.env` file:
+
+```sh
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+```
+
+### Handling Stripe webhooks
+
+1. Create a new file `web/src/app/api/stripe/webhook.ts` to handle Stripe webhooks.
+2. Implement the webhook handler to validate and process Stripe events.
+3. Ensure your webhook endpoint is configured in the Stripe Dashboard to receive events.

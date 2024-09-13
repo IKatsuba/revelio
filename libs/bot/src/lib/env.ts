@@ -117,6 +117,9 @@ const envSchema = z.object({
 
   BOT_SESSION_REDIS_URL: z.string(),
   BOT_SESSION_REDIS_TOKEN: z.string(),
+
+  STRIPE_SECRET_KEY: z.string(),
+  STRIPE_WEBHOOK_SECRET: z.string(),
 });
 
 export const env = envSchema.parse({
