@@ -120,6 +120,9 @@ const envSchema = z.object({
 
   STRIPE_SECRET_KEY: z.string(),
   STRIPE_WEBHOOK_SECRET: z.string(),
+
+  // Prisma-related environment variables
+  POSTGRES_PRISMA_URL: z.string(),
 });
 
 export const env = envSchema.parse({

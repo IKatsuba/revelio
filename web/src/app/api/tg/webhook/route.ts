@@ -43,7 +43,7 @@ function validateWebhook(handler: (req: Request) => Promise<Response>) {
         console.log(
           'Secret token does not match:',
           token,
-          process.env.BOT_WEBHOOK_SECRET
+          process.env.BOT_WEBHOOK_SECRET,
         );
       }
     }
