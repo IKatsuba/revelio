@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "prisma:deploy": "prisma generate && prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
@@ -25,6 +26,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
     "@nx/eslint": "19.7.2",
     "@nx/eslint-plugin": "19.7.2",
     "@nx/jest": "19.7.2",
@@ -55,6 +57,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "nx": "19.7.2",
     "prettier": "^3.3.3",
+    "prettier-plugin-packagejson": "^2.5.2",
+    "prettier-plugin-tailwindcss": "^0.6.6",
     "prisma": "^5.19.1",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",

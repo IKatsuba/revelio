@@ -7,3 +7,138 @@ datasource db {
   url      = env("POSTGRES_PRISMA_URL")
 }
 
+enum GroupRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum PricingType {
+  one_time
+  recurring
+}
+
+enum PricingPlanInterval {
+  day
+  week
+  month
+  year
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  canceled
+  incomplete
+  incomplete_expired
+  past_due
+  unpaid
+  paused
+}
+
+model User {
+  id         String @id @default(cuid())
+  telegramId Int?   @unique
+
+  username String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer         Customer?
+  subscriptions    Subscription[]
+  groupMemberships GroupMember[]
+}
+
+model Customer {
+  id               String @id
+  user             User   @relation(fields: [id], references: [id])
+  stripeCustomerId String @unique
+}
+
+model Product {
+  id     String  @id
+  active Boolean
+  name   String  @unique
+  prices Price[]
+}
+
+model Price {
+  id              String               @id
+  active          Boolean
+  unitAmount      BigInt?
+  currency        String?              @db.VarChar(3)
+  type            PricingType?
+  interval        PricingPlanInterval?
+  intervalCount   Int?
+  trialPeriodDays Int?
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                 String             @id
+  status             SubscriptionStatus
+  metadata           Json?
+  quantity           Int?
+  cancelAtPeriodEnd  Boolean?
+  created            DateTime           @default(now())
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime           @default(now())
+  endedAt            DateTime?
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+  trialStart         DateTime?
+  trialEnd           DateTime?
+  usage              Usage?
+
+  price   Price  @relation(fields: [priceId], references: [id])
+  priceId String
+
+  group   Group? @relation(fields: [groupId], references: [id])
+  groupId Int?
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  @@index([userId])
+  @@index([groupId])
+}
+
+model Usage {
+  id               Int          @id @default(autoincrement())
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId   String       @unique
+  textTokensUsed   Int          @default(0)
+  voiceMinutesUsed Int          @default(0)
+  imagesGenerated  Int          @default(0)
+  updatedAt        DateTime     @updatedAt
+}
+
+model Group {
+  id         Int    @id @default(autoincrement())
+  telegramId BigInt @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+  members       GroupMember[]
+}
+
+model GroupMember {
+  id       Int       @id @default(autoincrement())
+  role     GroupRole
+  joinedAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  @@unique([userId, groupId])
+}

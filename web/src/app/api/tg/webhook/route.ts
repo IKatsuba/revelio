@@ -1,4 +1,5 @@
 import { GrammyError } from 'grammy';
+
 import { bot } from '@revelio/bot/server';
 
 export const maxDuration = 60;
@@ -40,11 +41,7 @@ function validateWebhook(handler: (req: Request) => Promise<Response>) {
       if (process.env.BOT_WEBHOOK_SECRET === token) {
         return handler(req);
       } else {
-        console.log(
-          'Secret token does not match:',
-          token,
-          process.env.BOT_WEBHOOK_SECRET,
-        );
+        console.log('Secret token does not match:', token, process.env.BOT_WEBHOOK_SECRET);
       }
     }
 

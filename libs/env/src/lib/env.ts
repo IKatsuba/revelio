@@ -46,9 +46,7 @@ const envSchema = z.object({
   VISION_DETAIL: z.string().default('auto'),
   VISION_MAX_TOKENS: z.coerce.number().int().default(300),
   TTS_MODEL: z.string().default('tts-1'),
-  TTS_VOICE: z
-    .enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'])
-    .default('alloy'),
+  TTS_VOICE: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']).default('alloy'),
 
   BOT_TOKEN: z.string(),
   ADMIN_USER_IDS: z

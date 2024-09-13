@@ -1,15 +1,17 @@
-import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
-import { RedisAdapter } from '@grammyjs/storage-redis';
-import { Redis } from '@upstash/redis';
-import { env } from './env';
-import { BotContext, SessionData } from './context';
-import { convertToCoreMessages, generateText, tool } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { telegramify } from './telegramify';
-import OpenAI from 'openai';
 import * as fs from 'node:fs';
-import { z } from 'zod';
+import { openai } from '@ai-sdk/openai';
+import { RedisAdapter } from '@grammyjs/storage-redis';
 import { PrismaClient } from '@prisma/client';
+import { Redis } from '@upstash/redis';
+import { convertToCoreMessages, generateText, tool } from 'ai';
+import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
+import OpenAI from 'openai';
+import { z } from 'zod';
+
+import { env } from '@revelio/env/server';
+
+import { BotContext, SessionData } from './context';
+import { telegramify } from './telegramify';
 
 const redis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
@@ -51,16 +53,8 @@ async function help(ctx: BotContext) {
 /reset - Reset the conversation. Optionally pass high-level instructions (e.g. /reset You are a helpful assistant)
 /stats - Get your current usage statistics
 /resend - Resend the latest message
-${
-  env.ENABLE_IMAGE_GENERATION
-    ? '/image - Generate image from prompt (e.g. /image cat)\n'
-    : ''
-}
-${
-  env.ENABLE_TTS_GENERATION
-    ? '/tts - Generate speech from text (e.g. /tts my house)\n'
-    : ''
-}
+${env.ENABLE_IMAGE_GENERATION ? '/image - Generate image from prompt (e.g. /image cat)\n' : ''}
+${env.ENABLE_TTS_GENERATION ? '/tts - Generate speech from text (e.g. /tts my house)\n' : ''}
 ${Context.has.chatType('group')(ctx) ? '/chat - Chat with the bot!\n' : ''}
 
 Send me a voice message or file and I'll transcribe it for you!
@@ -107,9 +101,7 @@ bot.command('resend', async (ctx) => {
     tools: {},
   });
 
-  ctx.session.messages = [...messages, ...result.responseMessages].slice(
-    -env.MAX_HISTORY_SIZE,
-  );
+  ctx.session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
 
   await ctx.reply(telegramify(result.text), {
     parse_mode: 'MarkdownV2',
@@ -177,26 +169,17 @@ bot
   });
 
 function onlyPrivateChatAndTextMessage(ctx: BotContext) {
-  return (
-    Context.has.chatType('private')(ctx) &&
-    Context.has.filterQuery('message:text')(ctx)
-  );
+  return Context.has.chatType('private')(ctx) && Context.has.filterQuery('message:text')(ctx);
 }
 
 function onlyGroupChatAndCommandChat(ctx: BotContext) {
-  return (
-    Context.has.chatType(['group', 'supergroup'])(ctx) &&
-    Context.has.command('chat')(ctx)
-  );
+  return Context.has.chatType(['group', 'supergroup'])(ctx) && Context.has.command('chat')(ctx);
 }
 
 bot.filter(
-  (ctx) =>
-    onlyPrivateChatAndTextMessage(ctx) || onlyGroupChatAndCommandChat(ctx),
+  (ctx) => onlyPrivateChatAndTextMessage(ctx) || onlyGroupChatAndCommandChat(ctx),
   async (ctx) => {
-    console.log(
-      `New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`,
-    );
+    console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
 
     await ctx.replyWithChatAction('typing');
 
@@ -238,15 +221,12 @@ bot.filter(
           parameters: z.object({
             text: z.string().describe('the text to moderate'),
           }),
-          execute: async ({ text }) =>
-            openaiClient.moderations.create({ input: text }),
+          execute: async ({ text }) => openaiClient.moderations.create({ input: text }),
         }),
       },
     });
 
-    ctx.session.messages = [...messages, ...result.responseMessages].slice(
-      -env.MAX_HISTORY_SIZE,
-    );
+    ctx.session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
 
     if (!result.text) {
       return;
@@ -262,63 +242,53 @@ bot.filter(
 
 bot
   .filter(() => env.ENABLE_TRANSCRIPTION)
-  .on(
-    ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
-    async (ctx) => {
-      await ctx.replyWithChatAction('typing');
+  .on(['message:voice', 'message:audio', 'message:video_note', 'message:video'], async (ctx) => {
+    await ctx.replyWithChatAction('typing');
 
-      const file =
-        ctx.message.voice ??
-        ctx.message.audio ??
-        ctx.message.video_note ??
-        ctx.message.video;
+    const file =
+      ctx.message.voice ?? ctx.message.audio ?? ctx.message.video_note ?? ctx.message.video;
 
-      if (!file) {
-        await ctx.reply('Failed to transcribe audio');
-      }
+    if (!file) {
+      await ctx.reply('Failed to transcribe audio');
+    }
 
-      const fileData = await ctx.api.getFile(file!.file_id);
+    const fileData = await ctx.api.getFile(file!.file_id);
 
-      const result = await openaiClient.audio.transcriptions.create({
-        model: 'whisper-1',
-        file: await fetch(
-          `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
-        ),
-        prompt: env.WHISPER_PROMPT,
+    const result = await openaiClient.audio.transcriptions.create({
+      model: 'whisper-1',
+      file: await fetch(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`),
+      prompt: env.WHISPER_PROMPT,
+    });
+
+    const messages = [
+      ...ctx.session.messages,
+      ...convertToCoreMessages([
+        {
+          role: 'user',
+          content: result.text,
+        },
+      ]),
+    ];
+
+    const response = await generateText({
+      model: openai('gpt-4o-mini', {
+        structuredOutputs: true,
+      }),
+      temperature: env.TEMPERATURE,
+      messages,
+      system: env.ASSISTANT_PROMPT,
+      maxToolRoundtrips: 2,
+      tools: {},
+    });
+
+    ctx.session.messages = [...messages, ...response.responseMessages].slice(-env.MAX_HISTORY_SIZE);
+
+    for (const chunk of splitTextIntoChunks(response.text)) {
+      await ctx.reply(telegramify(chunk), {
+        parse_mode: 'MarkdownV2',
       });
-
-      const messages = [
-        ...ctx.session.messages,
-        ...convertToCoreMessages([
-          {
-            role: 'user',
-            content: result.text,
-          },
-        ]),
-      ];
-
-      const response = await generateText({
-        model: openai('gpt-4o-mini', {
-          structuredOutputs: true,
-        }),
-        temperature: env.TEMPERATURE,
-        messages,
-        system: env.ASSISTANT_PROMPT,
-        maxToolRoundtrips: 2,
-        tools: {},
-      });
-
-      ctx.session.messages = [...messages, ...response.responseMessages].slice(
-        -env.MAX_HISTORY_SIZE,
-      );
-
-      for (const chunk of splitTextIntoChunks(response.text)) {
-        await ctx.reply(telegramify(chunk), {
-          parse_mode: 'MarkdownV2',
-        });
-      }
-    },
-  );
+    }
+  });
 
 bot
   .filter(() => env.ENABLE_VISION)
@@ -327,10 +297,7 @@ bot
 
     const file = ctx.message.photo?.[0] ?? ctx.message.document;
 
-    if (
-      !file ||
-      ('mime_type' in file && !file.mime_type?.startsWith('image/'))
-    ) {
+    if (!file || ('mime_type' in file && !file.mime_type?.startsWith('image/'))) {
       await ctx.reply('Failed to transcribe image');
     }
 
