@@ -6,10 +6,8 @@ import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
 import { z } from 'zod';
 
 import { env } from '@revelio/env/server';
-import { generateImage, openaiClient } from '@revelio/llm/server';
+import { generateImage, moderate, openaiClient, textToSpeech } from '@revelio/llm/server';
 
-import { moderate } from '../../../llm/src/lib/moderate';
-import { textToSpeech } from '../../../llm/src/lib/text-to-speech';
 import { BotContext, SessionData } from './context';
 import { telegramify } from './telegramify';
 
