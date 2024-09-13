@@ -6,7 +6,7 @@ import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
 import { z } from 'zod';
 
 import { env } from '@revelio/env/server';
-import { generateImage, moderate, openaiClient, textToSpeech } from '@revelio/llm/server';
+import { generateImage, moderate, textToSpeech, transcribe } from '@revelio/llm/server';
 
 import { BotContext, SessionData } from './context';
 import { telegramify } from './telegramify';
@@ -230,18 +230,16 @@ bot
 
     const fileData = await ctx.api.getFile(file!.file_id);
 
-    const result = await openaiClient.audio.transcriptions.create({
-      model: 'whisper-1',
-      file: await fetch(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`),
-      prompt: env.WHISPER_PROMPT,
-    });
+    const text = await transcribe(
+      await fetch(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`),
+    );
 
     const messages = [
       ...ctx.session.messages,
       ...convertToCoreMessages([
         {
           role: 'user',
-          content: result.text,
+          content: text,
         },
       ]),
     ];
