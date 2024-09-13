@@ -19,6 +19,8 @@
       "@revelio/bot/server": ["libs/bot/src/server.ts"],
       "@revelio/env": ["libs/env/src/index.ts"],
       "@revelio/env/server": ["libs/env/src/server.ts"],
+      "@revelio/llm": ["libs/llm/src/index.ts"],
+      "@revelio/llm/server": ["libs/llm/src/server.ts"],
       "@revelio/prisma": ["libs/prisma/src/index.ts"],
       "@revelio/prisma/server": ["libs/prisma/src/server.ts"],
       "@revelio/stripe": ["libs/stripe/src/index.ts"],

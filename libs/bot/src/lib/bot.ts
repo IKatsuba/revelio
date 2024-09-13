@@ -1,36 +1,30 @@
-import * as fs from 'node:fs';
 import { openai } from '@ai-sdk/openai';
 import { RedisAdapter } from '@grammyjs/storage-redis';
-import { PrismaClient } from '@prisma/client';
 import { Redis } from '@upstash/redis';
 import { convertToCoreMessages, generateText, tool } from 'ai';
 import { Bot, Context, enhanceStorage, InputFile, session } from 'grammy';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
 import { env } from '@revelio/env/server';
+import { generateImage, openaiClient } from '@revelio/llm/server';
 
+import { moderate } from '../../../llm/src/lib/moderate';
+import { textToSpeech } from '../../../llm/src/lib/text-to-speech';
 import { BotContext, SessionData } from './context';
 import { telegramify } from './telegramify';
 
-const redis = new Redis({
+const sessionRedis = new Redis({
   url: env.BOT_SESSION_REDIS_URL,
   token: env.BOT_SESSION_REDIS_TOKEN,
   automaticDeserialization: false,
 });
-
-const openaiClient = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-});
-
-const prisma = new PrismaClient();
 
 export const bot = new Bot<BotContext>(env.BOT_TOKEN!);
 
 bot.use(
   session({
     storage: enhanceStorage({
-      storage: new RedisAdapter({ instance: redis }),
+      storage: new RedisAdapter({ instance: sessionRedis }),
     }),
     initial: () =>
       ({
@@ -120,16 +114,7 @@ bot
       return;
     }
 
-    const result = await openaiClient.images.generate({
-      prompt,
-      n: 1,
-      model: env.IMAGE_MODEL,
-      quality: env.IMAGE_QUALITY,
-      style: env.IMAGE_STYLE,
-      size: env.IMAGE_SIZE,
-    });
-
-    const url = result.data[0].url;
+    const url = await generateImage(prompt);
 
     if (!url) {
       await ctx.reply('Failed to generate image');
@@ -151,21 +136,14 @@ bot
       return;
     }
 
-    const result = await openaiClient.audio.speech.create({
-      input: prompt,
-      voice: env.TTS_VOICE,
-      model: env.TTS_MODEL,
-      response_format: 'opus',
-    });
-
-    const blob = Buffer.from(await result.arrayBuffer());
+    const blob = await textToSpeech(prompt);
 
     if (!blob) {
       await ctx.reply('Failed to generate speech');
       return;
     }
 
-    await ctx.replyWithVoice(new InputFile(fs.ReadStream.from(blob)));
+    await ctx.replyWithVoice(new InputFile(blob));
   });
 
 function onlyPrivateChatAndTextMessage(ctx: BotContext) {
@@ -221,7 +199,7 @@ bot.filter(
           parameters: z.object({
             text: z.string().describe('the text to moderate'),
           }),
-          execute: async ({ text }) => openaiClient.moderations.create({ input: text }),
+          execute: async ({ text }) => moderate(text),
         }),
       },
     });

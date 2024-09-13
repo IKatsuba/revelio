@@ -7,10 +7,10 @@
   "// targets": "to see all targets run: nx show project web --web",
   "targets": {
     "dev": {
-      "dependsOn": ["revelio:bind:webhook"]
+      "dependsOn": ["revelio:prisma:migrate", "revelio:bind:webhook"]
     },
     "build": {
-      "dependsOn": ["revelio:bind:webhook"]
+      "dependsOn": ["revelio:prisma:deploy", "revelio:bind:webhook"]
     }
   }
 }
