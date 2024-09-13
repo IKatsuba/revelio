@@ -1,6 +1,6 @@
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis';
-import { Bot, Context, enhanceStorage, session } from 'grammy';
+import { Bot, Context, enhanceStorage, Middleware, NextFunction, session } from 'grammy';
 
 import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
@@ -57,15 +57,15 @@ bot.command('start', async (ctx) => {
 });
 bot.command('help', help);
 bot.command('reset', reset);
-bot.command('resend', resend);
-bot.command('image', image);
-bot.command('tts', tts);
+bot.command('resend', paywall, resend);
+bot.command('image', paywall, image);
+bot.command('tts', paywall, tts);
 
-bot.filter(Context.has.chatType('private')).on('message:text', prompt);
+bot.filter(Context.has.chatType('private')).on('message:text', paywall, prompt);
 bot
   .filter(() => env.ENABLE_TRANSCRIPTION)
-  .on(['message:voice', 'message:audio', 'message:video_note', 'message:video'], voice);
-bot.on(['message:photo', 'message:document'], describe);
+  .on(['message:voice', 'message:audio', 'message:video_note', 'message:video'], paywall, voice);
+bot.on(['message:photo', 'message:document'], paywall, describe);
 
 bot.on('msg:new_chat_members:me', async (ctx) => {
   await prisma.group.upsert({
@@ -80,3 +80,7 @@ bot.on('msg:new_chat_members:me', async (ctx) => {
     'Hello! I am Revelio! I am sory, but I am not able to chat in groups. Yet. Stay tuned!',
   );
 });
+
+async function paywall(ctx: BotContext, next: NextFunction) {
+  await next();
+}
