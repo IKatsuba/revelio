@@ -167,16 +167,27 @@ async function deleteProductRecord(object: Stripe.Product) {
 }
 
 async function manageSubscriptionStatusChange(subscriptionId: string, customerId: string) {
-  const customerData = await prisma.customer.findUnique({
-    where: { stripeCustomerId: customerId },
-    select: { id: true },
+  const groupMember = await prisma.groupMember.findFirst({
+    where: {
+      user: {
+        customer: {
+          stripeCustomerId: customerId,
+        },
+      },
+    },
+    include: {
+      user: {
+        include: {
+          customer: true,
+        },
+      },
+      group: true,
+    },
   });
 
-  if (!customerData) {
+  if (!groupMember) {
     throw new Error(`Customer lookup failed for`);
   }
-
-  const { id: uuid } = customerData!;
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
     expand: ['default_payment_method'],
@@ -186,10 +197,14 @@ async function manageSubscriptionStatusChange(subscriptionId: string, customerId
     id: subscription.id,
     user: {
       connect: {
-        id: uuid,
+        id: groupMember.user.id,
       },
     },
-    metadata: subscription.metadata,
+    group: {
+      connect: {
+        id: groupMember.group.id,
+      },
+    },
     status: subscription.status,
     price: {
       connect: {
@@ -225,7 +240,9 @@ async function manageSubscriptionStatusChange(subscriptionId: string, customerId
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }
 
-  console.log(`Inserted/updated subscription [${subscription.id}] for user [${uuid}]`);
+  console.log(
+    `Inserted/updated subscription [${subscription.id}] for user [${groupMember.user.id}]`,
+  );
 }
 
 function toDateTime(secs: number) {

@@ -45,10 +45,29 @@ bot.use(
 bot.command('start', async (ctx) => {
   if (ctx.from) {
     await prisma.user.upsert({
-      where: { telegramId: ctx.from.id },
+      where: { id: ctx.from.id },
       update: {},
       create: {
-        telegramId: ctx.from.id,
+        id: ctx.from.id,
+      },
+    });
+
+    await prisma.group.upsert({
+      where: { id: ctx.chat.id },
+      update: {},
+      create: {
+        id: ctx.chat.id,
+        type: ctx.chat.type,
+      },
+    });
+
+    await prisma.groupMember.upsert({
+      where: { userId_groupId: { userId: ctx.from.id, groupId: ctx.chat.id } },
+      update: {},
+      create: {
+        userId: ctx.from.id,
+        groupId: ctx.chat.id,
+        role: 'OWNER',
       },
     });
   }
@@ -69,10 +88,11 @@ bot.on(['message:photo', 'message:document'], paywall, describe);
 
 bot.on('msg:new_chat_members:me', async (ctx) => {
   await prisma.group.upsert({
-    where: { telegramId: ctx.chat.id },
+    where: { id: ctx.chat.id },
     update: {},
     create: {
-      telegramId: ctx.chat.id,
+      id: ctx.chat.id,
+      type: ctx.chat.type,
     },
   });
 

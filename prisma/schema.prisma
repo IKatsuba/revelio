@@ -37,8 +37,7 @@ enum SubscriptionStatus {
 }
 
 model User {
-  id         String @id @default(cuid())
-  telegramId Int?   @unique
+  id BigInt @id
 
   username String?
 
@@ -51,7 +50,7 @@ model User {
 }
 
 model Customer {
-  id               String @id
+  id               BigInt @id
   user             User   @relation(fields: [id], references: [id])
   stripeCustomerId String @unique
 }
@@ -97,11 +96,11 @@ model Subscription {
   price   Price  @relation(fields: [priceId], references: [id])
   priceId String
 
-  group   Group? @relation(fields: [groupId], references: [id])
-  groupId Int?
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId BigInt?
 
   user   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  userId BigInt?
 
   @@index([userId])
   @@index([groupId])
@@ -117,9 +116,16 @@ model Usage {
   updatedAt        DateTime     @updatedAt
 }
 
+enum GroupType {
+  private
+  group
+  supergroup
+  channel
+}
+
 model Group {
-  id         Int    @id @default(autoincrement())
-  telegramId BigInt @unique
+  id   BigInt    @id
+  type GroupType
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,10 +140,10 @@ model GroupMember {
   joinedAt DateTime  @default(now())
 
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId BigInt
 
-  group   Group @relation(fields: [groupId], references: [id])
-  groupId Int
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId BigInt
 
   @@unique([userId, groupId])
 }
