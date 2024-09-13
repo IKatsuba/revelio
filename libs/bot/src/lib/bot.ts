@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { Bot, Context, enhanceStorage, session } from 'grammy';
 
 import { env } from '@revelio/env/server';
+import { prisma } from '@revelio/prisma/server';
 
 import { describe } from './commands/describe';
 import { help } from './commands/help';
@@ -41,22 +42,41 @@ bot.use(
   }),
 );
 
-bot.command('start', help);
+bot.command('start', async (ctx) => {
+  if (ctx.from) {
+    await prisma.user.upsert({
+      where: { telegramId: ctx.from.id },
+      update: {},
+      create: {
+        telegramId: ctx.from.id,
+      },
+    });
+  }
+
+  await help(ctx);
+});
 bot.command('help', help);
 bot.command('reset', reset);
 bot.command('resend', resend);
-bot.filter(() => env.ENABLE_IMAGE_GENERATION).command('image', image);
-bot.filter(() => env.ENABLE_TTS_GENERATION).command('tts', tts);
-bot.filter((ctx) => onlyPrivateChatAndTextMessage(ctx) || onlyGroupChatAndCommandChat(ctx), prompt);
+bot.command('image', image);
+bot.command('tts', tts);
+
+bot.filter(Context.has.chatType('private')).on('message:text', prompt);
 bot
   .filter(() => env.ENABLE_TRANSCRIPTION)
   .on(['message:voice', 'message:audio', 'message:video_note', 'message:video'], voice);
-bot.filter(() => env.ENABLE_VISION).on(['message:photo', 'message:document'], describe);
+bot.on(['message:photo', 'message:document'], describe);
 
-function onlyPrivateChatAndTextMessage(ctx: BotContext) {
-  return Context.has.chatType('private')(ctx) && Context.has.filterQuery('message:text')(ctx);
-}
+bot.on('msg:new_chat_members:me', async (ctx) => {
+  await prisma.group.upsert({
+    where: { telegramId: ctx.chat.id },
+    update: {},
+    create: {
+      telegramId: ctx.chat.id,
+    },
+  });
 
-function onlyGroupChatAndCommandChat(ctx: BotContext) {
-  return Context.has.chatType(['group', 'supergroup'])(ctx) && Context.has.command('chat')(ctx);
-}
+  await ctx.reply(
+    'Hello! I am Revelio! I am sory, but I am not able to chat in groups. Yet. Stay tuned!',
+  );
+});

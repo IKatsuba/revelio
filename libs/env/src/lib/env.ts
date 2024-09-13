@@ -57,19 +57,7 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
-  ENABLE_IMAGE_GENERATION: z
-    .string()
-    .default('true')
-    .transform((value) => value.toLowerCase() === 'true'),
   ENABLE_TRANSCRIPTION: z
-    .string()
-    .default('true')
-    .transform((value) => value.toLowerCase() === 'true'),
-  ENABLE_VISION: z
-    .string()
-    .default('true')
-    .transform((value) => value.toLowerCase() === 'true'),
-  ENABLE_TTS_GENERATION: z
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
