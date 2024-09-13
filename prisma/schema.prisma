@@ -82,7 +82,6 @@ model Price {
 model Subscription {
   id                 String             @id
   status             SubscriptionStatus
-  metadata           Json?
   quantity           Int?
   cancelAtPeriodEnd  Boolean?
   created            DateTime           @default(now())
