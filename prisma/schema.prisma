@@ -69,6 +69,7 @@ model Price {
   interval        PricingPlanInterval?
   intervalCount   Int?
   trialPeriodDays Int?
+  lookupKey       String?
 
   product   Product @relation(fields: [productId], references: [id])
   productId String

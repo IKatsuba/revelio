@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 
+import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
 
@@ -20,7 +21,7 @@ const relevantEvents = new Set([
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature') as string;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
   let event: Stripe.Event;
 
   try {
@@ -121,6 +122,7 @@ async function upsertPriceRecord(object: Stripe.Price) {
             id: object.product as string,
           },
         },
+        lookupKey: object.lookup_key,
       },
       create: {
         id: object.id,
@@ -136,6 +138,7 @@ async function upsertPriceRecord(object: Stripe.Price) {
             id: object.product as string,
           },
         },
+        lookupKey: object.lookup_key,
       },
     });
     console.log(`Price ${object.id} upserted successfully.`);
