@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum GroupRole {
-  MEMBER
-  ADMIN
-  OWNER
+  member
+  administrator
+  creator
 }
 
 enum PricingType {

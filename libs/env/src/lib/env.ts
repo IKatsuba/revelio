@@ -57,10 +57,6 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
-  ENABLE_TRANSCRIPTION: z
-    .string()
-    .default('true')
-    .transform((value) => value.toLowerCase() === 'true'),
   BUDGET_PERIOD: z
     .string()
     .default('monthly')
