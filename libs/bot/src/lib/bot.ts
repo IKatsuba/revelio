@@ -24,12 +24,6 @@ bot.use(
     initial: () =>
       ({
         messages: [],
-        usage: {
-          total: {
-            promptTokens: 0,
-            completionTokens: 0,
-          },
-        },
       }) as SessionData,
     getSessionKey: (ctx) => `session:${ctx.chatId?.toString()}`,
   }),
