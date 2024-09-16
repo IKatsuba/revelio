@@ -1,7 +1,3 @@
-import { Context } from 'grammy';
-
-import { env } from '@revelio/env/server';
-
 import { BotContext } from '../context';
 
 export async function help(ctx: BotContext) {
@@ -11,9 +7,9 @@ export async function help(ctx: BotContext) {
 /reset - Reset the conversation. Optionally pass high-level instructions (e.g. /reset You are a helpful assistant)
 /stats - Get your current usage statistics
 /resend - Resend the latest message
-${env.ENABLE_IMAGE_GENERATION ? '/image - Generate image from prompt (e.g. /image cat)\n' : ''}
-${env.ENABLE_TTS_GENERATION ? '/tts - Generate speech from text (e.g. /tts my house)\n' : ''}
-${Context.has.chatType('group')(ctx) ? '/chat - Chat with the bot!\n' : ''}
+/image - Generate image from prompt (e.g. /image cat)
+/tts - Generate speech from text (e.g. /tts my house)
+/chat - Chat with the bot!
 
 Send me a voice message or file and I'll transcribe it for you!
 `);
