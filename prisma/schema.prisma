@@ -44,14 +44,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customer         Customer?
-  subscriptions    Subscription[]
   groupMemberships GroupMember[]
 }
 
 model Customer {
   id               BigInt @id
-  user             User   @relation(fields: [id], references: [id])
+  group            Group  @relation(fields: [id], references: [id])
   stripeCustomerId String @unique
 }
 
@@ -96,13 +94,9 @@ model Subscription {
   price   Price  @relation(fields: [priceId], references: [id])
   priceId String
 
-  group   Group?  @relation(fields: [groupId], references: [id])
-  groupId BigInt?
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId BigInt @unique
 
-  user   User?   @relation(fields: [userId], references: [id])
-  userId BigInt?
-
-  @@index([userId])
   @@index([groupId])
 }
 
@@ -130,8 +124,9 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subscriptions Subscription[]
-  members       GroupMember[]
+  subscription Subscription?
+  members      GroupMember[]
+  customer     Customer?
 }
 
 model GroupMember {
