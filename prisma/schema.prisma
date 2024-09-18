@@ -37,7 +37,7 @@ enum SubscriptionStatus {
 }
 
 model User {
-  id BigInt @id
+  id Int @id
 
   username String?
 
@@ -48,7 +48,7 @@ model User {
 }
 
 model Customer {
-  id               BigInt @id
+  id               Int    @id
   group            Group  @relation(fields: [id], references: [id])
   stripeCustomerId String @unique
 }
@@ -63,7 +63,7 @@ model Product {
 model Price {
   id              String               @id
   active          Boolean
-  unitAmount      BigInt?
+  unitAmount      Int?
   currency        String?              @db.VarChar(3)
   type            PricingType?
   interval        PricingPlanInterval?
@@ -95,8 +95,8 @@ model Subscription {
   price   Price  @relation(fields: [priceId], references: [id])
   priceId String
 
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId BigInt @unique
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
 
   @@index([groupId])
 }
@@ -119,15 +119,15 @@ enum GroupType {
 }
 
 model Group {
-  id   BigInt    @id
+  id   Int       @id
   type GroupType
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subscription Subscription?
   members      GroupMember[]
   customer     Customer?
+  subscription Subscription[]
 }
 
 model GroupMember {
@@ -135,11 +135,11 @@ model GroupMember {
   role     GroupRole
   joinedAt DateTime  @default(now())
 
-  user   User   @relation(fields: [userId], references: [id])
-  userId BigInt
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
 
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId BigInt
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
 
   @@unique([userId, groupId])
 }

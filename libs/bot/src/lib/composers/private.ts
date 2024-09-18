@@ -7,6 +7,7 @@ import { prompt } from '../commands/prompt';
 import { resend } from '../commands/resend';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
+import { subscription } from '../commands/subscription';
 import { tts } from '../commands/tts';
 import { voice } from '../commands/voice';
 import { BotContext } from '../context';
@@ -20,6 +21,7 @@ privateComposer.command('reset', reset);
 privateComposer.command('resend', paywall, resend);
 privateComposer.command('image', paywall, image);
 privateComposer.command('tts', paywall, tts);
+privateComposer.command('subscription', subscription);
 
 privateComposer.on('message:text', paywall, prompt);
 privateComposer.on(

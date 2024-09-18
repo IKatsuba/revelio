@@ -22,14 +22,15 @@ export function getSessionKey(chatId?: number) {
 
 export async function setSession(
   chatId: number,
-  data: SessionData | ((sessionData: SessionData | undefined) => SessionData),
+  data: SessionData | ((sessionData: SessionData) => SessionData | void),
 ) {
-  data =
+  const fn = typeof data === 'function' ? data : (session: SessionData) => session;
+  const session =
     typeof data === 'function'
-      ? data((await sessionStorage.read(getSessionKey(chatId))) ?? getInitialSessionData())
+      ? ((await sessionStorage.read(getSessionKey(chatId))) ?? getInitialSessionData())
       : data;
 
-  return sessionStorage.write(getSessionKey(chatId), data);
+  return sessionStorage.write(getSessionKey(chatId), fn(session) ?? session);
 }
 
 export function getInitialSessionData(): SessionData {

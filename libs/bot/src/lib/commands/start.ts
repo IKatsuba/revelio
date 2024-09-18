@@ -9,9 +9,12 @@ export async function start(ctx: CommandContext<BotContext>) {
   if (ctx.from) {
     await prisma.user.upsert({
       where: { id: ctx.from.id },
-      update: {},
+      update: {
+        username: ctx.from.username,
+      },
       create: {
         id: ctx.from.id,
+        username: ctx.from.username,
       },
     });
 

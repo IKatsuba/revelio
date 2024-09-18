@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 
+import { bot, setSession } from '@revelio/bot/server';
 import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
@@ -12,7 +13,6 @@ const relevantEvents = new Set([
   'price.created',
   'price.updated',
   'price.deleted',
-  'checkout.session.completed',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
@@ -50,7 +50,15 @@ export async function POST(req: Request) {
         case 'product.deleted':
           await deleteProductRecord(event.data.object as Stripe.Product);
           break;
-        case 'customer.subscription.created':
+        case 'customer.subscription.created': {
+          const subscription = event.data.object as Stripe.Subscription;
+          await manageSubscriptionStatusChange(
+            subscription.id,
+            subscription.customer as string,
+            true,
+          );
+          break;
+        }
         case 'customer.subscription.updated':
         case 'customer.subscription.deleted': {
           const subscription = event.data.object as Stripe.Subscription;
@@ -58,14 +66,14 @@ export async function POST(req: Request) {
           break;
         }
         case 'checkout.session.completed': {
-          const checkoutSession = event.data.object as Stripe.Checkout.Session;
-          if (checkoutSession.mode === 'subscription') {
-            const subscriptionId = checkoutSession.subscription;
-            await manageSubscriptionStatusChange(
-              subscriptionId as string,
-              checkoutSession.customer as string,
-            );
-          }
+          // const checkoutSession = event.data.object as Stripe.Checkout.Session;
+          // if (checkoutSession.mode === 'subscription') {
+          //   const subscriptionId = checkoutSession.subscription;
+          //   await manageSubscriptionStatusChange(
+          //     subscriptionId as string,
+          //     checkoutSession.customer as string,
+          //   );
+          // }
           break;
         }
         default:
@@ -169,7 +177,11 @@ async function deleteProductRecord(object: Stripe.Product) {
   }
 }
 
-async function manageSubscriptionStatusChange(subscriptionId: string, customerId: string) {
+async function manageSubscriptionStatusChange(
+  subscriptionId: string,
+  customerId: string,
+  isCreating = false,
+) {
   const group = await prisma.group.findFirst({
     where: {
       customer: {
@@ -219,11 +231,21 @@ async function manageSubscriptionStatusChange(subscriptionId: string, customerId
   });
 
   try {
-    await prisma.subscription.upsert({
+    const response = await prisma.subscription.upsert({
       where: { id: subscription.id },
       update: subscriptionData,
       create: subscriptionData,
+      select: {
+        price: true,
+      },
     });
+
+    await setSession(group.id, (session) => {
+      session.plan =
+        subscriptionData.status === 'active' ? response.price.lookupKey?.split('_')[0] : undefined;
+    });
+
+    await bot.api.sendMessage(group.id, `Subscription status updated to ${subscription.status}`);
   } catch (e) {
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }
