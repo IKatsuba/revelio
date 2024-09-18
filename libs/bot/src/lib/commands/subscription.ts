@@ -56,6 +56,11 @@ export async function subscription(ctx: BotContext) {
       currency: true,
       lookupKey: true,
       unitAmount: true,
+      product: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       unitAmount: 'asc',
@@ -90,7 +95,7 @@ export async function subscription(ctx: BotContext) {
 
     keyboard
       .url(
-        `${capitalize(price.lookupKey?.split('_').at(0))} (${new Intl.NumberFormat('en', {
+        `${capitalize(price.product.name)} (${new Intl.NumberFormat('en', {
           style: 'currency',
           currency: price.currency!,
         }).format(price.unitAmount! / 100)})`,
