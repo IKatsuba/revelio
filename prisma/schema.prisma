@@ -90,7 +90,7 @@ model Subscription {
   canceledAt         DateTime?
   trialStart         DateTime?
   trialEnd           DateTime?
-  usage              Usage?
+  limits             Limits?
 
   price   Price  @relation(fields: [priceId], references: [id])
   priceId String
@@ -101,14 +101,17 @@ model Subscription {
   @@index([groupId])
 }
 
-model Usage {
-  id               Int          @id @default(autoincrement())
-  subscription     Subscription @relation(fields: [subscriptionId], references: [id])
-  subscriptionId   String       @unique
-  textTokensUsed   Int          @default(0)
-  voiceMinutesUsed Int          @default(0)
-  imagesGenerated  Int          @default(0)
-  updatedAt        DateTime     @updatedAt
+model Limits {
+  id Int @id @default(autoincrement())
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String       @unique
+
+  textTokensUsed   Int @default(0)
+  voiceMinutesUsed Int @default(0)
+  imagesGenerated  Int @default(0)
+
+  updatedAt DateTime @updatedAt
 }
 
 enum GroupType {
@@ -125,9 +128,24 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members      GroupMember[]
   customer     Customer?
+  members      GroupMember[]
   subscription Subscription[]
+  usageLogs    UsageLog[]
+}
+
+model UsageLog {
+  id Int @id @default(autoincrement())
+
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  textTokensUsed   Int
+  voiceMinutesUsed Int
+  imagesGenerated  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GroupMember {
