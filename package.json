@@ -20,7 +20,7 @@
     "openai": "^4.60.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "stripe": "^10.0.0",
+    "stripe": "^16.12.0",
     "telegramify-markdown": "^1.2.2",
     "tslib": "^2.3.0",
     "zod": "^3.23.8"

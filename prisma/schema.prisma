@@ -57,6 +57,9 @@ model Product {
   id     String  @id
   active Boolean
   name   String  @unique
+
+  metadata Json?
+
   prices Price[]
 }
 
@@ -71,10 +74,12 @@ model Price {
   trialPeriodDays Int?
   lookupKey       String?
 
+  metadata Json?
+
   product   Product @relation(fields: [productId], references: [id])
   productId String
 
-  subscriptions Subscription[]
+  subscriptionOnPrice SubscriptionOnPrice[]
 }
 
 model Subscription {
@@ -91,13 +96,24 @@ model Subscription {
   trialStart         DateTime?
   trialEnd           DateTime?
 
-  price   Price  @relation(fields: [priceId], references: [id])
-  priceId String
-
   group   Group @relation(fields: [groupId], references: [id])
   groupId Int
 
+  subscriptionOnPrice SubscriptionOnPrice[]
+
   @@index([groupId])
+}
+
+model SubscriptionOnPrice {
+  id Int @id @default(autoincrement())
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+
+  price   Price  @relation(fields: [priceId], references: [id])
+  priceId String
+
+  @@unique([subscriptionId, priceId])
 }
 
 enum GroupType {

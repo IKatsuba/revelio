@@ -26,6 +26,10 @@
     "bind:webhook": {
       "command": "tsx ./scripts/bind-webhook.ts",
       "envFile": ".env"
+    },
+    "stripe:fixtures": {
+      "command": "tsx ./scripts/stripe-fixtures.ts",
+      "envFile": ".env"
     }
   }
 }

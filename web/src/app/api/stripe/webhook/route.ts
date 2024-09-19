@@ -100,11 +100,13 @@ async function upsertProductRecord(object: Stripe.Product) {
       update: {
         name: object.name,
         active: object.active,
+        metadata: object.metadata,
       },
       create: {
         id: object.id,
         name: object.name,
         active: object.active,
+        metadata: object.metadata,
       },
     });
     console.log(`Product ${object.id} upserted successfully.`);
@@ -131,6 +133,7 @@ async function upsertPriceRecord(object: Stripe.Price) {
           },
         },
         lookupKey: object.lookup_key,
+        metadata: object.metadata,
       },
       create: {
         id: object.id,
@@ -147,6 +150,7 @@ async function upsertPriceRecord(object: Stripe.Price) {
           },
         },
         lookupKey: object.lookup_key,
+        metadata: object.metadata,
       },
     });
     console.log(`Price ${object.id} upserted successfully.`);
@@ -206,10 +210,13 @@ async function manageSubscriptionStatusChange(
       },
     },
     status: subscription.status,
-    price: {
-      connect: {
-        id: subscription.items.data[0].price.id,
-      },
+    subscriptionOnPrice: {
+      connect: subscription.items.data.map((item) => ({
+        subscriptionId_priceId: {
+          priceId: item.price.id,
+          subscriptionId: subscription.id,
+        },
+      })),
     },
     //TODO check quantity on subscription
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -231,18 +238,14 @@ async function manageSubscriptionStatusChange(
   });
 
   try {
-    const response = await prisma.subscription.upsert({
+    await prisma.subscription.upsert({
       where: { id: subscription.id },
       update: subscriptionData,
       create: subscriptionData,
-      select: {
-        price: true,
-      },
     });
 
     await setSession(group.id, (session) => {
-      session.plan =
-        subscriptionData.status === 'active' ? response.price.lookupKey?.split('_')[0] : undefined;
+      session.plan = subscriptionData.status === 'active' ? 'pay-as-you-go' : undefined;
     });
 
     await bot.api.sendMessage(group.id, `Subscription status updated to ${subscription.status}`);
