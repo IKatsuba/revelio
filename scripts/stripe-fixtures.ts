@@ -15,7 +15,7 @@ const speechModels: Array<'tts-1'> = ['tts-1'];
 const prices: Record<string, Stripe.PriceCreateParams.Tier[]> = {
   'gpt-4o-mini-output-tokens': [
     {
-      flat_amount_decimal: '1.2',
+      flat_amount: 120,
       up_to: 1000000,
     },
     {
@@ -37,7 +37,7 @@ const prices: Record<string, Stripe.PriceCreateParams.Tier[]> = {
   ],
   'gpt-4o-mini-input-tokens': [
     {
-      flat_amount_decimal: '0.6',
+      flat_amount: 60,
       up_to: 2000000,
     },
     {
@@ -125,36 +125,177 @@ const prices: Record<string, Stripe.PriceCreateParams.Tier[]> = {
   ],
 };
 
-for (const textModel of textModeles) {
-  for (const textIOType of textIOTypes) {
+async function main() {
+  for (const textModel of textModeles) {
+    for (const textIOType of textIOTypes) {
+      const product = await stripe.products.create({
+        metadata: {
+          model: textModel,
+          mode: textIOType,
+          type: 'tokens',
+        },
+        name: `OpenAI ${textModel} ${textIOType} tokens`,
+        tax_code: 'txcd_10000000',
+        unit_label: 'tokens',
+      });
+
+      const meter =
+        (await stripe.billing.meters
+          .create({
+            default_aggregation: {
+              formula: 'sum',
+            },
+            display_name: `OpenAI ${textModel} ${textIOType} tokens meter`,
+            event_name: `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
+          })
+          .catch(console.error)) ??
+        (await stripe.billing.meters
+          .list({})
+          .then((meters) =>
+            meters.data.find(
+              (m) =>
+                m.event_name ===
+                `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
+            ),
+          ));
+
+      if (!meter) {
+        console.error(
+          'No meter found for',
+          product.metadata.model,
+          product.metadata.mode,
+          product.metadata.type,
+        );
+        process.exit(1);
+      }
+
+      await stripe.prices.create({
+        metadata: {
+          model: product.metadata.model,
+          mode: product.metadata.mode,
+          type: product.metadata.type,
+        },
+        billing_scheme: 'tiered',
+        currency: 'usd',
+        lookup_key: `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
+        product: product.id,
+        recurring: {
+          interval: 'month',
+          interval_count: 1,
+          meter: meter.id,
+          usage_type: 'metered',
+        },
+        tax_behavior: 'unspecified',
+        tiers:
+          prices[`${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`],
+        tiers_mode: 'graduated',
+      });
+    }
+  }
+
+  for (const imageModel of imageModels) {
+    for (const imageSize of imageResolutions) {
+      const product = await stripe.products.create({
+        metadata: {
+          model: imageModel,
+          resolution: imageSize,
+          type: 'images',
+        },
+        name: `OpenAI ${imageModel} ${imageSize} images`,
+        tax_code: 'txcd_10000000',
+        unit_label: 'images',
+      });
+
+      const meter =
+        (await stripe.billing.meters
+          .create({
+            default_aggregation: {
+              formula: 'sum',
+            },
+            display_name: `OpenAI ${imageModel} ${imageSize} images meter`,
+            event_name: `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
+          })
+          .catch(console.error)) ??
+        (await stripe.billing.meters.list({})).data.find(
+          (m) =>
+            m.event_name ===
+            `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
+        );
+
+      if (!meter) {
+        console.error(
+          'No meter found for',
+          product.metadata.model,
+          product.metadata.resolution,
+          product.metadata.type,
+        );
+        process.exit(1);
+      }
+
+      await stripe.prices.create({
+        metadata: {
+          model: product.metadata.model,
+          resolution: product.metadata.resolution,
+          type: product.metadata.type,
+        },
+        billing_scheme: 'tiered',
+        currency: 'usd',
+        lookup_key: `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
+        product: product.id,
+        recurring: {
+          interval: 'month',
+          interval_count: 1,
+          meter: meter.id,
+          usage_type: 'metered',
+        },
+        tax_behavior: 'unspecified',
+        tiers:
+          prices[
+            `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`
+          ],
+        tiers_mode: 'graduated',
+      });
+    }
+  }
+
+  for (const audioModel of audioModels) {
     const product = await stripe.products.create({
       metadata: {
-        model: textModel,
-        mode: textIOType,
-        type: 'tokens',
+        model: audioModel,
+        type: 'audio',
       },
-      name: `OpenAI ${textModel} ${textIOType} tokens`,
+      name: `OpenAI ${audioModel} audio`,
       tax_code: 'txcd_10000000',
-      unit_label: 'tokens',
+      unit_label: 'minutes',
     });
 
-    const meter = await stripe.billing.meters.create({
-      default_aggregation: {
-        formula: 'sum',
-      },
-      display_name: `OpenAI ${textModel} ${textIOType} tokens meter`,
-      event_name: `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
-    });
+    const meter =
+      (await stripe.billing.meters
+        .create({
+          default_aggregation: {
+            formula: 'sum',
+          },
+          display_name: `OpenAI ${audioModel} audio meter`,
+          event_name: `${product.metadata.model}-${product.metadata.type}`,
+        })
+        .catch(console.error)) ??
+      (await stripe.billing.meters.list({})).data.find(
+        (m) => m.event_name === `${product.metadata.model}-${product.metadata.type}`,
+      );
+
+    if (!meter) {
+      console.error('No meter found for', product.metadata.model, product.metadata.type);
+      continue;
+    }
 
     await stripe.prices.create({
       metadata: {
         model: product.metadata.model,
-        mode: product.metadata.mode,
         type: product.metadata.type,
       },
       billing_scheme: 'tiered',
       currency: 'usd',
-      lookup_key: `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
+      lookup_key: `${product.metadata.model}-${product.metadata.type}`,
       product: product.id,
       recurring: {
         interval: 'month',
@@ -163,42 +304,49 @@ for (const textModel of textModeles) {
         usage_type: 'metered',
       },
       tax_behavior: 'unspecified',
-      tiers: prices[`${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`],
+      tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
       tiers_mode: 'graduated',
     });
   }
-}
 
-for (const imageModel of imageModels) {
-  for (const imageSize of imageResolutions) {
+  for (const speechModel of speechModels) {
     const product = await stripe.products.create({
       metadata: {
-        model: imageModel,
-        resolution: imageSize,
-        type: 'images',
+        model: speechModel,
+        type: 'speech',
       },
-      name: `OpenAI ${imageModel} ${imageSize} images`,
+      name: `OpenAI ${speechModel} speech`,
       tax_code: 'txcd_10000000',
-      unit_label: 'images',
+      unit_label: 'characters',
     });
 
-    const meter = await stripe.billing.meters.create({
-      default_aggregation: {
-        formula: 'sum',
-      },
-      display_name: `OpenAI ${imageModel} ${imageSize} images meter`,
-      event_name: `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
-    });
+    const meter =
+      (await stripe.billing.meters
+        .create({
+          default_aggregation: {
+            formula: 'sum',
+          },
+          display_name: `OpenAI ${speechModel} speech meter`,
+          event_name: `${product.metadata.model}-${product.metadata.type}`,
+        })
+        .catch(console.error)) ??
+      (await stripe.billing.meters.list({})).data.find(
+        (m) => m.event_name === `${product.metadata.model}-${product.metadata.type}`,
+      );
+
+    if (!meter) {
+      console.error('No meter found for', product.metadata.model, product.metadata.type);
+      process.exit(1);
+    }
 
     await stripe.prices.create({
       metadata: {
         model: product.metadata.model,
-        resolution: product.metadata.resolution,
         type: product.metadata.type,
       },
       billing_scheme: 'tiered',
       currency: 'usd',
-      lookup_key: `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
+      lookup_key: `${product.metadata.model}-${product.metadata.type}`,
       product: product.id,
       recurring: {
         interval: 'month',
@@ -207,89 +355,10 @@ for (const imageModel of imageModels) {
         usage_type: 'metered',
       },
       tax_behavior: 'unspecified',
-      tiers:
-        prices[`${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`],
+      tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
       tiers_mode: 'graduated',
     });
   }
 }
 
-for (const audioModel of audioModels) {
-  const product = await stripe.products.create({
-    metadata: {
-      model: audioModel,
-      type: 'audio',
-    },
-    name: `OpenAI ${audioModel} audio`,
-    tax_code: 'txcd_10000000',
-    unit_label: 'minutes',
-  });
-
-  const meter = await stripe.billing.meters.create({
-    default_aggregation: {
-      formula: 'sum',
-    },
-    display_name: `OpenAI ${audioModel} audio meter`,
-    event_name: `${product.metadata.model}-${product.metadata.type}`,
-  });
-
-  await stripe.prices.create({
-    metadata: {
-      model: product.metadata.model,
-      type: product.metadata.type,
-    },
-    billing_scheme: 'tiered',
-    currency: 'usd',
-    lookup_key: `${product.metadata.model}-${product.metadata.type}`,
-    product: product.id,
-    recurring: {
-      interval: 'month',
-      interval_count: 1,
-      meter: meter.id,
-      usage_type: 'metered',
-    },
-    tax_behavior: 'unspecified',
-    tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
-    tiers_mode: 'graduated',
-  });
-}
-
-for (const speechModel of speechModels) {
-  const product = await stripe.products.create({
-    metadata: {
-      model: speechModel,
-      type: 'speech',
-    },
-    name: `OpenAI ${speechModel} speech`,
-    tax_code: 'txcd_10000000',
-    unit_label: 'characters',
-  });
-
-  const meter = await stripe.billing.meters.create({
-    default_aggregation: {
-      formula: 'sum',
-    },
-    display_name: `OpenAI ${speechModel} speech meter`,
-    event_name: `${product.metadata.model}-${product.metadata.type}`,
-  });
-
-  await stripe.prices.create({
-    metadata: {
-      model: product.metadata.model,
-      type: product.metadata.type,
-    },
-    billing_scheme: 'tiered',
-    currency: 'usd',
-    lookup_key: `${product.metadata.model}-${product.metadata.type}`,
-    product: product.id,
-    recurring: {
-      interval: 'month',
-      interval_count: 1,
-      meter: meter.id,
-      usage_type: 'metered',
-    },
-    tax_behavior: 'unspecified',
-    tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
-    tiers_mode: 'graduated',
-  });
-}
+main().catch(console.error);

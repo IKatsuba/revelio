@@ -67,51 +67,31 @@ export async function subscription(ctx: BotContext) {
     },
   });
 
-  const keyboard = new InlineKeyboard();
+  const session = await stripe.checkout.sessions.create({
+    customer: customer.stripeCustomerId,
+    success_url: 'https://t.me/RevelioDevBot',
+    cancel_url: 'https://t.me/RevelioDevBot',
+    mode: 'subscription',
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    subscription_data: {
+      metadata: {},
+    },
+    line_items: prices.map((price) => ({
+      price: price.id,
+      quantity: 1,
+    })),
+    allow_promotion_codes: true,
+    expand: ['line_items.data.price.product'],
+  });
 
-  for (const price of prices) {
-    const session = await stripe.checkout.sessions.create({
-      customer: customer.stripeCustomerId,
-      success_url: 'https://t.me/RevelioDevBot',
-      cancel_url: 'https://t.me/RevelioDevBot',
-      mode: 'subscription',
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      subscription_data: {
-        metadata: {},
-      },
-      line_items: [
-        {
-          price: price.id,
-          quantity: 1,
-        },
-      ],
-      allow_promotion_codes: true,
-    });
-
-    if (!session.url) {
-      await ctx.reply('An error occurred while creating the session. Please try again later.');
-      return;
-    }
-
-    keyboard
-      .url(
-        `${capitalize(price.product.name)} (${new Intl.NumberFormat('en', {
-          style: 'currency',
-          currency: price.currency!,
-        }).format(price.unitAmount! / 100)})`,
-        session.url,
-      )
-      .row();
+  if (!session.url) {
+    await ctx.reply('An error occurred while creating the session. Please try again later.');
+    return;
   }
+
+  const keyboard = new InlineKeyboard().url(`Pay as you go`, session.url).row();
 
   await ctx.reply('Please choose a plan:', {
     reply_markup: keyboard,
   });
-}
-
-function capitalize(s: string | undefined): string {
-  if (!s) {
-    return '';
-  }
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
