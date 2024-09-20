@@ -1,6 +1,5 @@
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
-import { prisma } from '@revelio/prisma/server';
 import { addTokenUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';

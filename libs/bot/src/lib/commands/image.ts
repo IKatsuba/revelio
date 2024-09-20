@@ -6,14 +6,14 @@ import { addImageUsage } from '@revelio/stripe/server';
 import { BotContext } from '../context';
 
 export async function image(ctx: BotContext) {
-  await ctx.replyWithChatAction('typing');
-
   const prompt = ctx.message?.text?.replace(/^\/image/, '').trim();
 
   if (!prompt) {
     await ctx.reply('Please provide a prompt for the image generation');
     return;
   }
+
+  await ctx.replyWithChatAction('upload_photo');
 
   const url = await generateImage(prompt);
 
@@ -22,15 +22,9 @@ export async function image(ctx: BotContext) {
     return;
   }
 
+  await ctx.replyWithChatAction('upload_photo');
+
   await ctx.replyWithPhoto(url);
-
-  const customer = await prisma.customer.findFirst({
-    where: { id: ctx.chatId },
-  });
-
-  if (!customer) {
-    return;
-  }
 
   await addImageUsage(ctx, {
     model: env.IMAGE_MODEL,

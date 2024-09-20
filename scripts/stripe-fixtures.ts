@@ -113,23 +113,23 @@ const prices: Record<string, Stripe.PriceCreateParams.Tier[]> = {
   ],
   'tts-1-speech': [
     {
-      unit_amount: 30,
+      unit_amount_decimal: '0.003',
       up_to: 10000,
     },
     {
-      unit_amount: 28,
+      unit_amount_decimal: '0.0028',
       up_to: 25000,
     },
     {
-      unit_amount: 26,
+      unit_amount_decimal: '0.0026',
       up_to: 60000,
     },
     {
-      unit_amount: 24,
+      unit_amount_decimal: '0.0024',
       up_to: 150000,
     },
     {
-      unit_amount: 22,
+      unit_amount_decimal: '0.0022',
       up_to: 'inf',
     },
   ],

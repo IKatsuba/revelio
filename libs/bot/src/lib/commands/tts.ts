@@ -7,7 +7,7 @@ import { addSpeechUsage } from '@revelio/stripe/server';
 import { BotContext } from '../context';
 
 export async function tts(ctx: BotContext) {
-  await ctx.replyWithChatAction('typing');
+  await ctx.replyWithChatAction('record_voice');
 
   const prompt = ctx.message?.text?.replace(/^\/tts/, '').trim();
 
@@ -22,6 +22,8 @@ export async function tts(ctx: BotContext) {
     await ctx.reply('Failed to generate speech');
     return;
   }
+
+  await ctx.replyWithChatAction('upload_voice');
 
   await ctx.replyWithVoice(new InputFile(audioBuffer));
 

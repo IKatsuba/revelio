@@ -3,7 +3,7 @@ import { parseBlob } from 'music-metadata';
 
 import { env } from '@revelio/env/server';
 import { generateText, transcribe } from '@revelio/llm/server';
-import { addAudioUsage, addSpeechUsage, addTokenUsage } from '@revelio/stripe/server';
+import { addAudioUsage, addTokenUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
 import { sendLongText } from '../utils';
@@ -16,9 +16,12 @@ export async function voice(ctx: BotContext) {
 
   if (!file) {
     await ctx.reply('Failed to transcribe audio');
+    return;
   }
 
   const fileData = await ctx.api.getFile(file!.file_id);
+
+  await ctx.replyWithChatAction('upload_voice');
 
   const fileResponse = await fetch(
     `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
@@ -33,12 +36,12 @@ export async function voice(ctx: BotContext) {
     return;
   }
 
+  const text = await transcribe(fileResponse);
+
   await addAudioUsage(ctx, {
     model: 'whisper-1',
     minuteCount: Math.ceil(metadata.format.duration / 60),
   });
-
-  const text = await transcribe(fileResponse);
 
   const messages = [
     ...ctx.session.messages,
@@ -49,6 +52,8 @@ export async function voice(ctx: BotContext) {
       },
     ]),
   ];
+
+  await ctx.replyWithChatAction('typing');
 
   const response = await generateText(messages);
 

@@ -129,11 +129,11 @@ How you pay:
   - 1,501+ used: US$0.000088 per minute
 
 - **OpenAI tts-1 Speech**
-  - US$0.003 per character for the first 10,000 characters in a month
-  - Next 10,001-25,000 used: US$0.0028 per character
-  - Next 25,001-60,000 used: US$0.0026 per character
-  - Next 60,001-150,000 used: US$0.0024 per character
-  - 150,001+ used: US$0.0022 per character
+  - US$0.00003 per character for the first 10,000 characters in a month
+  - Next 10,001-25,000 used: US$0.000028 per character
+  - Next 25,001-60,000 used: US$0.000026 per character
+  - Next 60,001-150,000 used: US$0.000024 per character
+  - 150,001+ used: US$0.000022 per character
     `),
     {
       reply_markup: keyboard,

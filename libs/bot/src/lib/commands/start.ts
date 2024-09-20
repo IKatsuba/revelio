@@ -6,6 +6,8 @@ import { BotContext } from '../context';
 import { help } from './help';
 
 export async function start(ctx: CommandContext<BotContext>) {
+  await ctx.replyWithChatAction('typing');
+
   if (ctx.from) {
     await prisma.user.upsert({
       where: { id: ctx.from.id },
