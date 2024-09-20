@@ -2,6 +2,7 @@ import { convertToCoreMessages } from 'ai';
 
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
+import { addTokenUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
 import { sendLongText } from '../utils';
@@ -32,4 +33,16 @@ export async function prompt(ctx: BotContext) {
   }
 
   await sendLongText(ctx, result.text);
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'output',
+    tokenCount: result.usage.completionTokens,
+  });
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'input',
+    tokenCount: result.usage.promptTokens,
+  });
 }

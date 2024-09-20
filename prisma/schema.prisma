@@ -56,7 +56,7 @@ model Customer {
 model Product {
   id     String  @id
   active Boolean
-  name   String  @unique
+  name   String
 
   metadata Json?
 

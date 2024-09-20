@@ -1,7 +1,9 @@
+import { PrismaClient } from '@prisma/client';
 import { OpenAI } from 'openai';
 import Stripe from 'stripe';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const prisma = new PrismaClient();
 
 const textModeles: OpenAI.ChatModel[] = ['gpt-4o-mini'];
 const textIOTypes = ['input', 'output'];
@@ -15,117 +17,147 @@ const speechModels: Array<'tts-1'> = ['tts-1'];
 const prices: Record<string, Stripe.PriceCreateParams.Tier[]> = {
   'gpt-4o-mini-output-tokens': [
     {
+      unit_amount: 0,
+      up_to: 1,
+    },
+    {
       flat_amount: 120,
       up_to: 1000000,
     },
     {
-      unit_amount_decimal: '0.00000112',
+      unit_amount_decimal: '0.000112',
       up_to: 2500000,
     },
     {
-      unit_amount_decimal: '0.00000104',
+      unit_amount_decimal: '0.000104',
       up_to: 6000000,
     },
     {
-      unit_amount_decimal: '0.00000096',
+      unit_amount_decimal: '0.000096',
       up_to: 15000000,
     },
     {
-      unit_amount_decimal: '0.00000088',
+      unit_amount_decimal: '0.000088',
       up_to: 'inf',
     },
   ],
   'gpt-4o-mini-input-tokens': [
     {
+      unit_amount: 0,
+      up_to: 1,
+    },
+    {
       flat_amount: 60,
       up_to: 2000000,
     },
     {
-      unit_amount_decimal: '0.00000028',
+      unit_amount_decimal: '0.000028',
       up_to: 5000000,
     },
     {
-      unit_amount_decimal: '0.00000026',
+      unit_amount_decimal: '0.000026',
       up_to: 12000000,
     },
     {
-      unit_amount_decimal: '0.00000024',
+      unit_amount_decimal: '0.000024',
       up_to: 30000000,
     },
     {
-      unit_amount_decimal: '0.00000022',
+      unit_amount_decimal: '0.000022',
       up_to: 'inf',
     },
   ],
   'dall-e-2-1024x1024-images': [
     {
-      unit_amount_decimal: '0.040',
+      unit_amount: 4,
       up_to: 30,
     },
     {
-      unit_amount_decimal: '0.037',
+      unit_amount_decimal: '3.7',
       up_to: 70,
     },
     {
-      unit_amount_decimal: '0.034',
+      unit_amount_decimal: '3.4',
       up_to: 160,
     },
     {
-      unit_amount_decimal: '0.031',
+      unit_amount_decimal: '3.1',
       up_to: 400,
     },
     {
-      unit_amount_decimal: '0.028',
+      unit_amount_decimal: '2.8',
       up_to: 'inf',
     },
   ],
   'whisper-1-audio': [
     {
-      unit_amount_decimal: '0.012',
+      unit_amount_decimal: '1.2',
       up_to: 100,
     },
     {
-      unit_amount_decimal: '0.0112',
+      unit_amount_decimal: '1.12',
       up_to: 250,
     },
     {
-      unit_amount_decimal: '0.0104',
+      unit_amount_decimal: '1.04',
       up_to: 600,
     },
     {
-      unit_amount_decimal: '0.0096',
+      unit_amount_decimal: '0.96',
       up_to: 1500,
     },
     {
-      unit_amount_decimal: '0.0088',
+      unit_amount_decimal: '0.88',
       up_to: 'inf',
     },
   ],
   'tts-1-speech': [
     {
-      unit_amount_decimal: '0.3',
+      unit_amount: 30,
       up_to: 10000,
     },
     {
-      unit_amount_decimal: '0.28',
+      unit_amount: 28,
       up_to: 25000,
     },
     {
-      unit_amount_decimal: '0.26',
+      unit_amount: 26,
       up_to: 60000,
     },
     {
-      unit_amount_decimal: '0.24',
+      unit_amount: 24,
       up_to: 150000,
     },
     {
-      unit_amount_decimal: '0.22',
+      unit_amount: 22,
       up_to: 'inf',
     },
   ],
 };
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function main() {
+  const products = await stripe.products.list({ limit: 100, active: true });
+
+  for (const price of products.data) {
+    await stripe.products.update(price.id, {
+      active: false,
+    });
+
+    await sleep(3000);
+  }
+
+  await prisma.subscriptionOnPrice.deleteMany();
+  await prisma.subscription.deleteMany();
+  await prisma.price.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.customer.deleteMany();
+
+  await sleep(3000);
+
   for (const textModel of textModeles) {
     for (const textIOType of textIOTypes) {
       const product = await stripe.products.create({
@@ -138,6 +170,8 @@ async function main() {
         tax_code: 'txcd_10000000',
         unit_label: 'tokens',
       });
+
+      await sleep(3000);
 
       const meter =
         (await stripe.billing.meters
@@ -177,7 +211,6 @@ async function main() {
         },
         billing_scheme: 'tiered',
         currency: 'usd',
-        lookup_key: `${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`,
         product: product.id,
         recurring: {
           interval: 'month',
@@ -190,6 +223,8 @@ async function main() {
           prices[`${product.metadata.model}-${product.metadata.mode}-${product.metadata.type}`],
         tiers_mode: 'graduated',
       });
+
+      await sleep(3000);
     }
   }
 
@@ -205,6 +240,8 @@ async function main() {
         tax_code: 'txcd_10000000',
         unit_label: 'images',
       });
+
+      await sleep(3000);
 
       const meter =
         (await stripe.billing.meters
@@ -240,7 +277,6 @@ async function main() {
         },
         billing_scheme: 'tiered',
         currency: 'usd',
-        lookup_key: `${product.metadata.model}-${product.metadata.resolution}-${product.metadata.type}`,
         product: product.id,
         recurring: {
           interval: 'month',
@@ -255,6 +291,8 @@ async function main() {
           ],
         tiers_mode: 'graduated',
       });
+
+      await sleep(3000);
     }
   }
 
@@ -268,6 +306,8 @@ async function main() {
       tax_code: 'txcd_10000000',
       unit_label: 'minutes',
     });
+
+    await sleep(3000);
 
     const meter =
       (await stripe.billing.meters
@@ -295,7 +335,6 @@ async function main() {
       },
       billing_scheme: 'tiered',
       currency: 'usd',
-      lookup_key: `${product.metadata.model}-${product.metadata.type}`,
       product: product.id,
       recurring: {
         interval: 'month',
@@ -307,6 +346,8 @@ async function main() {
       tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
       tiers_mode: 'graduated',
     });
+
+    await sleep(3000);
   }
 
   for (const speechModel of speechModels) {
@@ -319,6 +360,8 @@ async function main() {
       tax_code: 'txcd_10000000',
       unit_label: 'characters',
     });
+
+    await sleep(3000);
 
     const meter =
       (await stripe.billing.meters
@@ -346,7 +389,6 @@ async function main() {
       },
       billing_scheme: 'tiered',
       currency: 'usd',
-      lookup_key: `${product.metadata.model}-${product.metadata.type}`,
       product: product.id,
       recurring: {
         interval: 'month',
@@ -358,6 +400,8 @@ async function main() {
       tiers: prices[`${product.metadata.model}-${product.metadata.type}`],
       tiers_mode: 'graduated',
     });
+
+    await sleep(3000);
   }
 }
 

@@ -210,14 +210,6 @@ async function manageSubscriptionStatusChange(
       },
     },
     status: subscription.status,
-    subscriptionOnPrice: {
-      connect: subscription.items.data.map((item) => ({
-        subscriptionId_priceId: {
-          priceId: item.price.id,
-          subscriptionId: subscription.id,
-        },
-      })),
-    },
     //TODO check quantity on subscription
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
@@ -244,11 +236,20 @@ async function manageSubscriptionStatusChange(
       create: subscriptionData,
     });
 
+    if (isCreating) {
+      await prisma.subscriptionOnPrice.createMany({
+        data: subscription.items.data.map((item) => ({
+          priceId: item.price.id,
+          subscriptionId: subscription.id,
+        })),
+      });
+    }
+
     await setSession(group.id, (session) => {
       session.plan = subscriptionData.status === 'active' ? 'pay-as-you-go' : undefined;
     });
 
-    await bot.api.sendMessage(group.id, `Subscription status updated to ${subscription.status}`);
+    await bot.api.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);
   } catch (e) {
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }

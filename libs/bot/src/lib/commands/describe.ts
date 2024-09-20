@@ -1,5 +1,7 @@
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
+import { prisma } from '@revelio/prisma/server';
+import { addTokenUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
 import { sendLongText } from '../utils';
@@ -29,4 +31,16 @@ export async function describe(ctx: BotContext) {
   ]);
 
   await sendLongText(ctx, response.text);
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'output',
+    tokenCount: response.usage.completionTokens,
+  });
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'input',
+    tokenCount: response.usage.promptTokens,
+  });
 }

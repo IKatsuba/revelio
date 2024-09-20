@@ -1,6 +1,8 @@
 import { InputFile } from 'grammy';
 
+import { env } from '@revelio/env/server';
 import { textToSpeech } from '@revelio/llm/server';
+import { addSpeechUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
 
@@ -14,12 +16,17 @@ export async function tts(ctx: BotContext) {
     return;
   }
 
-  const blob = await textToSpeech(prompt);
+  const audioBuffer = await textToSpeech(prompt);
 
-  if (!blob) {
+  if (!audioBuffer) {
     await ctx.reply('Failed to generate speech');
     return;
   }
 
-  await ctx.replyWithVoice(new InputFile(blob));
+  await ctx.replyWithVoice(new InputFile(audioBuffer));
+
+  await addSpeechUsage(ctx, {
+    model: env.TTS_MODEL,
+    characterCount: prompt.split(/\s+/).length,
+  });
 }

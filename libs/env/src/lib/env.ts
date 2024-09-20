@@ -22,7 +22,7 @@ const envSchema = z.object({
   IMAGE_STYLE: z.enum(['vivid', 'natural']).default('vivid'),
   IMAGE_SIZE: z
     .enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'])
-    .default('512x512'),
+    .default('1024x1024'),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   ENABLE_FUNCTIONS: z
     .string()

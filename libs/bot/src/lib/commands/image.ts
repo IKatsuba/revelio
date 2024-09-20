@@ -1,4 +1,7 @@
+import { env } from '@revelio/env/server';
 import { generateImage } from '@revelio/llm/server';
+import { prisma } from '@revelio/prisma/server';
+import { addImageUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
 
@@ -20,4 +23,17 @@ export async function image(ctx: BotContext) {
   }
 
   await ctx.replyWithPhoto(url);
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: ctx.chatId },
+  });
+
+  if (!customer) {
+    return;
+  }
+
+  await addImageUsage(ctx, {
+    model: env.IMAGE_MODEL,
+    resolution: env.IMAGE_SIZE,
+  });
 }

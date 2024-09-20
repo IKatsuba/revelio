@@ -1,8 +1,9 @@
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
+import { addTokenUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';
-import { telegramify } from '../telegramify';
+import { sendLongText } from '../utils';
 
 export async function resend(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -27,7 +28,17 @@ export async function resend(ctx: BotContext) {
 
   ctx.session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
 
-  await ctx.reply(telegramify(result.text), {
-    parse_mode: 'MarkdownV2',
+  await sendLongText(ctx, result.text);
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'output',
+    tokenCount: result.usage.completionTokens,
+  });
+
+  await addTokenUsage(ctx, {
+    model: 'gpt-4o-mini',
+    mode: 'input',
+    tokenCount: result.usage.promptTokens,
   });
 }
