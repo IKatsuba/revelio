@@ -9,6 +9,7 @@ import { resend } from '../commands/resend';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
 import { tts } from '../commands/tts';
+import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { BotContext } from '../context';
 import { paywall } from '../middlewares/paywall';
@@ -17,11 +18,12 @@ export const privateComposer = new Composer<BotContext>();
 
 privateComposer.command('start', start);
 privateComposer.command('help', help);
-privateComposer.command('reset', reset);
+privateComposer.command('reset', paywall, reset);
 privateComposer.command('resend', paywall, resend);
 privateComposer.command('image', paywall, image);
 privateComposer.command('tts', paywall, tts);
 privateComposer.command('billing', billing);
+privateComposer.command('usage', paywall, usage);
 
 privateComposer.on('message:text', paywall, prompt);
 privateComposer.on(
