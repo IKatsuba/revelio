@@ -4,10 +4,11 @@ import { prisma } from '@revelio/prisma/server';
 
 import { sorry } from '../commands/sorry';
 import { BotContext } from '../context';
+import { track } from '../middlewares/track';
 
 export const groupComposer = new Composer<BotContext>();
 
-groupComposer.on('msg:new_chat_members:me', async (ctx) => {
+groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), async (ctx) => {
   await prisma.group.upsert({
     where: { id: ctx.chat.id },
     update: {},
@@ -34,4 +35,4 @@ groupComposer.on('msg:new_chat_members:me', async (ctx) => {
   await sorry(ctx);
 });
 
-groupComposer.on('message', sorry);
+groupComposer.on('message', track('message:group'), sorry);
