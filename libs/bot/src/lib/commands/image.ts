@@ -1,6 +1,5 @@
 import { env } from '@revelio/env/server';
 import { generateImage } from '@revelio/llm/server';
-import { prisma } from '@revelio/prisma/server';
 import { addImageUsage } from '@revelio/stripe/server';
 
 import { BotContext } from '../context';

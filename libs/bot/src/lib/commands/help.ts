@@ -1,16 +1,27 @@
 import { BotContext } from '../context';
+import { telegramify } from '../telegramify';
 
 export async function help(ctx: BotContext) {
-  await ctx.reply(`I'm a ChatGPT bot, talk to me!
+  await ctx.reply(
+    telegramify(`👋 **I'm Revelio, your personal assistant!**
 
-/help - Show this message
-/reset - Reset the conversation. Optionally pass high-level instructions (e.g. /reset You are a helpful assistant)
-/stats - Get your current usage statistics
-/resend - Resend the latest message
-/image - Generate image from prompt (e.g. /image cat)
-/tts - Generate speech from text (e.g. /tts my house)
-/chat - Chat with the bot!
+Here are some things I can help you with:
 
-Send me a voice message or file and I'll transcribe it for you!
-`);
+💡 **/help** – Show this message
+💳 **/billing** – Manage your billing information
+📊 **/usage** – Get your current usage statistics
+
+🔄 **/reset** – Reset the conversation. Optionally pass high-level instructions (e.g. /reset You are a helpful assistant)
+📩 **/resend** – Resend the latest message
+🖼️ **/image** – Generate image from prompt (e.g. /image a cat in the forest)
+🔊 **/tts** – Generate speech from text (e.g. /tts Hello, how are you?)
+
+You can also send me text messages, and I'll respond to them. 📜
+
+Send me a voice message or file, and I'll transcribe it for you! 🎤
+`),
+    {
+      parse_mode: 'MarkdownV2',
+    },
+  );
 }
