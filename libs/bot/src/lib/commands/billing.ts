@@ -77,7 +77,7 @@ export async function billing(ctx: BotContext) {
   if (ctx.session.plan) {
     const session = await stripe.billingPortal.sessions.create({
       customer: customer?.stripeCustomerId,
-      return_url: 'https://t.me/RevelioDevBot',
+      return_url: 'https://t.me/RevelioGPTBot',
     });
 
     await ctx.reply(
@@ -115,8 +115,8 @@ ${howYouPay}`),
 
   const session = await stripe.checkout.sessions.create({
     customer: customer.stripeCustomerId,
-    success_url: 'https://t.me/RevelioDevBot',
-    cancel_url: 'https://t.me/RevelioDevBot',
+    success_url: 'https://t.me/RevelioGPTBot',
+    cancel_url: 'https://t.me/RevelioGPTBot',
     mode: 'subscription',
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     subscription_data: {
