@@ -1,3 +1,4 @@
+import { syncEnvVars } from '@trigger.dev/build/extensions/core';
 import { prismaExtension } from '@trigger.dev/build/extensions/prisma';
 import { defineConfig } from '@trigger.dev/sdk/v3';
 
@@ -18,6 +19,7 @@ export default defineConfig({
   dirs: ['libs/jobs/src/lib'],
   build: {
     extensions: [
+      syncEnvVars(() => Object.entries(process.env).map(([name, value]) => ({ name, value }))),
       prismaExtension({
         schema: 'prisma/schema.prisma',
         clientGenerator: 'client',
