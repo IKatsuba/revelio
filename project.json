@@ -18,6 +18,10 @@
           {
             "command": "docker-compose up",
             "prefix": "[docker-compose]"
+          },
+          {
+            "command": "nx dev jobs",
+            "prefix": "[jobs]"
           }
         ],
         "parallel": true

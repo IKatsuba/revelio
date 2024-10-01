@@ -1,5 +1,4 @@
-import { BotContext } from '../context';
-import { telegramify } from '../telegramify';
+import { BotContext, telegramify } from '@revelio/bot-utils';
 
 export async function help(ctx: BotContext) {
   await ctx.reply(

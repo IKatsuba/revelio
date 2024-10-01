@@ -1,10 +1,8 @@
 import { InlineKeyboard } from 'grammy';
 
+import { BotContext, telegramify } from '@revelio/bot-utils';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
-
-import { BotContext } from '../context';
-import { telegramify } from '../telegramify';
 
 const howYouPay = `You pay only for what you use. No upfront costs. No termination fees. No hidden charges. No surprises.
 

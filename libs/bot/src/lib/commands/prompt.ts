@@ -1,11 +1,9 @@
 import { convertToCoreMessages } from 'ai';
 
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
 import { addTokenUsage } from '@revelio/stripe/server';
-
-import { BotContext } from '../context';
-import { sendLongText } from '../utils';
 
 export async function prompt(ctx: BotContext) {
   console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
@@ -32,15 +30,15 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  await sendLongText(ctx, result.text);
+  await sendLongText(ctx.chatId, result.text);
 
-  await addTokenUsage(ctx, {
+  await addTokenUsage(ctx.chatId, {
     model: 'gpt-4o-mini',
     mode: 'output',
     tokenCount: result.usage.completionTokens,
   });
 
-  await addTokenUsage(ctx, {
+  await addTokenUsage(ctx.chatId, {
     model: 'gpt-4o-mini',
     mode: 'input',
     tokenCount: result.usage.promptTokens,

@@ -1,5 +1,7 @@
 import { Composer } from 'grammy';
 
+import { BotContext } from '@revelio/bot-utils';
+
 import { billing } from '../commands/billing';
 import { describe } from '../commands/describe';
 import { help } from '../commands/help';
@@ -11,7 +13,6 @@ import { start } from '../commands/start';
 import { tts } from '../commands/tts';
 import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
-import { BotContext } from '../context';
 import { paywall } from '../middlewares/paywall';
 import { track } from '../middlewares/track';
 

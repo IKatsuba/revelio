@@ -1,8 +1,7 @@
+import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateImage } from '@revelio/llm/server';
 import { addImageUsage } from '@revelio/stripe/server';
-
-import { BotContext } from '../context';
 
 export async function image(ctx: BotContext) {
   const prompt = ctx.message?.text?.replace(/^\/image/, '').trim();
@@ -25,7 +24,7 @@ export async function image(ctx: BotContext) {
 
   await ctx.replyWithPhoto(url);
 
-  await addImageUsage(ctx, {
+  await addImageUsage(ctx.chatId, {
     model: env.IMAGE_MODEL,
     resolution: env.IMAGE_SIZE,
   });

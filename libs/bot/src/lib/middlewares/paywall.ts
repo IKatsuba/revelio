@@ -1,8 +1,9 @@
 import { track } from '@vercel/analytics/server';
 import { NextFunction } from 'grammy';
 
+import { BotContext } from '@revelio/bot-utils';
+
 import { billing } from '../commands/billing';
-import { BotContext } from '../context';
 
 export async function paywall(ctx: BotContext, next: NextFunction) {
   if (!ctx.session.plan) {

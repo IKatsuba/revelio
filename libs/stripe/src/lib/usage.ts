@@ -5,7 +5,7 @@ import { prisma } from '@revelio/prisma/server';
 import { stripe } from './stripe';
 
 export async function addTokenUsage(
-  ctx: Context,
+  chatId: number | undefined,
   {
     model,
     mode,
@@ -16,8 +16,12 @@ export async function addTokenUsage(
     tokenCount: number;
   },
 ) {
+  if (!chatId) {
+    return;
+  }
+
   const customer = await prisma.customer.findFirst({
-    where: { id: ctx.chatId },
+    where: { id: chatId },
   });
 
   if (!customer) {
@@ -34,7 +38,7 @@ export async function addTokenUsage(
 }
 
 export async function addImageUsage(
-  ctx: Context,
+  chatId: number | undefined,
   {
     model,
     resolution,
@@ -43,8 +47,12 @@ export async function addImageUsage(
     resolution: string;
   },
 ) {
+  if (!chatId) {
+    return;
+  }
+
   const customer = await prisma.customer.findFirst({
-    where: { id: ctx.chatId },
+    where: { id: chatId },
   });
 
   if (!customer) {
@@ -61,7 +69,7 @@ export async function addImageUsage(
 }
 
 export async function addAudioUsage(
-  ctx: Context,
+  chatId: number | undefined,
   {
     model,
     minuteCount,
@@ -70,8 +78,12 @@ export async function addAudioUsage(
     minuteCount: number;
   },
 ) {
+  if (!chatId) {
+    return;
+  }
+
   const customer = await prisma.customer.findFirst({
-    where: { id: ctx.chatId },
+    where: { id: chatId },
   });
 
   if (!customer) {
@@ -88,7 +100,7 @@ export async function addAudioUsage(
 }
 
 export async function addSpeechUsage(
-  ctx: Context,
+  chatId: number | undefined,
   {
     model,
     characterCount,
@@ -97,8 +109,12 @@ export async function addSpeechUsage(
     characterCount: number;
   },
 ) {
+  if (!chatId) {
+    return;
+  }
+
   const customer = await prisma.customer.findFirst({
-    where: { id: ctx.chatId },
+    where: { id: chatId },
   });
 
   if (!customer) {

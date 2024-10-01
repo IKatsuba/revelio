@@ -30,7 +30,11 @@ export async function setSession(
       ? ((await sessionStorage.read(getSessionKey(chatId))) ?? getInitialSessionData())
       : data;
 
-  return sessionStorage.write(getSessionKey(chatId), fn(session) ?? session);
+  return sessionStorage.write(getSessionKey(chatId), fn(session) || session);
+}
+
+export async function getSession(chatId: number): Promise<SessionData> {
+  return (await sessionStorage.read(getSessionKey(chatId))) ?? getInitialSessionData();
 }
 
 export function getInitialSessionData(): SessionData {

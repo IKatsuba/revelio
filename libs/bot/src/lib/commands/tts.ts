@@ -1,10 +1,9 @@
 import { InputFile } from 'grammy';
 
+import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { textToSpeech } from '@revelio/llm/server';
 import { addSpeechUsage } from '@revelio/stripe/server';
-
-import { BotContext } from '../context';
 
 export async function tts(ctx: BotContext) {
   await ctx.replyWithChatAction('record_voice');
@@ -27,7 +26,7 @@ export async function tts(ctx: BotContext) {
 
   await ctx.replyWithVoice(new InputFile(audioBuffer));
 
-  await addSpeechUsage(ctx, {
+  await addSpeechUsage(ctx.chatId, {
     model: env.TTS_MODEL,
     characterCount: prompt.split(/\s+/).length,
   });

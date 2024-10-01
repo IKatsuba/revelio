@@ -1,9 +1,7 @@
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateText } from '@revelio/llm/server';
 import { addTokenUsage } from '@revelio/stripe/server';
-
-import { BotContext } from '../context';
-import { sendLongText } from '../utils';
 
 export async function describe(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -29,15 +27,15 @@ export async function describe(ctx: BotContext) {
     },
   ]);
 
-  await sendLongText(ctx, response.text);
+  await sendLongText(ctx.chatId, response.text);
 
-  await addTokenUsage(ctx, {
+  await addTokenUsage(ctx.chatId, {
     model: 'gpt-4o-mini',
     mode: 'output',
     tokenCount: response.usage.completionTokens,
   });
 
-  await addTokenUsage(ctx, {
+  await addTokenUsage(ctx.chatId, {
     model: 'gpt-4o-mini',
     mode: 'input',
     tokenCount: response.usage.promptTokens,

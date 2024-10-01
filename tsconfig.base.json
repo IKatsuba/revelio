@@ -16,9 +16,11 @@
     "baseUrl": ".",
     "paths": {
       "@revelio/bot": ["libs/bot/src/index.ts"],
+      "@revelio/bot-utils": ["libs/bot-utils/src/index.ts"],
       "@revelio/bot/server": ["libs/bot/src/server.ts"],
       "@revelio/env": ["libs/env/src/index.ts"],
       "@revelio/env/server": ["libs/env/src/server.ts"],
+      "@revelio/jobs": ["libs/jobs/src/index.ts"],
       "@revelio/llm": ["libs/llm/src/index.ts"],
       "@revelio/llm/server": ["libs/llm/src/server.ts"],
       "@revelio/prisma": ["libs/prisma/src/index.ts"],

@@ -1,0 +1,22 @@
+{
+  "name": "jobs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/jobs/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project jobs --web",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npx trigger.dev@latest dev -c ./libs/jobs/trigger.config.ts"]
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npx trigger.dev@latest deploy -c ./libs/jobs/trigger.config.ts"]
+      }
+    }
+  }
+}

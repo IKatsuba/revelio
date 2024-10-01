@@ -1,6 +1,7 @@
 import { GrammyError } from 'grammy';
 
-import { bot } from '@revelio/bot/server';
+import { bot } from '@revelio/bot-utils';
+import { initBot } from '@revelio/bot/server';
 
 export const maxDuration = 60;
 
@@ -12,6 +13,8 @@ export const POST = validateWebhook(async (request: Request) => {
   const body = await request.json();
 
   try {
+    initBot(bot);
+
     await bot.init();
 
     await bot.handleUpdate(body);

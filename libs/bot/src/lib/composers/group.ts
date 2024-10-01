@@ -1,9 +1,9 @@
 import { Composer } from 'grammy';
 
+import { BotContext } from '@revelio/bot-utils';
 import { prisma } from '@revelio/prisma/server';
 
 import { sorry } from '../commands/sorry';
-import { BotContext } from '../context';
 import { track } from '../middlewares/track';
 
 export const groupComposer = new Composer<BotContext>();

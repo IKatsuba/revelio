@@ -1,8 +1,8 @@
 import { CommandContext } from 'grammy';
 
+import { BotContext } from '@revelio/bot-utils';
 import { prisma } from '@revelio/prisma/server';
 
-import { BotContext } from '../context';
 import { help } from './help';
 
 export async function start(ctx: CommandContext<BotContext>) {
