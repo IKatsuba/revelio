@@ -1,7 +1,7 @@
+import { tasks } from '@trigger.dev/sdk/v3';
+
 import { BotContext } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { generateImage } from '@revelio/llm/server';
-import { addImageUsage } from '@revelio/stripe/server';
+import { ImageTask } from '@revelio/jobs';
 
 export async function image(ctx: BotContext) {
   const prompt = ctx.message?.text?.replace(/^\/image/, '').trim();
@@ -11,21 +11,15 @@ export async function image(ctx: BotContext) {
     return;
   }
 
-  await ctx.replyWithChatAction('upload_photo');
-
-  const url = await generateImage(prompt);
-
-  if (!url) {
-    await ctx.reply('Failed to generate image');
+  if (!ctx.chatId) {
+    await ctx.reply('Please provide a chatId');
     return;
   }
 
   await ctx.replyWithChatAction('upload_photo');
 
-  await ctx.replyWithPhoto(url);
-
-  await addImageUsage(ctx.chatId, {
-    model: env.IMAGE_MODEL,
-    resolution: env.IMAGE_SIZE,
+  await tasks.trigger<ImageTask>('image', {
+    prompt,
+    chatId: ctx.chatId,
   });
 }

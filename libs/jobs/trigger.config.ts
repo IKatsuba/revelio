@@ -7,7 +7,7 @@ import { defineConfig } from '@trigger.dev/sdk/v3';
 export default defineConfig({
   project: 'proj_xstwsidsvhoemwrosezu',
   runtime: 'node',
-  logLevel: 'debug',
+  logLevel: 'log',
   retries: {
     enabledInDev: true,
     default: {
