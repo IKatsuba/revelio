@@ -1,3 +1,5 @@
+import { PrismaInstrumentation } from '@prisma/instrumentation';
+import { OpenAIInstrumentation } from '@traceloop/instrumentation-openai';
 import { syncEnvVars } from '@trigger.dev/build/extensions/core';
 import { prismaExtension } from '@trigger.dev/build/extensions/prisma';
 import { defineConfig } from '@trigger.dev/sdk/v3';
@@ -23,8 +25,8 @@ export default defineConfig({
       prismaExtension({
         schema: 'prisma/schema.prisma',
         clientGenerator: 'client',
-        directUrlEnvVarName: 'POSTGRES_PRISMA_URL',
       }),
     ],
   },
+  instrumentations: [new PrismaInstrumentation(), new OpenAIInstrumentation()],
 });
