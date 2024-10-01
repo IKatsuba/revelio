@@ -1,7 +1,7 @@
-import { BotContext, sendLongText } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { generateText } from '@revelio/llm/server';
-import { addTokenUsage } from '@revelio/stripe/server';
+import { tasks } from '@trigger.dev/sdk/v3';
+
+import { BotContext } from '@revelio/bot-utils';
+import { DescribeTask } from '@revelio/jobs';
 
 export async function describe(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -21,32 +21,9 @@ export async function describe(ctx: BotContext) {
     return;
   }
 
-  const fileData = await ctx.api.getFile(photo.file_id);
-
-  const response = await generateText([
-    {
-      role: 'user',
-      content: [
-        { type: 'text', text: ctx.message?.caption ?? 'What’s in this image?' },
-        {
-          type: 'image',
-          image: new URL(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`),
-        },
-      ],
-    },
-  ]);
-
-  await sendLongText(ctx.chatId, response.text);
-
-  await addTokenUsage(ctx.chatId, {
-    model: 'gpt-4o-mini',
-    mode: 'output',
-    tokenCount: response.usage.completionTokens,
-  });
-
-  await addTokenUsage(ctx.chatId, {
-    model: 'gpt-4o-mini',
-    mode: 'input',
-    tokenCount: response.usage.promptTokens,
+  await tasks.trigger<DescribeTask>('describe', {
+    chatId: ctx.chatId!,
+    fileId: photo.file_id,
+    caption: ctx.message?.caption,
   });
 }
