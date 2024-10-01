@@ -23,6 +23,7 @@ export default defineConfig({
       prismaExtension({
         schema: 'prisma/schema.prisma',
         clientGenerator: 'client',
+        directUrlEnvVarName: 'POSTGRES_PRISMA_URL',
       }),
     ],
   },
