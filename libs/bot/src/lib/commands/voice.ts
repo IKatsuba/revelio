@@ -15,10 +15,14 @@ export async function voice(ctx: BotContext) {
     return;
   }
 
-  console.log(
-    await tasks.trigger<TranscribeTask>('transcribe', {
-      fileId: file.file_id,
-      chatId: ctx.chatId,
-    }),
-  );
+  if (!ctx.chatId) {
+    console.log('No chatId found');
+    await ctx.reply('Failed to transcribe audio');
+    return;
+  }
+
+  await tasks.trigger<TranscribeTask>('transcribe', {
+    fileId: file.file_id,
+    chatId: ctx.chatId,
+  });
 }

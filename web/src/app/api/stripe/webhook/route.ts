@@ -1,8 +1,7 @@
 import { Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 
-import { setSession } from '@revelio/bot-utils';
-import { bot } from '@revelio/bot/server';
+import { bot, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';

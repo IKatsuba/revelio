@@ -9,7 +9,7 @@ import { addAudioUsage, addTokenUsage } from '@revelio/stripe/server';
 
 export const transcribeTask = task({
   id: 'transcribe',
-  async run(payload: { fileId: string; chatId: number | undefined }) {
+  async run(payload: { fileId: string; chatId: number }) {
     console.log('Transcribing audio');
 
     const fileData = await bot.api.getFile(payload.fileId);
