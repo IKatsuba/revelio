@@ -1,9 +1,7 @@
-import { convertToCoreMessages } from 'ai';
+import { tasks } from '@trigger.dev/sdk/v3';
 
-import { BotContext, sendLongText } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { generateText } from '@revelio/llm/server';
-import { addTokenUsage } from '@revelio/stripe/server';
+import { BotContext } from '@revelio/bot-utils';
+import { ImageTask } from '@revelio/jobs';
 
 export async function prompt(ctx: BotContext) {
   console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
@@ -12,36 +10,15 @@ export async function prompt(ctx: BotContext) {
 
   const prompt = ctx.message?.text?.replace(/^\/chat/, '').trim();
 
-  const messages = [
-    ...ctx.session.messages,
-    ...convertToCoreMessages([
-      {
-        role: 'user',
-        content: prompt ?? '',
-      },
-    ]),
-  ];
-
-  const result = await generateText(messages);
-
-  ctx.session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
-
-  if (!result.text) {
-    console.log('No text generated');
+  if (!prompt) {
+    await ctx.reply('Please provide a prompt');
     return;
   }
 
-  await sendLongText(ctx.chatId, result.text);
+  if (!ctx.chatId) {
+    await ctx.reply('This command is only available in a chat');
+    return;
+  }
 
-  await addTokenUsage(ctx.chatId, {
-    model: 'gpt-4o-mini',
-    mode: 'output',
-    tokenCount: result.usage.completionTokens,
-  });
-
-  await addTokenUsage(ctx.chatId, {
-    model: 'gpt-4o-mini',
-    mode: 'input',
-    tokenCount: result.usage.promptTokens,
-  });
+  await tasks.trigger<ImageTask>('image', { chatId: ctx.chatId, prompt });
 }

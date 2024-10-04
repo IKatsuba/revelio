@@ -16,6 +16,10 @@
             "prefix": "[bot-proxy]"
           },
           {
+            "command": "npx -y -p smee-client smee -u https://smee.ktsb.io/revelio-stripe -p 3000 -P /api/stripe/webhook",
+            "prefix": "[stripe-proxy]"
+          },
+          {
             "command": "docker-compose up",
             "prefix": "[docker-compose]"
           },
