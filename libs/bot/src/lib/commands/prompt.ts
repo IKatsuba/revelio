@@ -27,6 +27,7 @@ export async function prompt(ctx: BotContext) {
   ctx.session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
 
   if (!result.text) {
+    console.log('No text generated');
     return;
   }
 

@@ -15,7 +15,7 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx trigger.dev@latest deploy -c ./libs/jobs/trigger.config.ts"]
+        "commands": ["npx -y trigger.dev@latest deploy -c ./libs/jobs/trigger.config.ts"]
       }
     }
   }

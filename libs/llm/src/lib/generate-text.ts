@@ -14,7 +14,7 @@ export async function generateText(messages: Array<CoreMessage>) {
     temperature: env.TEMPERATURE,
     messages,
     system: env.ASSISTANT_PROMPT,
-    maxToolRoundtrips: 2,
+    maxSteps: 2,
     tools: {
       getCryptoRate,
       moderateContent,
