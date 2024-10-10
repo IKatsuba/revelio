@@ -9,13 +9,13 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx trigger.dev@latest dev -c ./libs/jobs/trigger.config.ts"]
+        "commands": ["trigger dev -c ./libs/jobs/trigger.config.ts"]
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx -y trigger.dev@latest deploy -c ./libs/jobs/trigger.config.ts"]
+        "commands": ["trigger deploy -c ./libs/jobs/trigger.config.ts"]
       }
     }
   }
