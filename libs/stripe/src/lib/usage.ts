@@ -1,5 +1,3 @@
-import { Context } from 'grammy';
-
 import { prisma } from '@revelio/prisma/server';
 
 import { stripe } from './stripe';

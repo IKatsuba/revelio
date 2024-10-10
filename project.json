@@ -12,12 +12,8 @@
             "prefix": "[bot]"
           },
           {
-            "command": "npx -y -p smee-client smee -u $BOT_WEBHOOK_URL -p 3000 -P /api/tg/webhook",
+            "command": "npx -y -p localtunnel lt --port 3000 -s revelio",
             "prefix": "[bot-proxy]"
-          },
-          {
-            "command": "npx -y -p smee-client smee -u https://smee.ktsb.io/revelio-stripe -p 3000 -P /api/stripe/webhook",
-            "prefix": "[stripe-proxy]"
           },
           {
             "command": "docker-compose up",

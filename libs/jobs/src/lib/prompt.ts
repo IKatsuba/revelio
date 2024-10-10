@@ -37,13 +37,13 @@ export const promptTask = task({
     await addTokenUsage(payload.chatId, {
       model: 'gpt-4o-mini',
       mode: 'output',
-      tokenCount: result.usage.completionTokens,
+      tokenCount: result.steps.reduce((sum, step) => sum + step.usage.completionTokens, 0),
     });
 
     await addTokenUsage(payload.chatId, {
       model: 'gpt-4o-mini',
       mode: 'input',
-      tokenCount: result.usage.promptTokens,
+      tokenCount: result.steps.reduce((sum, step) => sum + step.usage.promptTokens, 0),
     });
   },
 });
