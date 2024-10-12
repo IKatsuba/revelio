@@ -1,7 +1,7 @@
 import { tasks } from '@trigger.dev/sdk/v3';
 
 import { BotContext } from '@revelio/bot-utils';
-import { ImageTask } from '@revelio/jobs';
+import { PromptTask } from '@revelio/jobs';
 
 export async function prompt(ctx: BotContext) {
   console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
@@ -20,5 +20,14 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  await tasks.trigger<ImageTask>('image', { chatId: ctx.chatId, prompt });
+  if (!ctx.message?.message_id) {
+    await ctx.reply('Message id is missing');
+    return;
+  }
+
+  await tasks.trigger<PromptTask>('prompt', {
+    chatId: ctx.chatId,
+    prompt,
+    messageId: ctx.message?.message_id,
+  });
 }

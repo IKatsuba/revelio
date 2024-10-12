@@ -105,6 +105,9 @@ const envSchema = z.object({
 
   // Prisma-related environment variables
   POSTGRES_PRISMA_URL: z.string(),
+
+  UPSTASH_VECTOR_REST_URL: z.string(),
+  UPSTASH_VECTOR_REST_TOKEN: z.string(),
 });
 
 export const env = envSchema.parse({

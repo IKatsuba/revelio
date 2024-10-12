@@ -3,12 +3,12 @@ import { convertToCoreMessages } from 'ai';
 
 import { getSession, sendLongText, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateText } from '@revelio/llm/server';
+import { generateTextFactory } from '@revelio/llm/server';
 import { addTokenUsage } from '@revelio/stripe/server';
 
 export const promptTask = task({
-  id: 'image',
-  async run(payload: { chatId: number; prompt: string }) {
+  id: 'prompt',
+  async run(payload: { chatId: number; prompt: string; messageId: number }) {
     const session = await getSession(payload.chatId);
 
     const messages = [
@@ -20,6 +20,11 @@ export const promptTask = task({
         },
       ]),
     ];
+
+    const generateText = generateTextFactory({
+      chatId: payload.chatId,
+      messageId: payload.messageId,
+    });
 
     const result = await generateText(messages);
 
