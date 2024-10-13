@@ -11,7 +11,7 @@ export function addToMemoryToolFactory({
   messageId: number;
 }) {
   return tool({
-    description: 'add some data to semantically store',
+    description: 'add some data to semantically store. Add something to memory only if asked',
     parameters: z.object({
       value: z.string().describe('the data to store'),
     }),
@@ -33,7 +33,8 @@ export function addToMemoryToolFactory({
 
 export function getFromMemoryToolFactory({ chatId }: { chatId: number }) {
   return tool({
-    description: 'get some data from semantically store',
+    description:
+      'get some data from semantically store. Try to get something from memory only if asked',
     parameters: z.object({
       context: z.string().describe('the context to use when querying the store'),
     }),
