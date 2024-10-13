@@ -6,6 +6,7 @@ import { env } from '@revelio/env/server';
 import { getCryptoRate } from './tools/get-crypto-rate';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
+import { reminderToolFactory } from './tools/reminders';
 
 export async function generateText(messages: Array<CoreMessage>) {
   return __generateText({
@@ -32,12 +33,13 @@ export function generateTextFactory({ chatId, messageId }: { chatId: number; mes
       temperature: env.TEMPERATURE,
       messages,
       system: env.ASSISTANT_PROMPT,
-      maxSteps: 2,
+      maxSteps: 4,
       tools: {
         getCryptoRate,
         moderateContent,
         addToMemory: addToMemoryToolFactory({ chatId: chatId, messageId: messageId }),
         getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
+        createReminder: reminderToolFactory({ chatId }),
       },
     });
   };

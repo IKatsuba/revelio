@@ -13,9 +13,11 @@ const envSchema = z.object({
   PROXY: z.string().nullable().optional(),
   MAX_HISTORY_SIZE: z.coerce.number().int().default(15),
   MAX_CONVERSATION_AGE_MINUTES: z.coerce.number().int().default(180),
-  ASSISTANT_PROMPT: z
-    .string()
-    .default('You are a helpful assistant. Answer briefly and to the point.'),
+  ASSISTANT_PROMPT: z.string().default(
+    `You are a helpful assistant. Answer briefly and to the point. If user asks for crete reminder,
+you can ask for time and date. If there is no timezone you can get it from a memory or ask user for it and add it to memory for future use.
+`,
+  ),
   MAX_TOKENS: z.coerce.number().int().default(2048),
   N_CHOICES: z.coerce.number().int().default(1),
   TEMPERATURE: z.coerce.number().default(0),
@@ -110,6 +112,11 @@ const envSchema = z.object({
 
   UPSTASH_VECTOR_REST_URL: z.string(),
   UPSTASH_VECTOR_REST_TOKEN: z.string(),
+
+  QSTASH_URL: z.string(),
+  QSTASH_TOKEN: z.string(),
+  QSTASH_CURRENT_SIGNING_KEY: z.string(),
+  QSTASH_NEXT_SIGNING_KEY: z.string(),
 });
 
 export const env = envSchema.parse({

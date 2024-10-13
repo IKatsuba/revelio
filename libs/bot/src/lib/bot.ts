@@ -9,8 +9,9 @@ import {
 
 import { groupComposer } from './composers/group';
 import { privateComposer } from './composers/private';
+import { requestMiddleware } from './middlewares/request';
 
-export function initBot(bot: Bot<BotContext>) {
+export function initBot({ bot, request }: { bot: Bot<BotContext>; request: Request }) {
   bot.use(
     session({
       storage: sessionStorage,
@@ -18,6 +19,8 @@ export function initBot(bot: Bot<BotContext>) {
       initial: () => getInitialSessionData(),
     }),
   );
+
+  bot.use(requestMiddleware(request));
 
   bot.filter(Context.has.chatType('private'), privateComposer);
 

@@ -6,4 +6,7 @@ export interface SessionData {
   plan?: string;
 }
 
-export type BotContext = Context & SessionFlavor<SessionData>;
+export type BotContext = Context &
+  SessionFlavor<SessionData> & {
+    request: Request;
+  };
