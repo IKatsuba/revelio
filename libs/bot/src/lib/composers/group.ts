@@ -15,11 +15,11 @@ import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
 import { track } from '../middlewares/track';
-import { privateComposer } from './private';
 
 export const groupComposer = new Composer<BotContext>();
 
 groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), async (ctx) => {
+  console.log('New chat members:', ctx);
   await prisma.group.upsert({
     where: { id: ctx.chat.id },
     update: {},
@@ -57,8 +57,8 @@ groupComposer.command('usage', track('command:usage'), paywall, usage);
 const mentionFilter = (ctx: Context) =>
   Context.has.text(/revelio/gi)(ctx) || Context.has.text(/ревелио/gi)(ctx);
 
-privateComposer.filter(mentionFilter).on('message:text', track('message:text'), paywall, prompt);
-privateComposer
+groupComposer.filter(mentionFilter).on('message:text', track('message:text'), paywall, prompt);
+groupComposer
   .filter(mentionFilter)
   .on(
     ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
@@ -66,6 +66,6 @@ privateComposer
     paywall,
     voice,
   );
-privateComposer
+groupComposer
   .filter(mentionFilter)
   .on(['message:photo', 'message:document'], track('message:photo'), paywall, describe);
