@@ -19,7 +19,7 @@ export function initBot(bot: Bot<BotContext>) {
     }),
   );
 
-  bot.filter(Context.has.chatType('private')).use(privateComposer);
+  bot.filter(Context.has.chatType('private'), privateComposer);
 
-  bot.filter(Context.has.chatType(['group', 'supergroup'])).use(groupComposer);
+  bot.filter(Context.has.chatType(['group', 'supergroup']), groupComposer);
 }
