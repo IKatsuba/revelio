@@ -18,15 +18,13 @@ export function addToMemoryToolFactory({
     execute: async ({ value }) => {
       const namespace = index.namespace(chatId.toString());
 
-      await namespace.upsert({
+      return namespace.upsert({
         id: messageId,
         data: value,
         metadata: {
           value,
         },
       });
-
-      return 'Data stored in memory';
     },
   });
 }
@@ -41,15 +39,11 @@ export function getFromMemoryToolFactory({ chatId }: { chatId: number }) {
     execute: async ({ context }) => {
       const namespace = index.namespace(chatId.toString());
 
-      const result = await namespace.query({
+      return namespace.query({
         data: context,
         includeMetadata: true,
         topK: 1,
       });
-
-      console.log(result);
-
-      return result?.[0]?.metadata?.value;
     },
   });
 }
