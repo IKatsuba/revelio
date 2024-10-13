@@ -11,7 +11,7 @@ export const POST = validateWebhook(async (request: Request) => {
   const body = await request.json();
 
   try {
-    initBot({ bot: bot });
+    initBot({ bot: bot, request });
 
     await bot.init();
 
