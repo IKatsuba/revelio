@@ -245,14 +245,11 @@ async function manageSubscriptionStatusChange(
       });
     }
 
-    await setSession(group.id.toNumber(), (session) => {
+    await setSession(Number(group.id), (session) => {
       session.plan = subscriptionData.status === 'active' ? 'pay-as-you-go' : undefined;
     });
 
-    await bot.api.sendMessage(
-      group.id.toNumber(),
-      `Now you have a ${subscriptionData.status} subscription.`,
-    );
+    await bot.api.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);
   } catch (e) {
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }

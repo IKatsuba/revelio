@@ -47,10 +47,15 @@ export async function billing(ctx: BotContext) {
   console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
   await ctx.replyWithChatAction('typing');
 
+  if (!ctx.chatId) {
+    await ctx.reply('Failed to create a customer. Please try again later.');
+    return;
+  }
+
   const customer =
     (await prisma.customer.findUnique({
       where: {
-        id: ctx.chatId,
+        id: ctx.chatId.toString(),
       },
     })) ??
     (await stripe.customers
@@ -61,7 +66,7 @@ export async function billing(ctx: BotContext) {
       .then((customer) =>
         prisma.customer.create({
           data: {
-            id: ctx.chatId!,
+            id: ctx.chatId!.toString(),
             stripeCustomerId: customer.id,
           },
         }),

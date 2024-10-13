@@ -21,10 +21,10 @@ export const groupComposer = new Composer<BotContext>();
 groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), async (ctx) => {
   console.log('New chat members:', ctx);
   await prisma.group.upsert({
-    where: { id: ctx.chat.id },
+    where: { id: ctx.chat.id.toString() },
     update: {},
     create: {
-      id: ctx.chat.id,
+      id: ctx.chat.id.toString(),
       type: ctx.chat.type,
     },
   });
@@ -33,11 +33,11 @@ groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), as
 
   for (const admin of admins) {
     await prisma.groupMember.upsert({
-      where: { userId_groupId: { userId: admin.user.id, groupId: ctx.chat.id } },
+      where: { userId_groupId: { userId: admin.user.id, groupId: ctx.chat.id.toString() } },
       update: {},
       create: {
         userId: admin.user.id,
-        groupId: ctx.chat.id,
+        groupId: ctx.chat.id.toString(),
         role: admin.status,
       },
     });

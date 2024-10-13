@@ -19,7 +19,7 @@ export async function addTokenUsage(
   }
 
   const customer = await prisma.customer.findFirst({
-    where: { id: chatId },
+    where: { id: chatId.toString() },
   });
 
   if (!customer) {
@@ -50,7 +50,7 @@ export async function addImageUsage(
   }
 
   const customer = await prisma.customer.findFirst({
-    where: { id: chatId },
+    where: { id: chatId.toString() },
   });
 
   if (!customer) {
@@ -81,7 +81,7 @@ export async function addAudioUsage(
   }
 
   const customer = await prisma.customer.findFirst({
-    where: { id: chatId },
+    where: { id: chatId.toString() },
   });
 
   if (!customer) {
@@ -112,7 +112,7 @@ export async function addSpeechUsage(
   }
 
   const customer = await prisma.customer.findFirst({
-    where: { id: chatId },
+    where: { id: chatId.toString() },
   });
 
   if (!customer) {

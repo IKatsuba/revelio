@@ -4,7 +4,7 @@ import { stripe } from '@revelio/stripe/server';
 
 export async function usage(ctx: BotContext) {
   const customer = await prisma.customer.findUnique({
-    where: { id: ctx.from!.id },
+    where: { id: ctx.from!.id.toString() },
   });
 
   if (!customer) {

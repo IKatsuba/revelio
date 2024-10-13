@@ -21,20 +21,20 @@ export async function start(ctx: CommandContext<BotContext>) {
     });
 
     await prisma.group.upsert({
-      where: { id: ctx.chat.id },
+      where: { id: ctx.chatId.toString() },
       update: {},
       create: {
-        id: ctx.chat.id,
+        id: ctx.chatId.toString(),
         type: ctx.chat.type,
       },
     });
 
     await prisma.groupMember.upsert({
-      where: { userId_groupId: { userId: ctx.from.id, groupId: ctx.chat.id } },
+      where: { userId_groupId: { userId: ctx.from.id, groupId: ctx.chatId.toString() } },
       update: {},
       create: {
         userId: ctx.from.id,
-        groupId: ctx.chat.id,
+        groupId: ctx.chatId.toString(),
         role: 'creator',
       },
     });
