@@ -151,7 +151,6 @@ model UsageLog {
 }
 
 model GroupMember {
-  id       Int       @id @default(autoincrement())
   role     GroupRole
   joinedAt DateTime  @default(now())
 
@@ -161,5 +160,5 @@ model GroupMember {
   group   Group  @relation(fields: [groupId], references: [id])
   groupId String
 
-  @@unique([userId, groupId])
+  @@id([userId, groupId])
 }
