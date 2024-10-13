@@ -13,7 +13,9 @@ const envSchema = z.object({
   PROXY: z.string().nullable().optional(),
   MAX_HISTORY_SIZE: z.coerce.number().int().default(15),
   MAX_CONVERSATION_AGE_MINUTES: z.coerce.number().int().default(180),
-  ASSISTANT_PROMPT: z.string().default('You are a helpful assistant.'),
+  ASSISTANT_PROMPT: z
+    .string()
+    .default('You are a helpful assistant. Answer briefly and to the point.'),
   MAX_TOKENS: z.coerce.number().int().default(2048),
   N_CHOICES: z.coerce.number().int().default(1),
   TEMPERATURE: z.coerce.number().default(0),
