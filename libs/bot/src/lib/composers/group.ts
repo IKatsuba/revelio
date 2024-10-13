@@ -57,7 +57,9 @@ groupComposer.command('billing', track('command:billing'), billing);
 groupComposer.command('usage', track('command:usage'), paywall, usage);
 
 const mentionFilter = (ctx: Context) =>
-  Context.has.text(/revelio/gi)(ctx) || Context.has.text(/ревелио/gi)(ctx);
+  Context.has.text(/revelio/gi)(ctx) ||
+  Context.has.text(/ревелио/gi)(ctx) ||
+  Context.has.text(/саня/gi)(ctx);
 
 groupComposer.filter(mentionFilter).on('message:text', track('message:text'), paywall, prompt);
 groupComposer
