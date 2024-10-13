@@ -37,7 +37,7 @@ enum SubscriptionStatus {
 }
 
 model User {
-  id Int @id
+  id String @id
 
   username String?
 
@@ -155,8 +155,8 @@ model GroupMember {
   role     GroupRole
   joinedAt DateTime  @default(now())
 
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 
   group   Group  @relation(fields: [groupId], references: [id])
   groupId String

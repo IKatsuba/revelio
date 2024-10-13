@@ -33,10 +33,12 @@ groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), as
 
   for (const admin of admins) {
     await prisma.groupMember.upsert({
-      where: { userId_groupId: { userId: admin.user.id, groupId: ctx.chat.id.toString() } },
+      where: {
+        userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
+      },
       update: {},
       create: {
-        userId: admin.user.id,
+        userId: admin.user.id.toString(),
         groupId: ctx.chat.id.toString(),
         role: admin.status,
       },

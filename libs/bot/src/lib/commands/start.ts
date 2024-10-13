@@ -10,12 +10,12 @@ export async function start(ctx: CommandContext<BotContext>) {
 
   if (ctx.from) {
     await prisma.user.upsert({
-      where: { id: ctx.from.id },
+      where: { id: ctx.from.id.toString() },
       update: {
         username: ctx.from.username,
       },
       create: {
-        id: ctx.from.id,
+        id: ctx.from.id.toString(),
         username: ctx.from.username,
       },
     });
@@ -30,10 +30,10 @@ export async function start(ctx: CommandContext<BotContext>) {
     });
 
     await prisma.groupMember.upsert({
-      where: { userId_groupId: { userId: ctx.from.id, groupId: ctx.chatId.toString() } },
+      where: { userId_groupId: { userId: ctx.from.id.toString(), groupId: ctx.chatId.toString() } },
       update: {},
       create: {
-        userId: ctx.from.id,
+        userId: ctx.from.id.toString(),
         groupId: ctx.chatId.toString(),
         role: 'creator',
       },
