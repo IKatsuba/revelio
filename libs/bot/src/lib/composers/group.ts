@@ -19,7 +19,7 @@ import { track } from '../middlewares/track';
 export const groupComposer = new Composer<BotContext>();
 
 groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), async (ctx) => {
-  console.log('New chat members:', ctx);
+  console.log('New chat members');
   await prisma.group.upsert({
     where: { id: ctx.chat.id.toString() },
     update: {},

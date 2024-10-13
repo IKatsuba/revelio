@@ -1,5 +1,3 @@
-import { GrammyError } from 'grammy';
-
 import { bot } from '@revelio/bot-utils';
 import { initBot } from '@revelio/bot/server';
 
@@ -16,20 +14,10 @@ export const POST = validateWebhook(async (request: Request) => {
     initBot(bot);
 
     await bot.init();
-    console.log('body', body);
+
     await bot.handleUpdate(body);
   } catch (error) {
-    console.error(error);
-
-    if (error instanceof GrammyError && error.error_code === 403) {
-      return new Response('Ok');
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      return new Response('Ok');
-    }
-
-    return new Response((error as Error).message, { status: 500 });
+    console.error('internal error', error);
   }
 
   return new Response('Ok');
