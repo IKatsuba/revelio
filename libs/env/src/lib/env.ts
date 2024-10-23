@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
+  OPENAI_API_URL: z.string().default('https://api.openai.com/v1'),
   SHOW_USAGE: z
     .string()
     .default('false')
@@ -15,7 +16,7 @@ const envSchema = z.object({
   MAX_CONVERSATION_AGE_MINUTES: z.coerce.number().int().default(180),
   ASSISTANT_PROMPT: z.string().default(
     `You are a helpful assistant. Answer briefly and to the point. If user asks for crete reminder,
-you can ask for time and date. If there is no timezone you can get it from a memory or ask user for it and add it to memory for future use.
+you can ask for time and date. Time and date can be relative to current date. If there is no timezone you can get it from a memory or ask user.
 `,
   ),
   MAX_TOKENS: z.coerce.number().int().default(2048),
@@ -117,6 +118,8 @@ you can ask for time and date. If there is no timezone you can get it from a mem
   QSTASH_TOKEN: z.string(),
   QSTASH_CURRENT_SIGNING_KEY: z.string(),
   QSTASH_NEXT_SIGNING_KEY: z.string(),
+
+  REMINDERS_AFTER_NOTIFY_CALLBACK_URL: z.string(),
 });
 
 export const env = envSchema.parse({

@@ -45,6 +45,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   groupMemberships GroupMember[]
+  reminders        Reminder[]
 }
 
 model Customer {
@@ -134,6 +135,7 @@ model Group {
   members      GroupMember[]
   subscription Subscription[]
   usageLogs    UsageLog[]
+  reminders    Reminder[]
 }
 
 model UsageLog {
@@ -161,4 +163,30 @@ model GroupMember {
   groupId String
 
   @@id([userId, groupId])
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  CANCELLED
+  SENT
+}
+
+model Reminder {
+  id String @id @default(uuid())
+
+  messageId String @unique
+
+  message   String
+  remindAt  DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  timezone  String
+
+  status ReminderStatus
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
 }

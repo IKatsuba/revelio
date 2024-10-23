@@ -1,8 +1,8 @@
-import { openai } from '@ai-sdk/openai';
 import { generateText as __generateText, CoreMessage } from 'ai';
 
 import { env } from '@revelio/env/server';
 
+import { openaiProvider } from './openai';
 import { getCryptoRate } from './tools/get-crypto-rate';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
@@ -10,7 +10,7 @@ import { reminderToolFactory } from './tools/reminders';
 
 export async function generateText(messages: Array<CoreMessage>) {
   return __generateText({
-    model: openai('gpt-4o-mini', {
+    model: openaiProvider('gpt-4o-mini', {
       structuredOutputs: true,
     }),
     temperature: env.TEMPERATURE,
@@ -24,22 +24,31 @@ export async function generateText(messages: Array<CoreMessage>) {
   });
 }
 
-export function generateTextFactory({ chatId, messageId }: { chatId: number; messageId: number }) {
+export function generateTextFactory({
+  chatId,
+  messageId,
+  userId,
+}: {
+  chatId: number;
+  messageId: number;
+  userId: number;
+}) {
   return function generateText(messages: Array<CoreMessage>) {
     return __generateText({
-      model: openai('gpt-4o-mini', {
+      model: openaiProvider('gpt-4o-mini', {
         structuredOutputs: true,
       }),
       temperature: env.TEMPERATURE,
       messages,
-      system: env.ASSISTANT_PROMPT,
-      maxSteps: 4,
+      system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
+      maxSteps: 10,
+      experimental_continueSteps: true,
       tools: {
         getCryptoRate,
         moderateContent,
         addToMemory: addToMemoryToolFactory({ chatId: chatId, messageId: messageId }),
         getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
-        createReminder: reminderToolFactory({ chatId }),
+        ...reminderToolFactory({ chatId, userId }),
       },
     });
   };

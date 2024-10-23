@@ -33,6 +33,7 @@
     "stripe": "^16.12.0",
     "telegramify-markdown": "^1.2.2",
     "tslib": "^2.3.0",
+    "uuid": "^10.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -54,6 +55,7 @@
     "@types/node": "18.16.9",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
     "@typescript-eslint/parser": "^7.16.0",
     "babel-jest": "^29.7.0",

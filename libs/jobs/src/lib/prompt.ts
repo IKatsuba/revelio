@@ -8,7 +8,7 @@ import { addTokenUsage } from '@revelio/stripe/server';
 
 export const promptTask = task({
   id: 'prompt',
-  async run(payload: { chatId: number; prompt: string; messageId: number }) {
+  async run(payload: { chatId: number; prompt: string; messageId: number; userId: number }) {
     const session = await getSession(payload.chatId);
 
     const messages = [
@@ -24,6 +24,7 @@ export const promptTask = task({
     const generateText = generateTextFactory({
       chatId: payload.chatId,
       messageId: payload.messageId,
+      userId: payload.userId,
     });
 
     const result = await generateText(messages);

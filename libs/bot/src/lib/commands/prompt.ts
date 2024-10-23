@@ -25,9 +25,15 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
+  if (!ctx.from?.id) {
+    await ctx.reply('User id is missing');
+    return;
+  }
+
   await tasks.trigger<PromptTask>('prompt', {
     chatId: ctx.chatId,
     prompt,
     messageId: ctx.message?.message_id,
+    userId: ctx.from?.id,
   });
 }
