@@ -19,12 +19,13 @@ export const promptTask = task({
           content: payload.prompt ?? '',
         },
       ]),
-    ];
+    ].slice(-env.MAX_HISTORY_SIZE);
 
     const generateText = generateTextFactory({
       chatId: payload.chatId,
       messageId: payload.messageId,
       userId: payload.userId,
+      plan: session.plan,
     });
 
     const result = await generateText(messages);

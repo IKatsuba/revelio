@@ -17,10 +17,7 @@ export async function generateText(messages: Array<CoreMessage>) {
     messages,
     system: env.ASSISTANT_PROMPT,
     maxSteps: 2,
-    tools: {
-      getCryptoRate,
-      moderateContent,
-    },
+    tools: {},
   });
 }
 
@@ -28,13 +25,23 @@ export function generateTextFactory({
   chatId,
   messageId,
   userId,
+  plan,
 }: {
   chatId: number;
   messageId: number;
   userId: number;
+  plan: 'free' | 'basic' | 'premium';
 }) {
-  return function generateText(messages: Array<CoreMessage>) {
-    return __generateText({
+  const tools = {
+    getCryptoRate,
+    moderateContent,
+    addToMemory: addToMemoryToolFactory({ chatId: chatId, messageId: messageId }),
+    getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
+    ...reminderToolFactory({ chatId, userId }),
+  };
+
+  return (messages: Array<CoreMessage>) =>
+    __generateText({
       model: openaiProvider('gpt-4o-mini', {
         structuredOutputs: true,
       }),
@@ -43,13 +50,6 @@ export function generateTextFactory({
       system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
       maxSteps: 10,
       experimental_continueSteps: true,
-      tools: {
-        getCryptoRate,
-        moderateContent,
-        addToMemory: addToMemoryToolFactory({ chatId: chatId, messageId: messageId }),
-        getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
-        ...reminderToolFactory({ chatId, userId }),
-      },
+      tools: plan === 'free' ? {} : tools,
     });
-  };
 }

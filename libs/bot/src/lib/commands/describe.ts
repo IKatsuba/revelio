@@ -6,6 +6,16 @@ import { DescribeTask } from '@revelio/jobs';
 export async function describe(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
+  if (!ctx.message?.message_id) {
+    await ctx.reply('Failed to transcribe image');
+    return;
+  }
+
+  if (!ctx.from?.id) {
+    await ctx.reply('Failed to transcribe image');
+    return;
+  }
+
   const photos = ctx.message?.photo ?? [];
 
   // find the biggest photo
@@ -25,5 +35,7 @@ export async function describe(ctx: BotContext) {
     chatId: ctx.chatId!,
     fileId: photo.file_id,
     caption: ctx.message?.caption,
+    messageId: ctx.message.message_id,
+    userId: ctx.from.id,
   });
 }

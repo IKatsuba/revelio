@@ -4,12 +4,12 @@ import { parseBlob } from 'music-metadata';
 
 import { bot, getSession, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateText, transcribe } from '@revelio/llm/server';
+import { generateTextFactory, transcribe } from '@revelio/llm/server';
 import { addAudioUsage, addTokenUsage } from '@revelio/stripe/server';
 
 export const transcribeTask = task({
   id: 'transcribe',
-  async run(payload: { fileId: string; chatId: number }) {
+  async run(payload: { fileId: string; chatId: number; messageId: number; userId: number }) {
     console.log('Transcribing audio');
 
     const fileData = await bot.api.getFile(payload.fileId);
@@ -46,6 +46,13 @@ export const transcribeTask = task({
     );
 
     await bot.api.sendChatAction(payload.chatId, 'typing');
+
+    const generateText = generateTextFactory({
+      chatId: payload.chatId,
+      messageId: payload.messageId,
+      userId: payload.userId,
+      plan: session.plan,
+    });
 
     const response = await generateText(session.messages);
 
