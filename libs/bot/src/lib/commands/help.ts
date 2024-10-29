@@ -10,7 +10,7 @@ Here are some things I can help you with:
 💳 **/billing** – Manage your billing information
 📊 **/usage** – Get your current usage statistics
 
-🔄 **/reset** – Reset the conversation. Optionally pass high-level instructions (e.g. /reset You are a helpful assistant)
+🔄 **/reset** – Reset the conversation.
 🖼️ **/image** – Generate image from prompt (e.g. /image a cat in the forest)
 🔊 **/tts** – Generate speech from text (e.g. /tts Hello, how are you?)
 
