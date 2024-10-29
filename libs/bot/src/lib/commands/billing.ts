@@ -11,13 +11,12 @@ const howYouPay = `Choose a subscription plan that suits your needs:
   - Includes:
     - 📝 Text messages: Up to 20 messages per day
     - 🎤 Voice message transcription: Up to 5 minutes per day
-    - ⏰ Reminders: Create up to 3 reminders
-    - 💾 Information storage: Save up to 5 requests in bot memory
-    - 📜 Basic functions: Access to basic commands (/help, /usage, /reset, etc.)
   - Limitations:
     - ❌ Image generation: Not available
     - ❌ Speech synthesis (TTS): Not available
-    - 📊 Usage statistics: Limited
+    - ❌ Reminders: Not available
+    - ❌ Bot has no long-term memory
+
 
 - **Basic Plan**
   - Price: $4.99 per month
@@ -27,20 +26,18 @@ const howYouPay = `Choose a subscription plan that suits your needs:
     - 🎤 Voice message transcription: Up to 60 minutes per month
     - 🔊 Speech synthesis (TTS): Up to 10,000 characters per month
     - ⏰ Reminders: Create up to 20 reminders
-    - 💾 Information storage: Save up to 50 requests in bot memory
-    - 📊 Usage statistics: Full access
+    - 💾 Bot can remember any kind of information
     - 📩 Priority support
 
 - **Premium Plan**
   - Price: $9.99 per month
   - Includes:
-    - 📝 Text messages: Unlimited
+    - 📝 Text messages: Up to 500 messages per day
     - 🖼️ Image generation: Up to 50 images per month
     - 🎤 Voice message transcription: Up to 300 minutes per month
     - 🔊 Speech synthesis (TTS): Up to 50,000 characters per month
     - ⏰ Reminders: No limits
-    - 💾 Information storage: No limits
-    - 📊 Usage statistics: Advanced analytics
+    - 💾 Bot can remember any kind of information
     - 🚀 Access to new features: Early access
     - 📩 Priority support`;
 
