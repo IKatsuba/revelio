@@ -227,26 +227,32 @@ async function manageSubscriptionStatusChange(
       ? toDateTime(subscription.trial_start).toISOString()
       : null,
     trialEnd: subscription.trial_end ? toDateTime(subscription.trial_end).toISOString() : null,
+    price: {
+      connect: {
+        id: subscription.items.data[0].price.id,
+      },
+    },
   });
 
   try {
-    await prisma.subscription.upsert({
+    const dbSubscription = await prisma.subscription.upsert({
       where: { id: subscription.id },
       update: subscriptionData,
       create: subscriptionData,
+      include: {
+        price: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
 
-    if (isCreating) {
-      await prisma.subscriptionOnPrice.createMany({
-        data: subscription.items.data.map((item) => ({
-          priceId: item.price.id,
-          subscriptionId: subscription.id,
-        })),
-      });
-    }
-
     await setSession(Number(group.id), (session) => {
-      session.plan = subscriptionData.status === 'active' ? 'pay-as-you-go' : undefined;
+      session.plan =
+        subscriptionData.status === 'active'
+          ? ((dbSubscription.price.lookupKey as 'free' | 'basic' | 'premium') ?? 'free')
+          : 'free';
     });
 
     await bot.api.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);

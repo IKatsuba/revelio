@@ -4,44 +4,45 @@ import { BotContext, telegramify } from '@revelio/bot-utils';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
 
-const howYouPay = `You pay only for what you use. No upfront costs. No termination fees. No hidden charges. No surprises.
+const howYouPay = `Choose a subscription plan that suits your needs:
 
-How you pay:
+- **Free Plan**
+  - Price: Free
+  - Includes:
+    - 📝 Text messages: Up to 20 messages per day
+    - 🎤 Voice message transcription: Up to 5 minutes per day
+    - ⏰ Reminders: Create up to 3 reminders
+    - 💾 Information storage: Save up to 5 requests in bot memory
+    - 📜 Basic functions: Access to basic commands (/help, /usage, /reset, etc.)
+  - Limitations:
+    - ❌ Image generation: Not available
+    - ❌ Speech synthesis (TTS): Not available
+    - 📊 Usage statistics: Limited
 
-- **OpenAI gpt-4o-mini Input Tokens**
-  - flat fee US$0.60 for the first 2,000,000 tokens in a month
-  - Next 2,000,001-5,000,000 used: US$0.0000000028 per tokens
-  - Next 5,000,001-12,000,000 used: US$0.0000000026 per tokens
-  - Next 12,000,001-30,000,000 used: US$0.0000000024 per tokens
-  - 30,000,001+ used: US$0.0000000022 per tokens
+- **Basic Plan**
+  - Price: $4.99 per month
+  - Includes:
+    - 📝 Text messages: Up to 100 messages per day
+    - 🖼️ Image generation: Up to 10 images per month
+    - 🎤 Voice message transcription: Up to 60 minutes per month
+    - 🔊 Speech synthesis (TTS): Up to 10,000 characters per month
+    - ⏰ Reminders: Create up to 20 reminders
+    - 💾 Information storage: Save up to 50 requests in bot memory
+    - 📊 Usage statistics: Full access
+    - 📩 Priority support
 
-- **OpenAI gpt-4o-mini Output Tokens**
-  - flat fee US$1.20 for the first 1,000,000 tokens in a month
-  - Next 1,000,001-2,500,000 used: US$0.0000000112 per tokens
-  - Next 2,500,001-6,000,000 used: US$0.0000000104 per tokens
-  - Next 6,000,001-15,000,000 used: US$0.0000000096 per tokens
-  - 15,000,001+ used: US$0.0000000088 per tokens
-
-- **OpenAI dall-e-2 1024x1024 Images**
-  - US$0.0004 per image for the first 30 images in a month
-  - Next 31-70 used: US$0.00037 per image
-  - Next 71-160 used: US$0.00034 per image
-  - Next 161-400 used: US$0.00031 per image
-  - 401+ used: US$0.00028 per image
-
-- **OpenAI whisper-1 Audio**
-  - US$0.00012 per minute for the first 100 minutes in a month
-  - Next 101-250 used: US$0.000112 per minute
-  - Next 251-600 used: US$0.000104 per minute
-  - Next 601-1,500 used: US$0.000096 per minute
-  - 1,501+ used: US$0.000088 per minute
-
-- **OpenAI tts-1 Speech**
-  - US$0.00003 per character for the first 10,000 characters in a month
-  - Next 10,001-25,000 used: US$0.000028 per character
-  - Next 25,001-60,000 used: US$0.000026 per character
-  - Next 60,001-150,000 used: US$0.000024 per character
-  - 150,001+ used: US$0.000022 per character`;
+- **Premium Plan**
+  - Price: $9.99 per month
+  - Includes:
+    - 📝 Text messages: Unlimited
+    - 🖼️ Image generation: Up to 50 images per month
+    - 🎤 Voice message transcription: Up to 300 minutes per month
+    - 🔊 Speech synthesis (TTS): Up to 50,000 characters per month
+    - ⏰ Reminders: No limits
+    - 💾 Information storage: No limits
+    - 📊 Usage statistics: Advanced analytics
+    - 🚀 Access to new features: Early access
+    - 📩 Priority support`;
 
 export async function billing(ctx: BotContext) {
   console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
@@ -116,28 +117,46 @@ ${howYouPay}`),
     },
   });
 
-  const session = await stripe.checkout.sessions.create({
-    customer: customer.stripeCustomerId,
-    success_url: 'https://t.me/RevelioGPTBot',
-    cancel_url: 'https://t.me/RevelioGPTBot',
-    mode: 'subscription',
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    subscription_data: {
-      metadata: {},
-    },
-    line_items: prices.map((price) => ({
-      price: price.id,
-    })),
-    allow_promotion_codes: true,
-    expand: ['line_items.data.price.product'],
-  });
+  const sessions = await Promise.all(
+    prices.map(async (price) => {
+      const session = await stripe.checkout.sessions.create({
+        after_expiration: {
+          recovery: {
+            enabled: true,
+          },
+        },
+        customer: customer.stripeCustomerId,
+        success_url: 'https://t.me/RevelioGPTBot',
+        cancel_url: 'https://t.me/RevelioGPTBot',
+        return_url: 'https://t.me/RevelioGPTBot',
+        mode: 'subscription',
+        line_items: [
+          {
+            price: price.id,
+          },
+        ],
+        allow_promotion_codes: true,
+        expand: ['line_items.data.price.product'],
+      });
 
-  if (!session.url) {
+      return {
+        id: price.id,
+        name: price.product.name,
+        url: session.url!,
+      };
+    }),
+  );
+
+  if (sessions.find((session) => !session.url)) {
     await ctx.reply('An error occurred while creating the session. Please try again later.');
     return;
   }
 
-  const keyboard = new InlineKeyboard().url('Add payment method', session.url);
+  const keyboard = new InlineKeyboard();
+
+  for (const session of sessions) {
+    keyboard.url(`Subscribe to ${session.name}`, session.url);
+  }
 
   await ctx.reply(
     telegramify(`

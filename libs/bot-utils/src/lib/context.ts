@@ -3,7 +3,7 @@ import { Context, SessionFlavor } from 'grammy';
 
 export interface SessionData {
   messages: CoreMessage[];
-  plan?: string;
+  plan?: 'free' | 'basic' | 'premium';
 }
 
 export type BotContext = Context &
