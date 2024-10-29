@@ -1,3 +1,4 @@
+import { Ratelimit } from '@upstash/ratelimit';
 import { Composer } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -13,6 +14,7 @@ import { tts } from '../commands/tts';
 import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
+import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
 
 export const privateComposer = new Composer<BotContext>();
@@ -25,7 +27,20 @@ privateComposer.command('tts', track('command:tts'), paywall, tts);
 privateComposer.command('billing', track('command:billing'), billing);
 privateComposer.command('usage', track('command:usage'), paywall, usage);
 
-privateComposer.on('message:text', track('message:text'), paywall, prompt);
+privateComposer.on(
+  'message:text',
+  track('message:text'),
+  paywall,
+  rateLimit({
+    limiter: {
+      free: Ratelimit.fixedWindow(10, '1d'),
+      basic: Ratelimit.fixedWindow(100, '1d'),
+      premium: Ratelimit.fixedWindow(500, '1d'),
+    },
+    name: 'text',
+  }),
+  prompt,
+);
 privateComposer.on(
   ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
   track('message:media'),

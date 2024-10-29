@@ -9,8 +9,7 @@ const howYouPay = `Choose a subscription plan that suits your needs:
 - **Free Plan**
   - Price: Free
   - Includes:
-    - 📝 Text messages: Up to 20 messages per day
-    - 🎤 Voice message transcription: Up to 5 minutes per day
+    - 📝 Text messages: Up to 10 messages per day
   - Limitations:
     - ❌ Image generation: Not available
     - ❌ Speech synthesis (TTS): Not available
@@ -23,7 +22,6 @@ const howYouPay = `Choose a subscription plan that suits your needs:
   - Includes:
     - 📝 Text messages: Up to 100 messages per day
     - 🖼️ Image generation: Up to 10 images per month
-    - 🎤 Voice message transcription: Up to 60 minutes per month
     - 🔊 Speech synthesis (TTS): Up to 10,000 characters per month
     - ⏰ Reminders: Create up to 20 reminders
     - 💾 Bot can remember any kind of information
@@ -34,7 +32,6 @@ const howYouPay = `Choose a subscription plan that suits your needs:
   - Includes:
     - 📝 Text messages: Up to 500 messages per day
     - 🖼️ Image generation: Up to 50 images per month
-    - 🎤 Voice message transcription: Up to 300 minutes per month
     - 🔊 Speech synthesis (TTS): Up to 50,000 characters per month
     - ⏰ Reminders: No limits
     - 💾 Bot can remember any kind of information
@@ -125,11 +122,11 @@ ${howYouPay}`),
         customer: customer.stripeCustomerId,
         success_url: 'https://t.me/RevelioGPTBot',
         cancel_url: 'https://t.me/RevelioGPTBot',
-        return_url: 'https://t.me/RevelioGPTBot',
         mode: 'subscription',
         line_items: [
           {
             price: price.id,
+            quantity: 1,
           },
         ],
         allow_promotion_codes: true,
