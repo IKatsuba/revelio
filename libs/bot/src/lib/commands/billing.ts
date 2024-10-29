@@ -72,7 +72,7 @@ export async function billing(ctx: BotContext) {
     return;
   }
 
-  if (ctx.session.plan) {
+  if (ctx.session.plan !== 'free') {
     const session = await stripe.billingPortal.sessions.create({
       customer: customer?.stripeCustomerId,
       return_url: 'https://t.me/RevelioGPTBot',
@@ -94,6 +94,9 @@ ${howYouPay}`),
   const prices = await prisma.price.findMany({
     where: {
       active: true,
+      lookupKey: {
+        not: 'free',
+      },
     },
     select: {
       id: true,
@@ -146,10 +149,10 @@ ${howYouPay}`),
     return;
   }
 
-  const keyboard = new InlineKeyboard();
+  const keyboard = new InlineKeyboard().text('Free', 'subscription:free');
 
   for (const session of sessions) {
-    keyboard.url(`Subscribe to ${session.name}`, session.url);
+    keyboard.url(session.name, session.url);
   }
 
   await ctx.reply(
@@ -161,4 +164,9 @@ ${howYouPay}
       parse_mode: 'MarkdownV2',
     },
   );
+}
+
+export async function callbackQuerySubscriptionFree(ctx: BotContext) {
+  ctx.session.plan = 'free';
+  await ctx.reply('You have successfully subscribed to the free plan.');
 }

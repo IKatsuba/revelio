@@ -25,6 +25,7 @@ privateComposer.command('reset', track('command:reset'), paywall, reset);
 privateComposer.command('image', track('command:image'), paywall, image);
 privateComposer.command('tts', track('command:tts'), paywall, tts);
 privateComposer.command('billing', track('command:billing'), billing);
+privateComposer.callbackQuery('subscription:free', track('callbackQuery:billing'), billing);
 privateComposer.command('usage', track('command:usage'), paywall, usage);
 
 privateComposer.on(
