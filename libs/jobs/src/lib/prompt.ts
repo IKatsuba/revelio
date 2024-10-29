@@ -29,7 +29,9 @@ export const promptTask = task({
 
     const result = await generateText(messages);
 
-    session.messages = [...messages, ...result.responseMessages].slice(-env.MAX_HISTORY_SIZE);
+    session.messages = [...messages, ...result.response.messages].slice(-env.MAX_HISTORY_SIZE);
+
+    console.log(result.response.messages);
 
     await setSession(payload.chatId, session);
 

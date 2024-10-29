@@ -3,6 +3,7 @@ import { generateText as __generateText, CoreMessage } from 'ai';
 import { env } from '@revelio/env/server';
 
 import { openaiProvider } from './openai';
+import { generateImage } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
@@ -37,6 +38,7 @@ export function generateTextFactory({
     moderateContent,
     addToMemory: addToMemoryToolFactory({ chatId: chatId, messageId: messageId }),
     getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
+    generateImage,
     ...reminderToolFactory({ chatId, userId }),
   };
 

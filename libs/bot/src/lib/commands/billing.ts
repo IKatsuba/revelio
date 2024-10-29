@@ -72,7 +72,7 @@ export async function billing(ctx: BotContext) {
     return;
   }
 
-  if (ctx.session.plan !== 'free') {
+  if (ctx.session.plan && ctx.session.plan !== 'free') {
     const session = await stripe.billingPortal.sessions.create({
       customer: customer?.stripeCustomerId,
       return_url: 'https://t.me/RevelioGPTBot',

@@ -42,7 +42,7 @@ export const describeTask = task({
 
     const response = await generateText(messages);
 
-    session.messages = [...messages, ...response.responseMessages].slice(-env.MAX_HISTORY_SIZE);
+    session.messages = [...messages, ...response.response.messages].slice(-env.MAX_HISTORY_SIZE);
 
     await sendLongText(payload.chatId, response.text);
   },
