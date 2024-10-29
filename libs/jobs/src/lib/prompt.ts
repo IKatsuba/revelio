@@ -4,7 +4,6 @@ import { convertToCoreMessages } from 'ai';
 import { getSession, sendLongText, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
-import { addTokenUsage } from '@revelio/stripe/server';
 
 export const promptTask = task({
   id: 'prompt',
@@ -40,18 +39,6 @@ export const promptTask = task({
     }
 
     await sendLongText(payload.chatId, result.text);
-
-    await addTokenUsage(payload.chatId, {
-      model: 'gpt-4o-mini',
-      mode: 'output',
-      tokenCount: result.steps.reduce((sum, step) => sum + step.usage.completionTokens, 0),
-    });
-
-    await addTokenUsage(payload.chatId, {
-      model: 'gpt-4o-mini',
-      mode: 'input',
-      tokenCount: result.steps.reduce((sum, step) => sum + step.usage.promptTokens, 0),
-    });
   },
 });
 

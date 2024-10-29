@@ -3,7 +3,6 @@ import { task } from '@trigger.dev/sdk/v3';
 import { bot } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateImage } from '@revelio/llm/server';
-import { addImageUsage } from '@revelio/stripe/server';
 
 export const imageTask = task({
   id: 'image',
@@ -18,11 +17,6 @@ export const imageTask = task({
     await bot.api.sendChatAction(payload.chatId, 'upload_photo');
 
     await bot.api.sendPhoto(payload.chatId, url);
-
-    await addImageUsage(payload.chatId, {
-      model: env.IMAGE_MODEL,
-      resolution: env.IMAGE_SIZE,
-    });
   },
 });
 

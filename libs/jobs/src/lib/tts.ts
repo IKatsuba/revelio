@@ -2,9 +2,7 @@ import { task } from '@trigger.dev/sdk/v3';
 import { InputFile } from 'grammy';
 
 import { bot } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
 import { textToSpeech } from '@revelio/llm/server';
-import { addSpeechUsage } from '@revelio/stripe/server';
 
 export const ttsTask = task({
   id: 'tts',
@@ -16,14 +14,11 @@ export const ttsTask = task({
       return;
     }
 
+    // payload.prompt.split(/\s+/).length
+
     await bot.api.sendChatAction(payload.chatId, 'upload_voice');
 
     await bot.api.sendVoice(payload.chatId, new InputFile(audioBuffer));
-
-    await addSpeechUsage(payload.chatId, {
-      model: env.TTS_MODEL,
-      characterCount: payload.prompt.split(/\s+/).length,
-    });
   },
 });
 

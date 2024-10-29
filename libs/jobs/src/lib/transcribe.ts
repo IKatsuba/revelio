@@ -5,7 +5,6 @@ import { parseBlob } from 'music-metadata';
 import { bot, getSession, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory, transcribe } from '@revelio/llm/server';
-import { addAudioUsage, addTokenUsage } from '@revelio/stripe/server';
 
 export const transcribeTask = task({
   id: 'transcribe',
@@ -28,11 +27,6 @@ export const transcribeTask = task({
     }
 
     const text = await transcribe(fileResponse);
-
-    await addAudioUsage(payload.chatId, {
-      model: 'whisper-1',
-      minuteCount: Math.ceil(metadata.format.duration / 60),
-    });
 
     const session = await getSession(payload.chatId);
 
@@ -61,18 +55,6 @@ export const transcribeTask = task({
     );
 
     await sendLongText(payload.chatId, response.text);
-
-    await addTokenUsage(payload.chatId, {
-      model: 'gpt-4o-mini',
-      mode: 'output',
-      tokenCount: response.steps.reduce((sum, step) => sum + step.usage.completionTokens, 0),
-    });
-
-    await addTokenUsage(payload.chatId, {
-      model: 'gpt-4o-mini',
-      mode: 'input',
-      tokenCount: response.steps.reduce((sum, step) => sum + step.usage.promptTokens, 0),
-    });
   },
 });
 
