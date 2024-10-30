@@ -8,8 +8,10 @@ export const generateImage = tool({
   parameters: z.object({
     prompt: z.string().describe('the prompt for the image'),
   }),
-  execute: async ({ prompt }) => {
-    const url = await openAIGenerateImage(prompt);
+  execute: async ({ prompt }, { abortSignal }) => {
+    const url = await openAIGenerateImage(prompt, {
+      signal: abortSignal,
+    });
 
     return {
       url,

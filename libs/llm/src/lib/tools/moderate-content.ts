@@ -8,5 +8,5 @@ export const moderateContent = tool({
   parameters: z.object({
     text: z.string().describe('the text to moderate'),
   }),
-  execute: async ({ text }) => moderate(text),
+  execute: async ({ text }, { abortSignal }) => moderate(text, { signal: abortSignal }),
 });
