@@ -6,7 +6,6 @@ import { prisma } from '@revelio/prisma/server';
 import { billing } from '../commands/billing';
 import { describe } from '../commands/describe';
 import { help } from '../commands/help';
-import { image } from '../commands/image';
 import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { tts } from '../commands/tts';
@@ -49,7 +48,6 @@ groupComposer.on('msg:new_chat_members:me', track('msg:new_chat_members:me'), as
 
 groupComposer.command('help', track('command:help'), help);
 groupComposer.command('reset', track('command:reset'), paywall, reset);
-groupComposer.command('image', track('command:image'), paywall, image);
 groupComposer.command('tts', track('command:tts'), paywall, tts);
 groupComposer.command('billing', track('command:billing'), billing);
 groupComposer.callbackQuery('subscription:free', track('callbackQuery:billing'), billing);

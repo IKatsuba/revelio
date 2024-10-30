@@ -6,7 +6,6 @@ import { BotContext } from '@revelio/bot-utils';
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
 import { describe } from '../commands/describe';
 import { help } from '../commands/help';
-import { image } from '../commands/image';
 import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
@@ -22,7 +21,6 @@ export const privateComposer = new Composer<BotContext>();
 privateComposer.command('start', track('command:start'), start);
 privateComposer.command('help', track('command:help'), help);
 privateComposer.command('reset', track('command:reset'), paywall, reset);
-privateComposer.command('image', track('command:image'), paywall, image);
 privateComposer.command('tts', track('command:tts'), paywall, tts);
 privateComposer.command('billing', track('command:billing'), billing);
 privateComposer.callbackQuery(

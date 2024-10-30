@@ -1,7 +1,7 @@
 import { task } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
-import { getSession, sendLongText, setSession } from '@revelio/bot-utils';
+import { bot, getSession, sendLongText, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
 
@@ -28,6 +28,25 @@ export const promptTask = task({
     });
 
     const result = await generateText(messages);
+
+    for (const message of result.response.messages) {
+      if (message.role === 'tool') {
+        const toolResult = message.content.find((content) => content.type === 'tool-result');
+
+        if (toolResult && toolResult.toolName === 'generateImage' && toolResult.result) {
+          const url = (toolResult.result as { url: string }).url;
+
+          if (!url) {
+            console.error('Failed to generate image');
+            continue;
+          }
+
+          await bot.api.sendChatAction(payload.chatId, 'upload_photo');
+
+          await bot.api.sendPhoto(payload.chatId, url);
+        }
+      }
+    }
 
     session.messages = excludeToolCallMessages([...messages, ...result.response.messages]).slice(
       -env.MAX_HISTORY_SIZE,
