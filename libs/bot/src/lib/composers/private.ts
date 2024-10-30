@@ -3,7 +3,7 @@ import { Composer } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
 
-import { billing } from '../commands/billing';
+import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
 import { describe } from '../commands/describe';
 import { help } from '../commands/help';
 import { image } from '../commands/image';
@@ -25,7 +25,11 @@ privateComposer.command('reset', track('command:reset'), paywall, reset);
 privateComposer.command('image', track('command:image'), paywall, image);
 privateComposer.command('tts', track('command:tts'), paywall, tts);
 privateComposer.command('billing', track('command:billing'), billing);
-privateComposer.callbackQuery('subscription:free', track('callbackQuery:billing'), billing);
+privateComposer.callbackQuery(
+  'subscription:free',
+  track('callbackQuery:billing'),
+  callbackQuerySubscriptionFree,
+);
 privateComposer.command('usage', track('command:usage'), paywall, usage);
 
 privateComposer.on(

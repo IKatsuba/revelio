@@ -50,8 +50,11 @@ export function generateTextFactory({
       temperature: env.TEMPERATURE,
       messages,
       system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
-      maxSteps: 10,
+      maxSteps: 2,
       experimental_continueSteps: true,
       tools: plan === 'free' ? {} : tools,
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 }

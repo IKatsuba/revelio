@@ -17,7 +17,7 @@ const envSchema = z.object({
   ASSISTANT_PROMPT: z.string().default(
     `You are a helpful assistant. Answer briefly and to the point. If user asks for crete reminder,
 you can ask for time and date. Time and date can be relative to current date. If there is no timezone you can get it from a memory or ask user.
-`,
+If you get result from image generation just tell user that you have generated an image without linking it. Allways answer in a language that user is using.`,
   ),
   MAX_TOKENS: z.coerce.number().int().default(2048),
   N_CHOICES: z.coerce.number().int().default(1),

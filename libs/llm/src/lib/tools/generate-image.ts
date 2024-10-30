@@ -13,6 +13,7 @@ export const generateImage = tool({
 
     return {
       url,
+      prompt,
     };
   },
 });

@@ -34,8 +34,10 @@ export function rateLimit({
       const remaining = reset - Date.now();
 
       await ctx.reply(
-        `You are sending messages too fast. Please slow down. Next message can be sent in ${formatSeconds(remaining / 1000)}.`,
+        `You are sending messages too fast. Please slow down. Next message can be sent in ${formatSeconds(Math.floor(remaining / 1000))}.`,
       );
+
+      return;
     }
 
     return next();
