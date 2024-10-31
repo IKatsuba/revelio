@@ -1,6 +1,6 @@
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis';
-import { enhanceStorage } from 'grammy';
+import { enhanceStorage, session } from 'grammy';
 
 import { env } from '@revelio/env/server';
 
@@ -42,3 +42,9 @@ export function getInitialSessionData(): SessionData {
     messages: [],
   };
 }
+
+export const sessionMiddleware = session({
+  storage: sessionStorage,
+  getSessionKey: (ctx) => getSessionKey(ctx.chatId),
+  initial: () => getInitialSessionData(),
+});
