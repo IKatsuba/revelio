@@ -1,7 +1,7 @@
 import { convertToCoreMessages } from 'ai';
 import { parseBlob } from 'music-metadata';
 
-import { api, BotContext, getSession, sendLongText } from '@revelio/bot-utils';
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory, transcribe } from '@revelio/llm/server';
 
@@ -25,7 +25,7 @@ export async function voice(ctx: BotContext) {
 
   console.log('Transcribing audio');
 
-  const fileData = await api.getFile(file.file_id);
+  const fileData = await ctx.api.getFile(file.file_id);
 
   const fileResponse = await fetch(
     `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
@@ -36,15 +36,13 @@ export async function voice(ctx: BotContext) {
   const metadata = await parseBlob(blob, { duration: true });
 
   if (!metadata.format.duration) {
-    await api.sendMessage(ctx.chatId, 'Failed to transcribe audio');
+    await ctx.reply('Failed to transcribe audio');
     return;
   }
 
   const text = await transcribe(fileResponse);
 
-  const session = await getSession(ctx.chatId);
-
-  session.messages.push(
+  ctx.session.messages.push(
     ...convertToCoreMessages([
       {
         role: 'user',
@@ -53,20 +51,20 @@ export async function voice(ctx: BotContext) {
     ]),
   );
 
-  await api.sendChatAction(ctx.chatId, 'typing');
+  await ctx.replyWithChatAction('typing');
 
   const generateText = generateTextFactory({
     chatId: ctx.chatId,
     messageId: ctx.message.message_id,
     userId: ctx.from.id,
-    plan: session.plan,
+    plan: ctx.session.plan,
   });
 
-  const response = await generateText(session.messages);
+  const response = await generateText(ctx.session.messages);
 
-  session.messages = [...session.messages, ...response.responseMessages].slice(
+  ctx.session.messages = [...ctx.session.messages, ...response.response.messages].slice(
     -env.MAX_HISTORY_SIZE,
   );
 
-  await sendLongText(ctx.chatId, response.text);
+  await sendLongText(ctx, response.text);
 }

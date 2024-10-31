@@ -1,6 +1,6 @@
 import { InputFile } from 'grammy';
 
-import { api, BotContext } from '@revelio/bot-utils';
+import { BotContext } from '@revelio/bot-utils';
 import { textToSpeech } from '@revelio/llm/server';
 
 export async function tts(ctx: BotContext) {
@@ -21,13 +21,13 @@ export async function tts(ctx: BotContext) {
   const audioBuffer = await textToSpeech(prompt);
 
   if (!audioBuffer) {
-    await api.sendMessage(ctx.chatId, 'Failed to generate speech');
+    await ctx.reply('Failed to generate speech');
     return;
   }
 
   // payload.prompt.split(/\s+/).length
 
-  await api.sendChatAction(ctx.chatId, 'upload_voice');
+  await ctx.replyWithChatAction('upload_voice');
 
-  await api.sendVoice(ctx.chatId, new InputFile(audioBuffer));
+  await ctx.replyWithVoice(new InputFile(audioBuffer));
 }

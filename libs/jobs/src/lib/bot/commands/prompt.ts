@@ -1,6 +1,6 @@
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
-import { api, BotContext, sendLongText } from '@revelio/bot-utils';
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
 
@@ -60,9 +60,9 @@ export async function prompt(ctx: BotContext) {
           continue;
         }
 
-        await api.sendChatAction(ctx.chatId, 'upload_photo');
+        await ctx.replyWithChatAction('upload_photo');
 
-        await api.sendPhoto(ctx.chatId, url);
+        await ctx.replyWithPhoto(url);
       }
     }
   }
@@ -76,7 +76,7 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  await sendLongText(ctx.chatId, result.text);
+  await sendLongText(ctx, result.text);
 }
 
 function excludeToolCallMessages(messages: CoreMessage[]) {

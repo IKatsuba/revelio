@@ -1,4 +1,4 @@
-import { api, BotContext, getSession, sendLongText } from '@revelio/bot-utils';
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
 
@@ -30,12 +30,10 @@ export async function describe(ctx: BotContext) {
     return;
   }
 
-  const fileData = await api.getFile(photo.file_id);
-
-  const session = await getSession(ctx.chatId!);
+  const fileData = await ctx.api.getFile(photo.file_id);
 
   const messages = [
-    ...session.messages,
+    ...ctx.session.messages,
     {
       role: 'user' as const,
       content: [
@@ -52,12 +50,12 @@ export async function describe(ctx: BotContext) {
     chatId: ctx.chatId!,
     messageId: ctx.message.message_id,
     userId: ctx.from.id,
-    plan: session.plan,
+    plan: ctx.session.plan,
   });
 
   const response = await generateText(messages);
 
-  session.messages = [...messages, ...response.response.messages].slice(-env.MAX_HISTORY_SIZE);
+  ctx.session.messages = [...messages, ...response.response.messages].slice(-env.MAX_HISTORY_SIZE);
 
-  await sendLongText(ctx.chatId, response.text);
+  await sendLongText(ctx, response.text);
 }
