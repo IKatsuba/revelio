@@ -8,32 +8,5 @@ export async function prompt(ctx: BotContext) {
 
   await ctx.replyWithChatAction('typing');
 
-  const prompt = ctx.message?.text?.replace(/^\/chat/, '').trim();
-
-  if (!prompt) {
-    await ctx.reply('Please provide a prompt');
-    return;
-  }
-
-  if (!ctx.chatId) {
-    await ctx.reply('This command is only available in a chat');
-    return;
-  }
-
-  if (!ctx.message?.message_id) {
-    await ctx.reply('Message id is missing');
-    return;
-  }
-
-  if (!ctx.from?.id) {
-    await ctx.reply('User id is missing');
-    return;
-  }
-
-  await tasks.trigger<PromptTask>('prompt', {
-    chatId: ctx.chatId,
-    prompt,
-    messageId: ctx.message?.message_id,
-    userId: ctx.from?.id,
-  });
+  await tasks.trigger<PromptTask>('prompt', ctx.update);
 }
