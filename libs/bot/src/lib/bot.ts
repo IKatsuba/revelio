@@ -8,8 +8,8 @@ import {
 } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 
-import { groupComposer } from './composers/group';
-import { privateComposer } from './composers/private';
+import { groupWebhookComposer } from './composers/group-webhook-composer';
+import { privateWebhookComposer } from './composers/private-webhook-composer';
 
 export async function initWebhookBot(): Promise<Bot<BotContext>> {
   const bot = new Bot<BotContext>(env.BOT_TOKEN);
@@ -22,9 +22,9 @@ export async function initWebhookBot(): Promise<Bot<BotContext>> {
     }),
   );
 
-  bot.filter(Context.has.chatType('private'), privateComposer);
+  bot.filter(Context.has.chatType('private'), privateWebhookComposer);
 
-  bot.filter(Context.has.chatType(['group', 'supergroup']), groupComposer);
+  bot.filter(Context.has.chatType(['group', 'supergroup']), groupWebhookComposer);
 
   await bot.init();
 

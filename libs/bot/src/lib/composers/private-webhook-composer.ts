@@ -16,21 +16,21 @@ import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
 
-export const privateComposer = new Composer<BotContext>();
+export const privateWebhookComposer = new Composer<BotContext>();
 
-privateComposer.command('start', track('command:start'), start);
-privateComposer.command('help', track('command:help'), help);
-privateComposer.command('reset', track('command:reset'), paywall, reset);
-privateComposer.command('tts', track('command:tts'), paywall, tts);
-privateComposer.command('billing', track('command:billing'), billing);
-privateComposer.callbackQuery(
+privateWebhookComposer.command('start', track('command:start'), start);
+privateWebhookComposer.command('help', track('command:help'), help);
+privateWebhookComposer.command('reset', track('command:reset'), paywall, reset);
+privateWebhookComposer.command('tts', track('command:tts'), paywall, tts);
+privateWebhookComposer.command('billing', track('command:billing'), billing);
+privateWebhookComposer.callbackQuery(
   'subscription:free',
   track('callbackQuery:billing'),
   callbackQuerySubscriptionFree,
 );
-privateComposer.command('usage', track('command:usage'), paywall, usage);
+privateWebhookComposer.command('usage', track('command:usage'), paywall, usage);
 
-privateComposer.on(
+privateWebhookComposer.on(
   'message:text',
   track('message:text'),
   paywall,
@@ -44,13 +44,13 @@ privateComposer.on(
   }),
   prompt,
 );
-privateComposer.on(
+privateWebhookComposer.on(
   ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
   track('message:media'),
   paywall,
   voice,
 );
-privateComposer.on(
+privateWebhookComposer.on(
   ['message:photo', 'message:document'],
   track('message:photo'),
   paywall,
