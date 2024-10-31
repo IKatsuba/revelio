@@ -29,7 +29,7 @@ privateWebhookComposer.callbackQuery(
 privateWebhookComposer.command('usage', track('command:usage'), paywall, usage);
 
 privateWebhookComposer.on(
-  'message:text',
+  ['message:text', 'message:photo', 'message:document'],
   track('message:text'),
   paywall,
   rateLimit({
@@ -47,10 +47,4 @@ privateWebhookComposer.on(
   track('message:media'),
   paywall,
   voice,
-);
-privateWebhookComposer.on(
-  ['message:photo', 'message:document'],
-  track('message:photo'),
-  paywall,
-  delegate,
 );

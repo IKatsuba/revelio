@@ -67,7 +67,7 @@ const mentionFilter = (ctx: Context) =>
   Context.has.text(/сан/gi)(ctx);
 
 groupWebhookComposer.filter(mentionFilter).on(
-  'message:text',
+  ['message:text', 'message:photo', 'message:document'],
   track('message:text'),
   paywall,
   rateLimit({
@@ -88,6 +88,3 @@ groupWebhookComposer
     paywall,
     voice,
   );
-groupWebhookComposer
-  .filter(mentionFilter)
-  .on(['message:photo', 'message:document'], track('message:photo'), paywall, delegate);

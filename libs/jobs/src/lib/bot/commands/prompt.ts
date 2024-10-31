@@ -7,9 +7,10 @@ import { generateText } from '@revelio/llm/server';
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
-  const prompt = ctx.message?.text?.replace(/^\/chat/, '').trim();
+  const prompt = ctx.message?.text || ctx.message?.caption;
+  const photo = await getPhoto(ctx);
 
-  if (!prompt) {
+  if (!prompt && !photo) {
     await ctx.reply('Please provide a prompt');
     return;
   }
@@ -31,12 +32,25 @@ export async function prompt(ctx: BotContext) {
 
   const messages = excludeToolCallMessages([
     ...ctx.session.messages,
-    ...convertToCoreMessages([
-      {
-        role: 'user',
-        content: prompt ?? '',
-      },
-    ]),
+    ...(photo
+      ? [
+          {
+            role: 'user' as const,
+            content: [
+              { type: 'text' as const, text: prompt ?? 'What’s in this image?' },
+              {
+                type: 'image' as const,
+                image: photo,
+              },
+            ],
+          },
+        ]
+      : convertToCoreMessages([
+          {
+            role: 'user',
+            content: prompt ?? '',
+          },
+        ])),
   ]).slice(-env.MAX_HISTORY_SIZE);
 
   const result = await generateText(ctx, { messages });
@@ -86,4 +100,24 @@ function excludeToolCallMessages(messages: CoreMessage[]) {
       (content) => content.type === 'tool-call' || content.type === 'tool-result',
     );
   });
+}
+
+async function getPhoto(ctx: BotContext) {
+  const photos = ctx.message?.photo ?? [];
+
+  // find the biggest photo
+  const photo =
+    ctx.message?.document ??
+    photos.reduce(
+      (acc, cur) => ((cur.file_size ?? 0) > (acc.file_size ?? 0) ? cur : acc),
+      photos[0],
+    );
+
+  if (!photo || ('mime_type' in photo && !photo.mime_type?.startsWith('image/'))) {
+    return null;
+  }
+
+  const fileData = await ctx.api.getFile(photo.file_id);
+
+  return new URL(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`);
 }
