@@ -55,25 +55,6 @@ export async function prompt(ctx: BotContext) {
 
   const result = await generateText(ctx, { messages });
 
-  for (const message of result.response.messages) {
-    if (message.role === 'tool') {
-      const toolResult = message.content.find((content) => content.type === 'tool-result');
-
-      if (toolResult && toolResult.toolName === 'generateImage' && toolResult.result) {
-        const url = (toolResult.result as { url: string }).url;
-
-        if (!url) {
-          console.error('Failed to generate image');
-          continue;
-        }
-
-        await ctx.replyWithChatAction('upload_photo');
-
-        await ctx.replyWithPhoto(url);
-      }
-    }
-  }
-
   ctx.session.messages = excludeToolCallMessages([...messages, ...result.response.messages]).slice(
     -env.MAX_HISTORY_SIZE,
   );

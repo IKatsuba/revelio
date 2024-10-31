@@ -5,7 +5,7 @@ import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 
 import { openaiProvider } from './openai';
-import { generateImage } from './tools/generate-image';
+import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
 import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-plan';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
@@ -25,7 +25,7 @@ export function generateText(
     moderateContent,
     addToMemory: addToMemoryToolFactory(ctx),
     getFromMemory: getFromMemoryToolFactory(ctx),
-    generateImage,
+    generateImage: generateImageFactory(ctx),
     ...reminderToolFactory(ctx),
     ...getCurrentBillingPlanToolFactory(ctx),
   };
