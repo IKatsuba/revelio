@@ -18,7 +18,6 @@ export const privateWebhookComposer = new Composer<BotContext>();
 privateWebhookComposer.command('start', track('command:start'), start);
 privateWebhookComposer.command('help', track('command:help'), help);
 privateWebhookComposer.command('reset', track('command:reset'), paywall, reset);
-privateWebhookComposer.command('tts', track('command:tts'), paywall, delegate);
 privateWebhookComposer.command('billing', track('command:billing'), billing);
 privateWebhookComposer.callbackQuery(
   'subscription:free',

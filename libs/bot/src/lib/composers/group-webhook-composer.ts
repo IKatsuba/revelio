@@ -51,7 +51,6 @@ groupWebhookComposer.on(
 
 groupWebhookComposer.command('help', track('command:help'), help);
 groupWebhookComposer.command('reset', track('command:reset'), paywall, reset);
-groupWebhookComposer.command('tts', track('command:tts'), paywall, delegate);
 groupWebhookComposer.command('billing', track('command:billing'), billing);
 groupWebhookComposer.callbackQuery(
   'subscription:free',

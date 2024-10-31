@@ -11,6 +11,7 @@ import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-pl
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
+import { ttsFactory } from './tools/tts';
 
 export function generateText(
   ctx: BotContext,
@@ -26,6 +27,7 @@ export function generateText(
     addToMemory: addToMemoryToolFactory(ctx),
     getFromMemory: getFromMemoryToolFactory(ctx),
     generateImage: generateImageFactory(ctx),
+    textToSpeech: ttsFactory(ctx),
     ...reminderToolFactory(ctx),
     ...getCurrentBillingPlanToolFactory(ctx),
   };
