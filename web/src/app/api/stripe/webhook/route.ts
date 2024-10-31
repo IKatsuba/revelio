@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 
-import { bot, setSession } from '@revelio/bot-utils';
+import { api, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
@@ -255,7 +255,7 @@ async function manageSubscriptionStatusChange(
           : 'free';
     });
 
-    await bot.api.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);
+    await api.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);
   } catch (e) {
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }

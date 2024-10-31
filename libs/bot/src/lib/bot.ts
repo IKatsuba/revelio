@@ -6,12 +6,14 @@ import {
   getSessionKey,
   sessionStorage,
 } from '@revelio/bot-utils';
+import { env } from '@revelio/env/server';
 
 import { groupComposer } from './composers/group';
 import { privateComposer } from './composers/private';
-import { requestMiddleware } from './middlewares/request';
 
-export function initBot({ bot, request }: { bot: Bot<BotContext>; request: Request }) {
+export async function initBot(): Promise<Bot<BotContext>> {
+  const bot = new Bot<BotContext>(env.BOT_TOKEN);
+
   bot.use(
     session({
       storage: sessionStorage,
@@ -20,9 +22,11 @@ export function initBot({ bot, request }: { bot: Bot<BotContext>; request: Reque
     }),
   );
 
-  bot.use(requestMiddleware(request));
-
   bot.filter(Context.has.chatType('private'), privateComposer);
 
   bot.filter(Context.has.chatType(['group', 'supergroup']), groupComposer);
+
+  await bot.init();
+
+  return bot;
 }

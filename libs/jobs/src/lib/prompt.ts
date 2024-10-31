@@ -1,7 +1,7 @@
 import { task } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
-import { bot, getSession, sendLongText, setSession } from '@revelio/bot-utils';
+import { api, getSession, sendLongText, setSession } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
 
@@ -41,9 +41,9 @@ export const promptTask = task({
             continue;
           }
 
-          await bot.api.sendChatAction(payload.chatId, 'upload_photo');
+          await api.sendChatAction(payload.chatId, 'upload_photo');
 
-          await bot.api.sendPhoto(payload.chatId, url);
+          await api.sendPhoto(payload.chatId, url);
         }
       }
     }

@@ -2,7 +2,7 @@ import { task } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages } from 'ai';
 import { parseBlob } from 'music-metadata';
 
-import { bot, getSession, sendLongText } from '@revelio/bot-utils';
+import { api, getSession, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory, transcribe } from '@revelio/llm/server';
 
@@ -11,7 +11,7 @@ export const transcribeTask = task({
   async run(payload: { fileId: string; chatId: number; messageId: number; userId: number }) {
     console.log('Transcribing audio');
 
-    const fileData = await bot.api.getFile(payload.fileId);
+    const fileData = await api.getFile(payload.fileId);
 
     const fileResponse = await fetch(
       `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
@@ -22,7 +22,7 @@ export const transcribeTask = task({
     const metadata = await parseBlob(blob, { duration: true });
 
     if (!metadata.format.duration) {
-      await bot.api.sendMessage(payload.chatId, 'Failed to transcribe audio');
+      await api.sendMessage(payload.chatId, 'Failed to transcribe audio');
       return;
     }
 
@@ -39,7 +39,7 @@ export const transcribeTask = task({
       ]),
     );
 
-    await bot.api.sendChatAction(payload.chatId, 'typing');
+    await api.sendChatAction(payload.chatId, 'typing');
 
     const generateText = generateTextFactory({
       chatId: payload.chatId,

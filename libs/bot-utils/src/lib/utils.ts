@@ -1,4 +1,4 @@
-import { bot } from './bot';
+import { api } from './api';
 import { telegramify } from './telegramify';
 
 function splitTextIntoChunks(text: string, chunkSize = 4096) {
@@ -17,7 +17,7 @@ export async function sendLongText(chatId: number | undefined, text: string) {
   }
 
   for (const chunk of splitTextIntoChunks(text)) {
-    await bot.api.sendMessage(chatId, telegramify(chunk), {
+    await api.sendMessage(chatId, telegramify(chunk), {
       parse_mode: 'MarkdownV2',
     });
   }

@@ -1,7 +1,6 @@
 import { task } from '@trigger.dev/sdk/v3';
 
-import { bot } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
+import { api } from '@revelio/bot-utils';
 import { generateImage } from '@revelio/llm/server';
 
 export const imageTask = task({
@@ -10,13 +9,13 @@ export const imageTask = task({
     const url = await generateImage(payload.prompt);
 
     if (!url) {
-      await bot.api.sendMessage(payload.chatId, 'Failed to generate image');
+      await api.sendMessage(payload.chatId, 'Failed to generate image');
       return;
     }
 
-    await bot.api.sendChatAction(payload.chatId, 'upload_photo');
+    await api.sendChatAction(payload.chatId, 'upload_photo');
 
-    await bot.api.sendPhoto(payload.chatId, url);
+    await api.sendPhoto(payload.chatId, url);
   },
 });
 

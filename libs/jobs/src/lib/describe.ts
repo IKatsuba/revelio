@@ -1,6 +1,6 @@
 import { task } from '@trigger.dev/sdk/v3';
 
-import { bot, getSession, sendLongText } from '@revelio/bot-utils';
+import { api, getSession, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateTextFactory } from '@revelio/llm/server';
 
@@ -13,7 +13,7 @@ export const describeTask = task({
     messageId: number;
     userId: number;
   }) {
-    const fileData = await bot.api.getFile(payload.fileId);
+    const fileData = await api.getFile(payload.fileId);
 
     const session = await getSession(payload.chatId);
 

@@ -1,4 +1,3 @@
-import { bot } from '@revelio/bot-utils';
 import { initBot } from '@revelio/bot/server';
 
 export const maxDuration = 60;
@@ -11,9 +10,7 @@ export const POST = validateWebhook(async (request: Request) => {
   const body = await request.json();
 
   try {
-    initBot({ bot: bot, request });
-
-    await bot.init();
+    const bot = await initBot();
 
     await bot.handleUpdate(body);
   } catch (error) {
