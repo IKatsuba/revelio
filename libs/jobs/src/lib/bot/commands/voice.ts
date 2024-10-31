@@ -3,7 +3,7 @@ import { parseBlob } from 'music-metadata';
 
 import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateTextFactory, transcribe } from '@revelio/llm/server';
+import { generateText, transcribe } from '@revelio/llm/server';
 
 export async function voice(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -53,14 +53,7 @@ export async function voice(ctx: BotContext) {
 
   await ctx.replyWithChatAction('typing');
 
-  const generateText = generateTextFactory({
-    chatId: ctx.chatId,
-    messageId: ctx.message.message_id,
-    userId: ctx.from.id,
-    plan: ctx.session.plan,
-  });
-
-  const response = await generateText(ctx.session.messages);
+  const response = await generateText(ctx, { messages: ctx.session.messages });
 
   ctx.session.messages = [...ctx.session.messages, ...response.response.messages].slice(
     -env.MAX_HISTORY_SIZE,

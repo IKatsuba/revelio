@@ -2,7 +2,7 @@ import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateTextFactory } from '@revelio/llm/server';
+import { generateText } from '@revelio/llm/server';
 
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -39,14 +39,7 @@ export async function prompt(ctx: BotContext) {
     ]),
   ]).slice(-env.MAX_HISTORY_SIZE);
 
-  const generateText = generateTextFactory({
-    chatId: ctx.chatId,
-    messageId: ctx.message.message_id,
-    userId: ctx.from.id,
-    plan: ctx.session.plan,
-  });
-
-  const result = await generateText(messages);
+  const result = await generateText(ctx, { messages });
 
   for (const message of result.response.messages) {
     if (message.role === 'tool') {

@@ -1,25 +1,29 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
+import { BotContext } from '@revelio/bot-utils';
+
 import { index } from '../vector-store';
 
-export function addToMemoryToolFactory({
-  chatId,
-  messageId,
-}: {
-  chatId: number;
-  messageId: number;
-}) {
+export function addToMemoryToolFactory(ctx: BotContext) {
   return tool({
     description: 'add some data to semantically store. Add something to memory only if asked',
     parameters: z.object({
       value: z.string().describe('the data to store'),
     }),
     execute: async ({ value }) => {
-      const namespace = index.namespace(chatId.toString());
+      if (!ctx.chatId) {
+        return 'No chatId found';
+      }
+
+      if (!ctx.message?.message_id) {
+        return 'No message_id found';
+      }
+
+      const namespace = index.namespace(ctx.chatId.toString());
 
       return namespace.upsert({
-        id: messageId,
+        id: ctx.message.message_id,
         data: value,
         metadata: {
           value,
@@ -29,7 +33,7 @@ export function addToMemoryToolFactory({
   });
 }
 
-export function getFromMemoryToolFactory({ chatId }: { chatId: number }) {
+export function getFromMemoryToolFactory(ctx: BotContext) {
   return tool({
     description:
       'get some data from semantically store. Try to get something from memory only if asked',
@@ -37,7 +41,11 @@ export function getFromMemoryToolFactory({ chatId }: { chatId: number }) {
       context: z.string().describe('the context to use when querying the store'),
     }),
     execute: async ({ context }) => {
-      const namespace = index.namespace(chatId.toString());
+      if (!ctx.chatId) {
+        return 'No chatId found';
+      }
+
+      const namespace = index.namespace(ctx.chatId.toString());
 
       return namespace.query({
         data: context,

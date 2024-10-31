@@ -5,7 +5,7 @@ import { parseDate } from 'chrono-node';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 
-import { telegramify } from '@revelio/bot-utils';
+import { BotContext, telegramify } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { prisma } from '@revelio/prisma/server';
 
@@ -18,7 +18,7 @@ const client = new Client({
   },
 });
 
-export function reminderToolFactory({ chatId, userId }: { chatId: number; userId: number }) {
+export function reminderToolFactory(ctx: BotContext) {
   return {
     createReminder: tool({
       description: 'create a reminder then notify the user.',
@@ -32,6 +32,20 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
         timezone: z.string().describe('the timezone to use for the reminder'),
       }),
       execute: async ({ message, time, timezone }) => {
+        if (!ctx.chatId) {
+          return {
+            status: 'error',
+            message: 'No chatId found',
+          };
+        }
+
+        if (!ctx.from?.id) {
+          return {
+            status: 'error',
+            message: 'No userId found',
+          };
+        }
+
         console.log('Creating reminder:', message, time, timezone);
 
         const date = parseDate(time, {
@@ -58,7 +72,7 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
           callback: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           body: {
             id,
-            chat_id: chatId,
+            chat_id: ctx.chatId,
             text: formattedMessage,
             parse_mode: 'MarkdownV2',
           },
@@ -71,8 +85,8 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
             messageId,
             message: formattedMessage,
             remindAt: date,
-            userId: userId.toString(),
-            groupId: chatId.toString(),
+            userId: ctx.from.id.toString(),
+            groupId: ctx.chatId.toString(),
             timezone,
             status: ReminderStatus.SCHEDULED,
           },
@@ -87,10 +101,24 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
       description: 'get all reminders for the user.',
       parameters: z.object({}),
       execute: async () => {
+        if (!ctx.chatId) {
+          return {
+            status: 'error',
+            message: 'No chatId found',
+          };
+        }
+
+        if (!ctx.from?.id) {
+          return {
+            status: 'error',
+            message: 'No userId found',
+          };
+        }
+
         const reminders = await prisma.reminder.findMany({
           where: {
-            groupId: chatId.toString(),
-            userId: userId.toString(),
+            groupId: ctx.chatId.toString(),
+            userId: ctx.from.id.toString(),
             status: ReminderStatus.SCHEDULED,
           },
           select: {
@@ -144,10 +172,24 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
       description: 'delete all reminders for the user.',
       parameters: z.object({}),
       execute: async () => {
+        if (!ctx.chatId) {
+          return {
+            status: 'error',
+            message: 'No chatId found',
+          };
+        }
+
+        if (!ctx.from?.id) {
+          return {
+            status: 'error',
+            message: 'No userId found',
+          };
+        }
+
         const reminders = await prisma.reminder.findMany({
           where: {
-            groupId: chatId.toString(),
-            userId: userId.toString(),
+            groupId: ctx.chatId.toString(),
+            userId: ctx.from.id.toString(),
             status: ReminderStatus.SCHEDULED,
           },
           select: {
@@ -157,8 +199,8 @@ export function reminderToolFactory({ chatId, userId }: { chatId: number; userId
 
         await prisma.reminder.updateMany({
           where: {
-            groupId: chatId.toString(),
-            userId: userId.toString(),
+            groupId: ctx.chatId.toString(),
+            userId: ctx.from.id.toString(),
             status: ReminderStatus.SCHEDULED,
           },
           data: {

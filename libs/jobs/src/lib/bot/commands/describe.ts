@@ -1,6 +1,6 @@
 import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateTextFactory } from '@revelio/llm/server';
+import { generateText } from '@revelio/llm/server';
 
 export async function describe(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -46,14 +46,7 @@ export async function describe(ctx: BotContext) {
     },
   ].slice(-env.MAX_HISTORY_SIZE);
 
-  const generateText = generateTextFactory({
-    chatId: ctx.chatId!,
-    messageId: ctx.message.message_id,
-    userId: ctx.from.id,
-    plan: ctx.session.plan,
-  });
-
-  const response = await generateText(messages);
+  const response = await generateText(ctx, { messages });
 
   ctx.session.messages = [...messages, ...response.response.messages].slice(-env.MAX_HISTORY_SIZE);
 
