@@ -6,4 +6,7 @@ export interface SessionData {
   plan?: 'free' | 'basic' | 'premium';
 }
 
-export type BotContext = Context & SessionFlavor<SessionData>;
+export type BotContext = Context &
+  SessionFlavor<SessionData> & {
+    transcription?: string;
+  };

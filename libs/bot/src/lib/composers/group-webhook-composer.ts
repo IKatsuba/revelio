@@ -9,7 +9,6 @@ import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
 import { reset } from '../commands/reset';
 import { usage } from '../commands/usage';
-import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
@@ -80,11 +79,3 @@ groupWebhookComposer.filter(mentionFilter).on(
   }),
   delegate,
 );
-groupWebhookComposer
-  .filter(mentionFilter)
-  .on(
-    ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
-    track('message:media'),
-    paywall,
-    voice,
-  );

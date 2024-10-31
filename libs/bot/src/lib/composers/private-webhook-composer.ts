@@ -9,7 +9,6 @@ import { help } from '../commands/help';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
 import { usage } from '../commands/usage';
-import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
@@ -29,7 +28,15 @@ privateWebhookComposer.callbackQuery(
 privateWebhookComposer.command('usage', track('command:usage'), paywall, usage);
 
 privateWebhookComposer.on(
-  ['message:text', 'message:photo', 'message:document'],
+  [
+    'message:text',
+    'message:photo',
+    'message:document',
+    'message:voice',
+    'message:audio',
+    'message:video_note',
+    'message:video',
+  ],
   track('message:text'),
   paywall,
   rateLimit({
@@ -41,10 +48,4 @@ privateWebhookComposer.on(
     name: 'text',
   }),
   delegate,
-);
-privateWebhookComposer.on(
-  ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
-  track('message:media'),
-  paywall,
-  voice,
 );

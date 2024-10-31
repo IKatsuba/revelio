@@ -7,7 +7,7 @@ import { generateText } from '@revelio/llm/server';
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
-  const prompt = ctx.message?.text || ctx.message?.caption;
+  const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
   const photo = await getPhoto(ctx);
 
   if (!prompt && !photo) {
