@@ -11,7 +11,7 @@ import { env } from '@revelio/env/server';
 import { groupComposer } from './composers/group';
 import { privateComposer } from './composers/private';
 
-export async function initBot(): Promise<Bot<BotContext>> {
+export async function initWebhookBot(): Promise<Bot<BotContext>> {
   const bot = new Bot<BotContext>(env.BOT_TOKEN);
 
   bot.use(

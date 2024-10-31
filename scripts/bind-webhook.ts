@@ -1,4 +1,4 @@
-import { Bot } from 'grammy';
+import { Api } from 'grammy';
 
 const token = process.env.BOT_TOKEN;
 const webhookUrl = process.env.BOT_WEBHOOK_URL;
@@ -8,9 +8,9 @@ if (!token || !webhookUrl) {
   throw new Error('BOT_TOKEN and BOT_WEBHOOK_URL must be set');
 }
 
-const bot = new Bot(token);
+const api = new Api(token);
 
-bot.api
+api
   .setWebhook(webhookUrl, {
     secret_token: secret || undefined,
   })
