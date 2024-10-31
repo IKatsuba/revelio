@@ -6,6 +6,7 @@ import { env } from '@revelio/env/server';
 import { openaiProvider } from './openai';
 import { generateImage } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
+import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-plan';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
@@ -41,6 +42,7 @@ export function generateTextFactory({
     getFromMemory: getFromMemoryToolFactory({ chatId: chatId }),
     generateImage,
     ...reminderToolFactory({ chatId, userId }),
+    ...getCurrentBillingPlanToolFactory({ chatId }),
   };
 
   return (messages: Array<CoreMessage>) =>

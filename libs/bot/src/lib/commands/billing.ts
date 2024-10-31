@@ -79,9 +79,7 @@ export async function billing(ctx: BotContext) {
     });
 
     await ctx.reply(
-      telegramify(`You have already added your payment method. But you can always manage it.
-
-${howYouPay}`),
+      telegramify(`You have already added your payment method. But you can always manage it.`),
       {
         reply_markup: new InlineKeyboard().url('Manage payment method', session.url),
         parse_mode: 'MarkdownV2',
