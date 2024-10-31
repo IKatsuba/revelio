@@ -4,12 +4,10 @@ import { Composer } from 'grammy';
 import { BotContext } from '@revelio/bot-utils';
 
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
-import { describe } from '../commands/describe';
+import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
-import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
-import { tts } from '../commands/tts';
 import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
@@ -21,7 +19,7 @@ export const privateWebhookComposer = new Composer<BotContext>();
 privateWebhookComposer.command('start', track('command:start'), start);
 privateWebhookComposer.command('help', track('command:help'), help);
 privateWebhookComposer.command('reset', track('command:reset'), paywall, reset);
-privateWebhookComposer.command('tts', track('command:tts'), paywall, tts);
+privateWebhookComposer.command('tts', track('command:tts'), paywall, delegate);
 privateWebhookComposer.command('billing', track('command:billing'), billing);
 privateWebhookComposer.callbackQuery(
   'subscription:free',
@@ -42,7 +40,7 @@ privateWebhookComposer.on(
     },
     name: 'text',
   }),
-  prompt,
+  delegate,
 );
 privateWebhookComposer.on(
   ['message:voice', 'message:audio', 'message:video_note', 'message:video'],
@@ -54,5 +52,5 @@ privateWebhookComposer.on(
   ['message:photo', 'message:document'],
   track('message:photo'),
   paywall,
-  describe,
+  delegate,
 );

@@ -3,12 +3,10 @@ import { Composer, Context } from 'grammy';
 import { BotContext } from '@revelio/bot-utils';
 import { prisma } from '@revelio/prisma/server';
 
-import { billing } from '../commands/billing';
-import { describe } from '../commands/describe';
+import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
+import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
-import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
-import { tts } from '../commands/tts';
 import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
@@ -52,9 +50,13 @@ groupWebhookComposer.on(
 
 groupWebhookComposer.command('help', track('command:help'), help);
 groupWebhookComposer.command('reset', track('command:reset'), paywall, reset);
-groupWebhookComposer.command('tts', track('command:tts'), paywall, tts);
+groupWebhookComposer.command('tts', track('command:tts'), paywall, delegate);
 groupWebhookComposer.command('billing', track('command:billing'), billing);
-groupWebhookComposer.callbackQuery('subscription:free', track('callbackQuery:billing'), billing);
+groupWebhookComposer.callbackQuery(
+  'subscription:free',
+  track('callbackQuery:billing'),
+  callbackQuerySubscriptionFree,
+);
 groupWebhookComposer.command('usage', track('command:usage'), paywall, usage);
 
 const mentionFilter = (ctx: Context) =>
@@ -64,7 +66,7 @@ const mentionFilter = (ctx: Context) =>
 
 groupWebhookComposer
   .filter(mentionFilter)
-  .on('message:text', track('message:text'), paywall, prompt);
+  .on('message:text', track('message:text'), paywall, delegate);
 groupWebhookComposer
   .filter(mentionFilter)
   .on(
@@ -75,4 +77,4 @@ groupWebhookComposer
   );
 groupWebhookComposer
   .filter(mentionFilter)
-  .on(['message:photo', 'message:document'], track('message:photo'), paywall, describe);
+  .on(['message:photo', 'message:document'], track('message:photo'), paywall, delegate);
