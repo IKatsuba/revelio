@@ -1,3 +1,4 @@
+import { Ratelimit } from '@upstash/ratelimit';
 import { Composer, Context } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -10,6 +11,7 @@ import { reset } from '../commands/reset';
 import { usage } from '../commands/usage';
 import { voice } from '../commands/voice';
 import { paywall } from '../middlewares/paywall';
+import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
 
 export const groupWebhookComposer = new Composer<BotContext>();
@@ -64,9 +66,20 @@ const mentionFilter = (ctx: Context) =>
   Context.has.text(/ревелио/gi)(ctx) ||
   Context.has.text(/сан/gi)(ctx);
 
-groupWebhookComposer
-  .filter(mentionFilter)
-  .on('message:text', track('message:text'), paywall, delegate);
+groupWebhookComposer.filter(mentionFilter).on(
+  'message:text',
+  track('message:text'),
+  paywall,
+  rateLimit({
+    limiter: {
+      free: Ratelimit.fixedWindow(10, '1d'),
+      basic: Ratelimit.fixedWindow(100, '1d'),
+      premium: Ratelimit.fixedWindow(500, '1d'),
+    },
+    name: 'text',
+  }),
+  delegate,
+);
 groupWebhookComposer
   .filter(mentionFilter)
   .on(
