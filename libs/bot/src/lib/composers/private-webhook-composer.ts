@@ -24,7 +24,7 @@ privateWebhookComposer.callbackQuery(
   track('callbackQuery:billing'),
   callbackQuerySubscriptionFree,
 );
-privateWebhookComposer.command('usage', track('command:usage'), paywall, usage);
+privateWebhookComposer.command('usage', track('command:usage'), usage);
 
 privateWebhookComposer.on(
   [

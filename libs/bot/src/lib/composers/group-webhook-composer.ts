@@ -57,7 +57,7 @@ groupWebhookComposer.callbackQuery(
   track('callbackQuery:billing'),
   callbackQuerySubscriptionFree,
 );
-groupWebhookComposer.command('usage', track('command:usage'), paywall, usage);
+groupWebhookComposer.command('usage', track('command:usage'), usage);
 
 const mentionFilter = (ctx: Context) =>
   Context.has.text(/revelio/gi)(ctx) ||
