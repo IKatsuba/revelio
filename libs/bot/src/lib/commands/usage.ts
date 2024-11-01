@@ -19,8 +19,6 @@ export async function usage(ctx: BotContext) {
     return line.description;
   });
 
-  console.log(upcomingInvoice.lines);
-
   return ctx.reply(
     telegramify(`Your usage for the upcoming billing period:
 
