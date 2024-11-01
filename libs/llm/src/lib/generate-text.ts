@@ -37,7 +37,7 @@ export function generateText(
       structuredOutputs: true,
     }),
     temperature: env.TEMPERATURE,
-    messages,
+    messages: excludeToolResultIfItFirst(messages),
     system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
     maxSteps: 2,
     experimental_continueSteps: true,
@@ -63,4 +63,16 @@ export function generateText(
       }
     },
   });
+}
+
+function excludeToolResultIfItFirst(messages: CoreMessage[]): CoreMessage[] {
+  const message = messages[0];
+
+  if (message.role !== 'tool') {
+    return messages;
+  }
+
+  const isToolResult = message.content.some((content) => content.type === 'tool-result');
+
+  return isToolResult ? messages.slice(1) : messages;
 }

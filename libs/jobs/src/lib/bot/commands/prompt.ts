@@ -30,7 +30,7 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  const messages = excludeToolCallMessages([
+  const messages = [
     ...ctx.session.messages,
     ...(photo
       ? [
@@ -51,13 +51,11 @@ export async function prompt(ctx: BotContext) {
             content: prompt ?? '',
           },
         ])),
-  ]).slice(-env.MAX_HISTORY_SIZE);
+  ].slice(-env.MAX_HISTORY_SIZE);
 
   const result = await generateText(ctx, { messages });
 
-  ctx.session.messages = excludeToolCallMessages([...messages, ...result.response.messages]).slice(
-    -env.MAX_HISTORY_SIZE,
-  );
+  ctx.session.messages = [...messages, ...result.response.messages].slice(-env.MAX_HISTORY_SIZE);
 
   if (!result.text) {
     console.log('No text generated');
@@ -65,22 +63,6 @@ export async function prompt(ctx: BotContext) {
   }
 
   await sendLongText(ctx, result.text);
-}
-
-function excludeToolCallMessages(messages: CoreMessage[]) {
-  return messages.filter((message) => {
-    if (typeof message.content === 'string') {
-      return true;
-    }
-
-    if (message.role !== 'assistant' && message.role !== 'tool') {
-      return true;
-    }
-
-    return !message.content.find(
-      (content) => content.type === 'tool-call' || content.type === 'tool-result',
-    );
-  });
 }
 
 async function getPhoto(ctx: BotContext) {

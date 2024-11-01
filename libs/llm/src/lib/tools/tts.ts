@@ -28,7 +28,7 @@ export function ttsFactory(ctx: BotContext) {
       await ctx.replyWithVoice(new InputFile(audioBuffer));
 
       return {
-        audioBuffer,
+        result: 'success',
         text,
       };
     },
