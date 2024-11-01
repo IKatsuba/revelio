@@ -52,7 +52,6 @@ export async function generateAnswer(
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
-Current user: ${ctx.from?.username}
 Current chat: ${ctx.chat?.title ?? 'Unknown'}
 Current chat language: ${ctx.session.language ?? 'Unknown'}
 `,

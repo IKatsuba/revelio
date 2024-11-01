@@ -35,7 +35,10 @@ export async function prompt(ctx: BotContext) {
         {
           role: 'user' as const,
           content: [
-            { type: 'text' as const, text: prompt ?? 'What’s in this image?' },
+            {
+              type: 'text' as const,
+              text: `${ctx.from.first_name ?? ctx.from.username}: ${prompt ?? 'What’s in this image?'}`,
+            },
             {
               type: 'image' as const,
               image: photo,
@@ -46,7 +49,14 @@ export async function prompt(ctx: BotContext) {
     : convertToCoreMessages([
         {
           role: 'user',
-          content: prompt ?? '',
+          content: `Username: ${ctx.from.username ?? 'Unknown'}
+User first name: ${ctx.from.first_name ?? 'Unknown'}
+User second name: ${ctx.from.last_name ?? 'Unknown'}
+User id: ${ctx.from.id ?? 'Unknown'}
+Message id: ${ctx.message.message_id ?? 'Unknown'}
+
+Message text from user:
+${prompt ?? ''}`,
         },
       ]);
 
