@@ -27,7 +27,8 @@
       "@revelio/prisma/server": ["libs/prisma/src/server.ts"],
       "@revelio/redis": ["libs/redis/src/index.ts"],
       "@revelio/stripe": ["libs/stripe/src/index.ts"],
-      "@revelio/stripe/server": ["libs/stripe/src/server.ts"]
+      "@revelio/stripe/server": ["libs/stripe/src/server.ts"],
+      "@revelio/utils": ["libs/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
