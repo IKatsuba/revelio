@@ -1,8 +1,8 @@
-import { convertToCoreMessages, CoreMessage } from 'ai';
+import { convertToCoreMessages } from 'ai';
 
-import { BotContext, sendLongText } from '@revelio/bot-utils';
+import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
-import { generateText } from '@revelio/llm/server';
+import { generateAnswer } from '@revelio/llm/server';
 
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -30,39 +30,27 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  const messages = [
-    ...ctx.session.messages,
-    ...(photo
-      ? [
-          {
-            role: 'user' as const,
-            content: [
-              { type: 'text' as const, text: prompt ?? 'What’s in this image?' },
-              {
-                type: 'image' as const,
-                image: photo,
-              },
-            ],
-          },
-        ]
-      : convertToCoreMessages([
-          {
-            role: 'user',
-            content: prompt ?? '',
-          },
-        ])),
-  ].slice(-env.MAX_HISTORY_SIZE);
+  const messages = photo
+    ? [
+        {
+          role: 'user' as const,
+          content: [
+            { type: 'text' as const, text: prompt ?? 'What’s in this image?' },
+            {
+              type: 'image' as const,
+              image: photo,
+            },
+          ],
+        },
+      ]
+    : convertToCoreMessages([
+        {
+          role: 'user',
+          content: prompt ?? '',
+        },
+      ]);
 
-  const result = await generateText(ctx, { messages });
-
-  ctx.session.messages = [...messages, ...result.response.messages].slice(-env.MAX_HISTORY_SIZE);
-
-  if (!result.text) {
-    console.log('No text generated');
-    return;
-  }
-
-  await sendLongText(ctx, result.text);
+  await generateAnswer(ctx, { messages });
 }
 
 async function getPhoto(ctx: BotContext) {

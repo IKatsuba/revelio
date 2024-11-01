@@ -1,7 +1,7 @@
 import { track } from '@vercel/analytics/server';
 import { generateText as __generateText, CoreMessage } from 'ai';
 
-import { BotContext } from '@revelio/bot-utils';
+import { BotContext, sendLongText } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 
 import { openaiProvider } from './openai';
@@ -13,7 +13,7 @@ import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
 import { ttsFactory } from './tools/tts';
 
-export function generateText(
+export async function generateAnswer(
   ctx: BotContext,
   {
     messages,
@@ -21,6 +21,8 @@ export function generateText(
     messages: Array<CoreMessage>;
   },
 ) {
+  const allMessages = [...ctx.session.messages, ...messages].slice(-env.MAX_HISTORY_SIZE);
+
   const tools = {
     getCryptoRate,
     moderateContent,
@@ -32,12 +34,12 @@ export function generateText(
     ...getCurrentBillingPlanToolFactory(ctx),
   };
 
-  return __generateText<typeof tools>({
+  const result = await __generateText<typeof tools>({
     model: openaiProvider('gpt-4o-mini', {
       structuredOutputs: true,
     }),
     temperature: env.TEMPERATURE,
-    messages: excludeToolResultIfItFirst(messages),
+    messages: excludeToolResultIfItFirst(allMessages),
     system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
     maxSteps: 2,
     experimental_continueSteps: true,
@@ -63,6 +65,12 @@ export function generateText(
       }
     },
   });
+
+  ctx.session.messages = [...messages, ...result.response.messages].slice(-env.MAX_HISTORY_SIZE);
+
+  await sendLongText(ctx, result.text);
+
+  return result;
 }
 
 function excludeToolResultIfItFirst(messages: CoreMessage[]): CoreMessage[] {
