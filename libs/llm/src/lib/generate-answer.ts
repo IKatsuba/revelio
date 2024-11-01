@@ -13,6 +13,7 @@ import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-pl
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
+import { setChatLanguageFactory } from './tools/set-chat-language';
 import { ttsFactory } from './tools/tts';
 
 export async function generateAnswer(
@@ -36,6 +37,7 @@ export async function generateAnswer(
     getFromMemory: getFromMemoryToolFactory(ctx),
     generateImage: generateImageFactory(ctx),
     textToSpeech: ttsFactory(ctx),
+    setLanguage: setChatLanguageFactory(ctx),
     ...reminderToolFactory(ctx),
     ...getCurrentBillingPlanToolFactory(ctx),
   };
@@ -46,7 +48,14 @@ export async function generateAnswer(
     }),
     temperature: env.TEMPERATURE,
     messages: excludeToolResultIfItFirst(allMessages),
-    system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
+    system: `${env.ASSISTANT_PROMPT}
+
+Current time: ${new Date().toISOString()}.
+Current plan: ${ctx.session.plan}
+Current user: ${ctx.from?.username}
+Current chat: ${ctx.chat?.title ?? 'Unknown'}
+Current chat language: ${ctx.session.language ?? 'Unknown'}
+`,
     maxSteps: env.MAX_STEPS,
     experimental_continueSteps: true,
     tools: ctx.session.plan === 'free' ? ({} as typeof tools) : tools,
