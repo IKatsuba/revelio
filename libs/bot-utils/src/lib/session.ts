@@ -7,8 +7,8 @@ import { env } from '@revelio/env/server';
 import { SessionData } from './context';
 
 const sessionRedis = new Redis({
-  url: env.BOT_SESSION_REDIS_URL,
-  token: env.BOT_SESSION_REDIS_TOKEN,
+  url: env.UPSTASH_REDIS_URL,
+  token: env.UPSTASH_REDIS_TOKEN,
   automaticDeserialization: false,
 });
 

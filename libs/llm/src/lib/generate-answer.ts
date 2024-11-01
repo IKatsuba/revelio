@@ -41,18 +41,19 @@ export async function generateAnswer(
   };
 
   const result = await __generateText<typeof tools>({
-    model: openaiProvider('gpt-4o-mini', {
+    model: openaiProvider(env.OPENAI_MODEL, {
       structuredOutputs: true,
     }),
     temperature: env.TEMPERATURE,
     messages: excludeToolResultIfItFirst(allMessages),
     system: env.ASSISTANT_PROMPT + `\n\nCurrent time: ${new Date().toISOString()}`,
-    maxSteps: 2,
+    maxSteps: env.MAX_STEPS,
     experimental_continueSteps: true,
     tools: ctx.session.plan === 'free' ? ({} as typeof tools) : tools,
     experimental_telemetry: {
       isEnabled: true,
     },
+    maxTokens: env.MAX_TOKENS,
     onStepFinish: async (event) => {
       for (const toolCall of event.toolCalls) {
         await track(`toolCall:${toolCall.toolName}`, {
@@ -121,7 +122,7 @@ async function addToChatHistory(
     .lrange(`msg_list_${ctx.chatId}`, -env.MAX_HISTORY_SIZE, -1);
 
   for (const [id] of messagesWithId) {
-    pipeline.expire(id, 60 * 60 * 24 * 7);
+    pipeline.expire(id, env.MAX_HISTORY_MESSAGE_TTL);
   }
 
   const [, , messageIds] = await pipeline.exec<[unknown, unknown, string[]]>();
