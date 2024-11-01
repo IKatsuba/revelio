@@ -2,7 +2,7 @@ import { ReminderStatus } from '@prisma/client';
 import { Client } from '@upstash/qstash';
 import { tool } from 'ai';
 import { parseDate } from 'chrono-node';
-import { v4 as uuid } from 'uuid';
+import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext, telegramify } from '@revelio/bot-utils';
@@ -61,7 +61,7 @@ export function reminderToolFactory(ctx: BotContext) {
 
         const formattedMessage = telegramify(message);
 
-        const id = uuid();
+        const id = nanoid();
 
         const { messageId } = await client.publishJSON({
           id: 'sss',
