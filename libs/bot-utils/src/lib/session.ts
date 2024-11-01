@@ -38,9 +38,7 @@ export async function getSession(chatId: number): Promise<SessionData> {
 }
 
 export function getInitialSessionData(): SessionData {
-  return {
-    messages: [],
-  };
+  return {};
 }
 
 export const sessionMiddleware = session({

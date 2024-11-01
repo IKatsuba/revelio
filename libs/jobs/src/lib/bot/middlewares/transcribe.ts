@@ -5,7 +5,7 @@ import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { transcribe } from '@revelio/llm/server';
 
-export function transcribeMiddleware(): Middleware {
+export function transcribeMiddleware(): Middleware<BotContext> {
   return async (ctx: BotContext, next) => {
     await ctx.replyWithChatAction('typing');
 
