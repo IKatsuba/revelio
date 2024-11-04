@@ -1,17 +1,36 @@
+import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
 import { tool } from 'ai';
 import ky from 'ky';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
+import { env } from '@revelio/env/server';
 
 const jinaApi = ky.extend({
   timeout: 1000 * 60 * 5,
 });
 
-const jinaClient = new JinaClient({
-  ky: jinaApi,
-});
+class XJinaClient extends JinaClient {
+  kyFactCheck: KyInstance;
+
+  constructor() {
+    super({
+      ky: jinaApi,
+    });
+
+    this.kyFactCheck = jinaApi.extend({
+      prefixUrl: 'https://g.jina.ai',
+      headers: { Authorization: `Bearer ${env.JINA_API_KEY}` },
+    });
+  }
+
+  async checkFact(query: string) {
+    return this.kyFactCheck.get(query, { headers: this._getHeadersFromOptions({ json: true }) });
+  }
+}
+
+const jinaClient = new XJinaClient();
 
 export function searchToolsFactory(ctx: BotContext) {
   return {
@@ -35,7 +54,7 @@ export function searchToolsFactory(ctx: BotContext) {
           url,
           returnFormat,
           json: true,
-          timeout: 1000 * 60,
+          timeout: 1000 * 60 * 5,
         });
 
         if (returnFormat === 'screenshot') {
@@ -57,6 +76,17 @@ export function searchToolsFactory(ctx: BotContext) {
         }
 
         return result;
+      },
+    }),
+    checkFact: tool({
+      description: 'Check a fact',
+      parameters: z.object({
+        query: z.string(),
+      }),
+      async execute({ query }) {
+        const response = await jinaClient.checkFact(query);
+
+        return response.json();
       },
     }),
   };

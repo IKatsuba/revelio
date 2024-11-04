@@ -57,6 +57,8 @@ Always answer in a language that user is using.`,
 
   CLOUDFLARE_ACCOUNT_ID: z.string(),
   CLOUDFLARE_API_TOKEN: z.string(),
+
+  JINA_API_KEY: z.string(),
 });
 
 export const env = envSchema.parse({
