@@ -10,6 +10,9 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@agentic/ai-sdk": "^7.1.0",
+    "@agentic/core": "^7.1.0",
+    "@agentic/weather": "^7.1.0",
     "@ai-sdk/openai": "^0.0.70",
     "@grammyjs/storage-redis": "^2.4.2",
     "@prisma/client": "^5.20.0",

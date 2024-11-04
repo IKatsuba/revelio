@@ -15,6 +15,7 @@ import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
 import { setChatLanguageFactory } from './tools/set-chat-language';
 import { ttsFactory } from './tools/tts';
+import { weatherTools } from './tools/weather';
 
 export async function generateAnswer(
   ctx: BotContext,
@@ -40,6 +41,7 @@ export async function generateAnswer(
     setLanguage: setChatLanguageFactory(ctx),
     ...reminderToolFactory(ctx),
     ...getCurrentBillingPlanToolFactory(ctx),
+    ...weatherTools,
   };
 
   const result = await __generateText<typeof tools>({
