@@ -1,4 +1,4 @@
-import { convertToCoreMessages } from 'ai';
+import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
@@ -8,9 +8,9 @@ export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
   const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
-  const photo = await getPhoto(ctx);
+  const photoTgUrl = await getPhoto(ctx);
 
-  if (!prompt && !photo) {
+  if (!prompt && !photoTgUrl) {
     await ctx.reply('Please provide a prompt');
     return;
   }
@@ -30,18 +30,27 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  const messages = photo
+  const promptHeader = `Username: ${ctx.from.username ?? 'Unknown'}
+User first name: ${ctx.from.first_name ?? 'Unknown'}
+User second name: ${ctx.from.last_name ?? 'Unknown'}
+User id: ${ctx.from.id ?? 'Unknown'}
+Message id: ${ctx.message.message_id ?? 'Unknown'}
+
+Message text from user:`;
+
+  const messages: CoreMessage[] = photoTgUrl
     ? [
         {
           role: 'user' as const,
           content: [
             {
               type: 'text' as const,
-              text: `${ctx.from.first_name ?? ctx.from.username}: ${prompt ?? 'What’s in this image?'}`,
+              text: `${promptHeader}
+${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
-              image: photo,
+              image: await uploadImg(photoTgUrl.toString()),
             },
           ],
         },
@@ -49,13 +58,7 @@ export async function prompt(ctx: BotContext) {
     : convertToCoreMessages([
         {
           role: 'user',
-          content: `Username: ${ctx.from.username ?? 'Unknown'}
-User first name: ${ctx.from.first_name ?? 'Unknown'}
-User second name: ${ctx.from.last_name ?? 'Unknown'}
-User id: ${ctx.from.id ?? 'Unknown'}
-Message id: ${ctx.message.message_id ?? 'Unknown'}
-
-Message text from user:
+          content: `${promptHeader}
 ${prompt ?? ''}`,
         },
       ]);
@@ -81,4 +84,39 @@ async function getPhoto(ctx: BotContext) {
   const fileData = await ctx.api.getFile(photo.file_id);
 
   return new URL(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`);
+}
+
+async function uploadImg(url: string) {
+  const formData = new FormData();
+  formData.append('url', url);
+  formData.append('requireSignedURLs', 'false');
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+      },
+      body: formData,
+    },
+  );
+
+  const json = await response.json();
+
+  const { result, success, errors } = json as {
+    result: { variants: string[] };
+    success: boolean;
+    errors: string[];
+  };
+
+  if (!success) {
+    throw new Error(errors.join(', '));
+  }
+
+  if (!result.variants.length) {
+    throw new Error('No variants found');
+  }
+
+  return new URL(result.variants[0]);
 }

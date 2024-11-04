@@ -54,6 +54,9 @@ Always answer in a language that user is using.`,
   QSTASH_NEXT_SIGNING_KEY: z.string(),
 
   REMINDERS_AFTER_NOTIFY_CALLBACK_URL: z.string(),
+
+  CLOUDFLARE_ACCOUNT_ID: z.string(),
+  CLOUDFLARE_API_TOKEN: z.string(),
 });
 
 export const env = envSchema.parse({
