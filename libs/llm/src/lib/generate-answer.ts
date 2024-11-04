@@ -13,6 +13,7 @@ import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-pl
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
+import { searchToolsFactory } from './tools/search';
 import { setChatLanguageFactory } from './tools/set-chat-language';
 import { ttsFactory } from './tools/tts';
 import { weatherTools } from './tools/weather';
@@ -42,6 +43,7 @@ export async function generateAnswer(
     ...reminderToolFactory(ctx),
     ...getCurrentBillingPlanToolFactory(ctx),
     ...weatherTools,
+    ...searchToolsFactory(ctx),
   };
 
   const result = await __generateText<typeof tools>({

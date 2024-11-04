@@ -46,7 +46,7 @@ export function generateImageFactory(ctx: BotContext) {
       await ctx.replyWithPhoto(url);
 
       return {
-        url,
+        result: 'Image generated and sent',
         prompt,
       };
     },
