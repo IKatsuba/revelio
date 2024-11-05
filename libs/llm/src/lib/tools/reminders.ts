@@ -31,7 +31,7 @@ export function reminderToolFactory(ctx: BotContext) {
           ),
         timezone: z.string().describe('the timezone to use for the reminder'),
       }),
-      execute: async ({ message, time, timezone }) => {
+      async execute({ message, time, timezone }) {
         if (!ctx.chatId) {
           return {
             status: 'error',
@@ -64,17 +64,14 @@ export function reminderToolFactory(ctx: BotContext) {
         const id = nanoid();
 
         const { messageId } = await client.publishJSON({
-          id: 'sss',
-          url: `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`,
+          url: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           headers: {
             'Content-Type': 'application/json',
           },
-          callback: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           body: {
             id,
-            chat_id: ctx.chatId,
+            update: ctx.update,
             text: formattedMessage,
-            parse_mode: 'MarkdownV2',
           },
           notBefore: Math.floor(date.getTime() / 1000),
         });
@@ -100,7 +97,7 @@ export function reminderToolFactory(ctx: BotContext) {
     getReminders: tool({
       description: 'get all reminders for the user.',
       parameters: z.object({}),
-      execute: async () => {
+      async execute() {
         if (!ctx.chatId) {
           return {
             status: 'error',
@@ -148,7 +145,7 @@ export function reminderToolFactory(ctx: BotContext) {
       parameters: z.object({
         id: z.string().describe('the id of the reminder to delete'),
       }),
-      execute: async ({ id }) => {
+      async execute({ id }) {
         const result = await prisma.reminder.update({
           where: {
             id,
@@ -171,7 +168,7 @@ export function reminderToolFactory(ctx: BotContext) {
     deleteAllReminders: tool({
       description: 'delete all reminders for the user.',
       parameters: z.object({}),
-      execute: async () => {
+      async execute() {
         if (!ctx.chatId) {
           return {
             status: 'error',

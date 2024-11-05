@@ -25,6 +25,7 @@ export async function generateAnswer(
   }: {
     messages: Array<CoreMessage>;
   },
+  other?: Parameters<BotContext['reply']>[1],
 ) {
   const messageIds = await addToChatHistory(ctx, {
     messages,
@@ -89,7 +90,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     messages: result.response.messages,
   });
 
-  await sendLongText(ctx, result.text);
+  await sendLongText(ctx, result.text, other);
 
   return result;
 }
