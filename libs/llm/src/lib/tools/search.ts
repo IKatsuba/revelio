@@ -40,7 +40,19 @@ export function searchToolsFactory(ctx: BotContext) {
         query: z.string(),
       }),
       async execute({ query }) {
-        return jinaClient.search({ query, json: true });
+        const result = await jinaClient.search({ query, json: true });
+
+        return result.data.map((item) => {
+          const tokens = (item as unknown as { usage: { tokens: number } })?.usage?.tokens;
+
+          return {
+            title: item.title,
+            description: item.description,
+            url: item.url,
+            publishedTime: item.publishedTime,
+            content: tokens && tokens >= 10000 ? 'Content too long to display' : item.content,
+          };
+        });
       },
     }),
     readUrl: tool({
