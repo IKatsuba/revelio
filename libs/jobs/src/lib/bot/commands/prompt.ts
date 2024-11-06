@@ -83,13 +83,15 @@ async function getPhoto(ctx: BotContext) {
     return null;
   }
 
+  const fileData = await ctx.api.getFile(photo.file_id);
+
   const tdlib = await createTDLib();
 
   const result = await tdlib.downloadAsBuffer(photo.file_id);
 
   await tdlib.close();
 
-  return new Blob([result]);
+  return new File([result], fileData.file_path);
 }
 
 async function uploadImg(blob: Blob) {
