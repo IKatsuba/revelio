@@ -83,7 +83,9 @@ async function getPhoto(ctx: BotContext) {
 
   const fileData = await ctx.api.getFile(photo.file_id);
 
-  return new URL(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`);
+  console.log(fileData);
+
+  return new URL(`${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileData.file_path}`);
 }
 
 async function uploadImg(url: string) {
@@ -111,6 +113,7 @@ async function uploadImg(url: string) {
   };
 
   if (!success) {
+    console.error(errors);
     throw new Error(errors.join(', '));
   }
 

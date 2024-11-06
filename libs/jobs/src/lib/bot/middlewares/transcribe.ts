@@ -29,7 +29,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     const fileData = await ctx.api.getFile(file.file_id);
 
     const fileResponse = await fetch(
-      `https://api.telegram.org/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
+      `${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
     );
 
     const blob = await fileResponse.clone().blob();

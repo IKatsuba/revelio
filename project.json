@@ -34,6 +34,10 @@
     "stripe:fixtures": {
       "command": "tsx ./scripts/stripe-fixtures.ts",
       "envFile": ".env"
+    },
+    "bot:logout": {
+      "command": "tsx ./scripts/logout.ts",
+      "envFile": ".env"
     }
   }
 }

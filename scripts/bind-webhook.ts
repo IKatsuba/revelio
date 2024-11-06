@@ -1,7 +1,5 @@
 import { Api } from 'grammy';
 
-import { env } from '@revelio/env/server';
-
 const token = process.env.BOT_TOKEN;
 const webhookUrl = process.env.BOT_WEBHOOK_URL;
 const secret = process.env.BOT_WEBHOOK_SECRET;
@@ -11,13 +9,13 @@ if (!token || !webhookUrl) {
 }
 
 const api = new Api(token, {
-  apiRoot: env.TELEGRAM_API_URL,
+  apiRoot: process.env.TELEGRAM_API_URL,
 });
 
 api
   .getMe()
   .then((me) => {
-    console.log(`Bot: ${me}`);
+    console.log(`Bot:`, me);
   })
   .then(() =>
     api.setWebhook(webhookUrl, {

@@ -33,7 +33,7 @@ Always answer in a language that user is using.`,
   TTS_VOICE: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']).default('alloy'),
 
   BOT_TOKEN: z.string(),
-  BOT_WEBHOOK_SECRET: z.string(),
+  BOT_WEBHOOK_SECRET: z.string().optional(),
   BOT_WEBHOOK_URL: z.string(),
 
   TELEGRAM_API_URL: z.string().default('https://api.telegram.org'),
