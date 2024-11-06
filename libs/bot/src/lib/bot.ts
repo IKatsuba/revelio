@@ -7,7 +7,11 @@ import { groupWebhookComposer } from './composers/group-webhook-composer';
 import { privateWebhookComposer } from './composers/private-webhook-composer';
 
 export async function initWebhookBot(): Promise<Bot<BotContext>> {
-  const bot = new Bot<BotContext>(env.BOT_TOKEN);
+  const bot = new Bot<BotContext>(env.BOT_TOKEN, {
+    client: {
+      apiRoot: env.TELEGRAM_API_URL,
+    },
+  });
 
   bot.use(sessionMiddleware);
 

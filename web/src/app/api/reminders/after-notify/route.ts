@@ -28,7 +28,11 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
       },
     });
 
-    const bot = new Bot<BotContext>(env.BOT_TOKEN);
+    const bot = new Bot<BotContext>(env.BOT_TOKEN, {
+      client: {
+        apiRoot: env.TELEGRAM_API_URL,
+      },
+    });
     bot.use(sessionMiddleware);
 
     bot.on('message', async (ctx) => {

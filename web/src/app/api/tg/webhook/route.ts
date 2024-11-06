@@ -1,4 +1,5 @@
 import { initWebhookBot } from '@revelio/bot/server';
+import { env } from '@revelio/env/server';
 
 export const maxDuration = 60;
 
@@ -22,14 +23,14 @@ export const POST = validateWebhook(async (request: Request) => {
 
 function validateWebhook(handler: (req: Request) => Promise<Response>) {
   return (req: Request) => {
-    if (!process.env.BOT_WEBHOOK_SECRET) {
+    if (!env.BOT_WEBHOOK_SECRET) {
       return handler(req);
     } else {
       const token = req.headers.get('x-telegram-bot-api-secret-token');
-      if (process.env.BOT_WEBHOOK_SECRET === token) {
+      if (env.BOT_WEBHOOK_SECRET === token) {
         return handler(req);
       } else {
-        console.log('Secret token does not match:', token, process.env.BOT_WEBHOOK_SECRET);
+        console.warn('Secret token does not match', token);
       }
     }
 
