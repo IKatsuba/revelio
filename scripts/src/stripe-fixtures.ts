@@ -1,8 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import Stripe from 'stripe';
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-export const prisma = new PrismaClient();
+import { prisma } from '@revelio/prisma/server';
+import { stripe } from '@revelio/stripe/server';
 
 const subscriptionPlans = [
   {

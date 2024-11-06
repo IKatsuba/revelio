@@ -28,15 +28,15 @@
       }
     },
     "bind:webhook": {
-      "command": "tsx ./scripts/bind-webhook.ts",
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/bind-webhook.ts",
       "envFile": ".env"
     },
     "stripe:fixtures": {
-      "command": "tsx ./scripts/stripe-fixtures.ts",
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/stripe-fixtures.ts",
       "envFile": ".env"
     },
     "bot:logout": {
-      "command": "tsx ./scripts/logout.ts",
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/logout.ts",
       "envFile": ".env"
     }
   }

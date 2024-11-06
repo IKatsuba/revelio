@@ -1,12 +1,8 @@
 import { Api } from 'grammy';
 
-const token = process.env.BOT_TOKEN;
+import { env } from '@revelio/env/server';
 
-if (!token) {
-  throw new Error('BOT_TOKEN and BOT_WEBHOOK_URL must be set');
-}
-
-const api = new Api(token);
+const api = new Api(env.BOT_TOKEN);
 
 api
   .getMe()
