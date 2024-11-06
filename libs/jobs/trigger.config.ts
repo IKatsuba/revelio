@@ -20,6 +20,7 @@ export default defineConfig({
   },
   dirs: ['libs/jobs/src/lib'],
   build: {
+    external: ['@mtcute/wasm'],
     extensions: [
       syncEnvVars(() => Object.entries(process.env).map(([name, value]) => ({ name, value }))),
       prismaExtension({

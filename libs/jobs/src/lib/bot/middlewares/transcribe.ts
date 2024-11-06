@@ -1,9 +1,9 @@
 import { Middleware } from 'grammy';
-import { parseBlob } from 'music-metadata';
 
 import { BotContext } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
 import { transcribe } from '@revelio/llm/server';
+
+import { createTDLib } from '../tdlib';
 
 export function transcribeMiddleware(): Middleware<BotContext> {
   return async (ctx: BotContext, next) => {
@@ -24,24 +24,17 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       return;
     }
 
-    console.log('Transcribing audio');
-
     const fileData = await ctx.api.getFile(file.file_id);
 
-    const fileResponse = await fetch(
-      `${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileData.file_path}`,
-    );
+    const tdlib = await createTDLib();
 
-    const blob = await fileResponse.clone().blob();
+    const buffer = await tdlib.downloadAsBuffer(file.file_id);
 
-    const metadata = await parseBlob(blob, { duration: true });
+    const blob = new File([buffer], fileData.file_path ?? 'audio.ogg');
 
-    if (!metadata.format.duration) {
-      await ctx.reply('Failed to transcribe audio');
-      return;
-    }
+    ctx.transcription = await transcribe(blob);
 
-    ctx.transcription = await transcribe(fileResponse);
+    await tdlib.close();
 
     await next();
   };
