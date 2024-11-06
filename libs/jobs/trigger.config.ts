@@ -8,7 +8,7 @@ export default defineConfig({
   project: 'proj_xstwsidsvhoemwrosezu',
   runtime: 'node',
   logLevel: 'log',
-  machine: 'small-2x',
+  machine: 'small-1x',
   retries: {
     enabledInDev: true,
     default: {

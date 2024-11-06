@@ -1,7 +1,8 @@
 import { Middleware } from 'grammy';
+import { nanoid } from 'nanoid';
 
 import { BotContext } from '@revelio/bot-utils';
-import { transcribe } from '@revelio/llm/server';
+import { generateAnswer, transcribe } from '@revelio/llm/server';
 
 import { createTDLib } from '../tdlib';
 
@@ -24,13 +25,49 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       return;
     }
 
-    const fileData = await ctx.api.getFile(file.file_id);
+    if (file.duration > 60) {
+      const toolCallId = `tool_${nanoid()}`;
+
+      await generateAnswer(ctx, {
+        messages: [
+          {
+            role: 'user',
+            content: 'Some audio file',
+          },
+          {
+            role: 'assistant',
+            content: [
+              {
+                type: 'tool-call',
+                toolCallId,
+                toolName: 'transcribe',
+                args: {},
+              },
+            ],
+          },
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId,
+                toolName: 'transcribe',
+                result: {
+                  error: `This audio file is too long to transcribe. Please try with a file that is less than 60 seconds long.`,
+                },
+              },
+            ],
+          },
+        ],
+      });
+      return;
+    }
 
     const tdlib = await createTDLib();
 
     const buffer = await tdlib.downloadAsBuffer(file.file_id);
 
-    const blob = new File([buffer], fileData.file_path ?? 'audio.ogg');
+    const blob = new File([buffer], file.file_id);
 
     ctx.transcription = await transcribe(blob);
 
