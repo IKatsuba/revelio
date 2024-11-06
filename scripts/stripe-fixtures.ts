@@ -14,7 +14,7 @@ const subscriptionPlans = [
       '🎤 Voice message transcription: Up to 5 minutes per day',
       '⏰ Reminders: Create up to 3 reminders',
       '💾 Information storage: Save up to 5 requests in bot memory',
-      '📜 Basic functions: Access to basic commands (/help, /usage, /reset, etc.)',
+      '📜 Basic functions: Access to basic commands (/help, /reset, etc.)',
       '📊 Usage statistics: Limited',
     ],
   },

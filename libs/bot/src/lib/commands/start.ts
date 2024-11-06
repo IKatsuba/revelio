@@ -1,9 +1,9 @@
 import { CommandContext } from 'grammy';
+import { nanoid } from 'nanoid';
 
-import { BotContext } from '@revelio/bot-utils';
+import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
+import { generateAnswer } from '@revelio/llm/server';
 import { prisma } from '@revelio/prisma/server';
-
-import { help } from './help';
 
 export async function start(ctx: CommandContext<BotContext>) {
   await ctx.replyWithChatAction('typing');
@@ -40,5 +40,49 @@ export async function start(ctx: CommandContext<BotContext>) {
     });
   }
 
-  await help(ctx);
+  const toolCallId = `tool_${nanoid()}`;
+
+  await generateAnswer(ctx, {
+    messages: [
+      {
+        role: 'user',
+        content: '/start',
+      },
+      {
+        role: 'assistant',
+        content: [
+          {
+            type: 'tool-call',
+            toolCallId,
+            toolName: 'startMsg',
+            args: {},
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId,
+            toolName: 'startMsg',
+            result: {
+              system: `This is the hello message to user.
+You need to replace this with the actual message you want to show to the user.
+Add more information about the bot and how to use it. Describe your tooling and how to use it.
+Describe the plans, if it is unknown, show the user how to upgrade (/billing command).`,
+              startMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
+Current plan: ${ctx.session.plan ?? 'Unknown'}
+Plan description:
+${plansDescription}
+
+Help message:
+${helpText}
+`,
+            },
+          },
+        ],
+      },
+    ],
+  });
 }

@@ -1,23 +1,53 @@
-import { BotContext, telegramify } from '@revelio/bot-utils';
+import { convertToCoreMessages } from 'ai';
+import { nanoid } from 'nanoid';
+
+import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
+import { generateAnswer } from '@revelio/llm/server';
 
 export async function help(ctx: BotContext) {
-  await ctx.reply(
-    telegramify(`👋 **I'm Revelio, your personal assistant!**
+  const toolCallId = `tool_${nanoid()}`;
 
-Here are some things I can help you with:
+  await generateAnswer(ctx, {
+    messages: [
+      {
+        role: 'user',
+        content: '/help',
+      },
+      {
+        role: 'assistant',
+        content: [
+          {
+            type: 'tool-call',
+            toolCallId,
+            toolName: 'helpMsg',
+            args: {},
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId,
+            toolName: 'helpMsg',
+            result: {
+              system: `This is the help message to user.
+You need to replace this with the actual message you want to show to the user.
+Add more information about the bot and how to use it. Describe your tooling and how to use it.
+Give just user plan description and how to upgrade (/billing command).`,
+              helpMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
+Current plan: ${ctx.session.plan ?? 'Unknown'}
+Plan description:
+${plansDescription}
 
-💡 **/help** – Show this message
-💳 **/billing** – Manage your billing information
-📊 **/usage** – Get your current usage statistics
-
-🔄 **/reset** – Reset the conversation.
-
-You can also send me text messages, and I'll respond to them. 📜
-
-Send me a voice message or file, and I'll transcribe it for you! 🎤
-`),
-    {
-      parse_mode: 'MarkdownV2',
-    },
-  );
+Help message:
+${helpText}
+`,
+            },
+          },
+        ],
+      },
+    ],
+  });
 }

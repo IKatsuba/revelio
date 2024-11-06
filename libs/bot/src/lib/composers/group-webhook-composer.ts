@@ -8,7 +8,6 @@ import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
 import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
 import { reset } from '../commands/reset';
-import { usage } from '../commands/usage';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
@@ -57,7 +56,6 @@ groupWebhookComposer.callbackQuery(
   track('callbackQuery:billing'),
   callbackQuerySubscriptionFree,
 );
-groupWebhookComposer.command('usage', track('command:usage'), usage);
 
 const mentionFilter = (ctx: Context) =>
   Context.has.text(/revelio/gi)(ctx) ||

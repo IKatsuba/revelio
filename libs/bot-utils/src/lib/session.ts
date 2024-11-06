@@ -38,7 +38,9 @@ export async function getSession(chatId: number): Promise<SessionData> {
 }
 
 export function getInitialSessionData(): SessionData {
-  return {};
+  return {
+    plan: 'free',
+  };
 }
 
 export const sessionMiddleware = session({

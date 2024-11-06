@@ -9,7 +9,7 @@ import { redis } from '@revelio/redis';
 import { openaiProvider } from './openai';
 import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
-import { getCurrentBillingPlanToolFactory } from './tools/get-current-billing-plan';
+import { getCurrentPlanToolFactory } from './tools/get-current-plan';
 import { addToMemoryToolFactory, getFromMemoryToolFactory } from './tools/memory';
 import { moderateContent } from './tools/moderate-content';
 import { reminderToolFactory } from './tools/reminders';
@@ -22,16 +22,22 @@ export async function generateAnswer(
   ctx: BotContext,
   {
     messages,
+    system,
   }: {
-    messages: Array<CoreMessage>;
+    messages?: Array<CoreMessage>;
+    system?: string;
   },
   other?: Parameters<BotContext['reply']>[1],
 ) {
-  const messageIds = await addToChatHistory(ctx, {
-    messages,
-  });
+  const messageIds =
+    messages && messages.length > 0
+      ? await addToChatHistory(ctx, {
+          messages,
+        })
+      : [];
 
-  const allMessages = await redis.mget<CoreMessage[]>(messageIds);
+  const allMessages =
+    messageIds && messageIds.length > 0 ? await redis.mget<CoreMessage[]>(messageIds) : [];
 
   const tools = {
     getCryptoRate,
@@ -42,7 +48,7 @@ export async function generateAnswer(
     textToSpeech: ttsFactory(ctx),
     setLanguage: setChatLanguageFactory(ctx),
     ...reminderToolFactory(ctx),
-    ...getCurrentBillingPlanToolFactory(ctx),
+    ...getCurrentPlanToolFactory(ctx),
     ...weatherTools,
     ...searchToolsFactory(ctx),
   };
@@ -53,7 +59,9 @@ export async function generateAnswer(
     }),
     temperature: env.TEMPERATURE,
     messages: excludeToolResultIfItFirst(allMessages),
-    system: `${env.ASSISTANT_PROMPT}
+    system:
+      system ||
+      `${env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
@@ -96,6 +104,10 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
 }
 
 function excludeToolResultIfItFirst(messages: CoreMessage[]): CoreMessage[] {
+  if (messages.length === 0) {
+    return messages;
+  }
+
   const message = messages[0];
 
   if (message.role !== 'tool') {

@@ -8,7 +8,6 @@ import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
-import { usage } from '../commands/usage';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
@@ -24,7 +23,6 @@ privateWebhookComposer.callbackQuery(
   track('callbackQuery:billing'),
   callbackQuerySubscriptionFree,
 );
-privateWebhookComposer.command('usage', track('command:usage'), usage);
 
 privateWebhookComposer.on(
   [

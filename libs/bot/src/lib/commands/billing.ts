@@ -1,45 +1,15 @@
 import { InlineKeyboard } from 'grammy';
 
-import { BotContext, telegramify } from '@revelio/bot-utils';
+import { BotContext, plansDescription, telegramify } from '@revelio/bot-utils';
+import { generateAnswer } from '@revelio/llm/server';
 import { prisma } from '@revelio/prisma/server';
 import { stripe } from '@revelio/stripe/server';
 
 const howYouPay = `Choose a subscription plan that suits your needs:
 
-- **Free Plan**
-  - Price: Free
-  - Includes:
-    - 📝 Text messages: Up to 10 messages per day
-  - Limitations:
-    - ❌ Image generation: Not available
-    - ❌ Speech synthesis (TTS): Not available
-    - ❌ Reminders: Not available
-    - ❌ Bot has no long-term memory
-
-
-- **Basic Plan**
-  - Price: $4.99 per month
-  - Includes:
-    - 📝 Text messages: Up to 100 messages per day
-    - 🖼️ Image generation: Up to 10 images per month
-    - 🔊 Speech synthesis (TTS): Up to 10,000 characters per month
-    - ⏰ Reminders: Create up to 20 reminders
-    - 💾 Bot can remember any kind of information
-    - 📩 Priority support
-
-- **Premium Plan**
-  - Price: $9.99 per month
-  - Includes:
-    - 📝 Text messages: Up to 500 messages per day
-    - 🖼️ Image generation: Up to 50 images per month
-    - 🔊 Speech synthesis (TTS): Up to 50,000 characters per month
-    - ⏰ Reminders: No limits
-    - 💾 Bot can remember any kind of information
-    - 🚀 Access to new features: Early access
-    - 📩 Priority support`;
+${plansDescription}`;
 
 export async function billing(ctx: BotContext) {
-  console.log(`New message received from user ${ctx.from?.username} (id: ${ctx.from?.id})`);
   await ctx.replyWithChatAction('typing');
 
   if (!ctx.chatId) {
@@ -78,11 +48,18 @@ export async function billing(ctx: BotContext) {
       return_url: 'https://t.me/RevelioGPTBot',
     });
 
-    await ctx.reply(
-      telegramify(`You have already added your payment method. But you can always manage it.`),
+    await generateAnswer(
+      ctx,
       {
-        reply_markup: new InlineKeyboard().url('Manage payment method', session.url),
-        parse_mode: 'MarkdownV2',
+        messages: [
+          {
+            role: 'user',
+            content: '/billing',
+          },
+        ],
+      },
+      {
+        reply_markup: new InlineKeyboard().url('Manage your plan', session.url),
       },
     );
 

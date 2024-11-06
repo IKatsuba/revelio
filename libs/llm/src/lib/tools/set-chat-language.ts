@@ -11,6 +11,10 @@ export function setChatLanguageFactory(ctx: BotContext) {
     }),
     async execute({ language }) {
       ctx.session.language = language;
+
+      return {
+        result: `Chat language set to ${language}`,
+      };
     },
   });
 }
