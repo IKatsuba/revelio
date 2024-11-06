@@ -37,6 +37,8 @@ Always answer in a language that user is using.`,
   BOT_WEBHOOK_URL: z.string(),
 
   TELEGRAM_API_URL: z.string().default('https://api.telegram.org'),
+  TELEGRAM_API_ID: z.coerce.number().int(),
+  TELEGRAM_API_HASH: z.string(),
 
   ADMIN_USER_IDS: z
     .string()

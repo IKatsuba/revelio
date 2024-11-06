@@ -16,6 +16,7 @@
     "@agentic/weather": "^7.1.0",
     "@ai-sdk/openai": "^0.0.70",
     "@grammyjs/storage-redis": "^2.4.2",
+    "@mtcute/node": "^0.17.0",
     "@prisma/client": "^5.20.0",
     "@prisma/instrumentation": "^5.20.0",
     "@traceloop/instrumentation-openai": "^0.11.1",

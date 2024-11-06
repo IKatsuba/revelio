@@ -4,13 +4,15 @@ import { BotContext } from '@revelio/bot-utils';
 import { env } from '@revelio/env/server';
 import { generateAnswer } from '@revelio/llm/server';
 
+import { createTDLib } from '../tdlib';
+
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
   const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
-  const photoTgUrl = await getPhoto(ctx);
+  const buffer = await getPhoto(ctx);
 
-  if (!prompt && !photoTgUrl) {
+  if (!prompt && !buffer) {
     await ctx.reply('Please provide a prompt');
     return;
   }
@@ -38,7 +40,7 @@ Message id: ${ctx.message.message_id ?? 'Unknown'}
 
 Message text from user:`;
 
-  const messages: CoreMessage[] = photoTgUrl
+  const messages: CoreMessage[] = buffer
     ? [
         {
           role: 'user' as const,
@@ -50,7 +52,7 @@ ${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
-              image: await uploadImg(photoTgUrl.toString()),
+              image: await uploadImg(buffer),
             },
           ],
         },
@@ -81,16 +83,18 @@ async function getPhoto(ctx: BotContext) {
     return null;
   }
 
-  const fileData = await ctx.api.getFile(photo.file_id);
+  const tdlib = await createTDLib();
 
-  console.log(fileData);
+  const result = await tdlib.downloadAsBuffer(photo.file_id);
 
-  return new URL(`${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileData.file_path}`);
+  await tdlib.close();
+
+  return new Blob([result]);
 }
 
-async function uploadImg(url: string) {
+async function uploadImg(blob: Blob) {
   const formData = new FormData();
-  formData.append('url', url);
+  formData.append('file', blob);
   formData.append('requireSignedURLs', 'false');
 
   const response = await fetch(
