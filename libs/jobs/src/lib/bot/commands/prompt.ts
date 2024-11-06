@@ -91,7 +91,7 @@ async function getPhoto(ctx: BotContext) {
 
   await tdlib.close();
 
-  return new File([result], fileData.file_path);
+  return new File([result], fileData.file_path!);
 }
 
 async function uploadImg(blob: Blob) {
