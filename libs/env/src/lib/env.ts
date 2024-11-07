@@ -21,9 +21,8 @@ Always answer in a language that user is using.`,
   MAX_TOKENS: z.coerce.number().int().default(2048),
   MAX_STEPS: z.coerce.number().int().default(5),
   TEMPERATURE: z.coerce.number().default(0),
-  IMAGE_MODEL: z.enum(['dall-e-2', 'dall-e-3']).default('dall-e-3'),
+  IMAGE_MODEL: z.enum(['dall-e-2', 'dall-e-3']).default('dall-e-2'),
   IMAGE_QUALITY: z.enum(['standard', 'hd']).default('standard'),
-  IMAGE_STYLE: z.enum(['vivid', 'natural']).default('natural'),
   IMAGE_SIZE: z
     .enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'])
     .default('1024x1024'),

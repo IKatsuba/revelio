@@ -15,7 +15,7 @@ export function generateImageFactory(ctx: BotContext) {
       prompt: z.string().describe('the prompt for the image'),
     }),
     execute: async ({ prompt }, { abortSignal }) => {
-      const limit = ctx.session.plan === 'premium' ? 50 : 10;
+      const limit = ctx.session.plan === 'premium' ? 50 : 20;
 
       const imageRateLimit = new Ratelimit({
         redis,

@@ -9,7 +9,6 @@ export async function generateImage(prompt: string, { signal }: { signal?: Abort
       n: 1,
       model: env.IMAGE_MODEL,
       quality: env.IMAGE_QUALITY,
-      style: env.IMAGE_STYLE,
       size: env.IMAGE_SIZE,
     },
     {
