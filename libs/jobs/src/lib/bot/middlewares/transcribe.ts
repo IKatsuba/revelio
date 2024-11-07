@@ -60,6 +60,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
           },
         ],
       });
+
       return;
     }
 
@@ -67,9 +68,11 @@ export function transcribeMiddleware(): Middleware<BotContext> {
 
     const buffer = await tdlib.downloadAsBuffer(file.file_id);
 
-    const blob = new File([buffer], file.file_id);
+    const blob = new File([buffer], file.file_id, {
+      type: ('mime_type' in file && file.mime_type) || 'audio/ogg',
+    });
 
-    ctx.transcription = await transcribe(blob);
+    ctx.transcription = await transcribe(file.file_unique_id, blob);
 
     await tdlib.close();
 

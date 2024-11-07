@@ -1,14 +1,14 @@
 import { Update } from '@grammyjs/types';
-import { task } from '@trigger.dev/sdk/v3';
+import { logger, task } from '@trigger.dev/sdk/v3';
 
 import { initTaskBot } from './bot/bot';
 
 export const promptTask = task({
   id: 'prompt',
   async run(payload: Update) {
-    const bot = await initTaskBot();
+    const bot = await logger.trace('init-bot', () => initTaskBot());
 
-    await bot.handleUpdate(payload);
+    await logger.trace('handle-update', () => bot.handleUpdate(payload));
   },
 });
 
