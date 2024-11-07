@@ -1,3 +1,4 @@
+import { logger } from '@trigger.dev/sdk/v3';
 import { Middleware } from 'grammy';
 import { nanoid } from 'nanoid';
 
@@ -64,17 +65,23 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       return;
     }
 
-    const tdlib = await createTDLib();
+    await logger.trace('transcribeMiddleware', async () => {
+      const tdlib = await logger.trace('createTDLib', () => createTDLib());
 
-    const buffer = await tdlib.downloadAsBuffer(file.file_id);
+      const buffer = await logger.trace('tdlib.downloadAsBuffer', () =>
+        tdlib.downloadAsBuffer(file.file_id),
+      );
 
-    const blob = new File([buffer], file.file_id, {
-      type: ('mime_type' in file && file.mime_type) || 'audio/ogg',
+      const blob = new File([buffer], file.file_id, {
+        type: ('mime_type' in file && file.mime_type) || 'audio/ogg',
+      });
+
+      ctx.transcription = await logger.trace('transcribe', () =>
+        transcribe(file.file_unique_id, blob),
+      );
+
+      await tdlib.close();
     });
-
-    ctx.transcription = await transcribe(file.file_unique_id, blob);
-
-    await tdlib.close();
 
     await next();
   };

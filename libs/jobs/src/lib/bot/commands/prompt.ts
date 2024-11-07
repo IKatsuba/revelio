@@ -1,3 +1,5 @@
+import { Document, PhotoSize } from '@grammyjs/types';
+import { logger } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -10,9 +12,9 @@ export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
   const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
-  const buffer = await getPhoto(ctx);
+  const photo = await getPhoto(ctx);
 
-  if (!prompt && !buffer) {
+  if (!prompt && !photo) {
     await ctx.reply('Please provide a prompt');
     return;
   }
@@ -40,7 +42,7 @@ Message id: ${ctx.message.message_id ?? 'Unknown'}
 
 Message text from user:`;
 
-  const messages: CoreMessage[] = buffer
+  const messages: CoreMessage[] = photo
     ? [
         {
           role: 'user' as const,
@@ -52,7 +54,7 @@ ${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
-              image: await uploadImg(buffer),
+              image: await logger.trace('getPhotoUrl', () => getPhotoUrl(photo)),
             },
           ],
         },
@@ -83,13 +85,7 @@ async function getPhoto(ctx: BotContext) {
     return null;
   }
 
-  const tdlib = await createTDLib();
-
-  const result = await tdlib.downloadAsBuffer(photo.file_id);
-
-  await tdlib.close();
-
-  return new File([result], photo.file_id);
+  return photo;
 }
 
 async function uploadImg(blob: Blob) {
@@ -126,4 +122,20 @@ async function uploadImg(blob: Blob) {
   }
 
   return new URL(result.variants[0]);
+}
+
+async function getPhotoUrl(photo: PhotoSize | Document) {
+  const tdlib = await logger.trace('createTDLib', () => createTDLib());
+
+  const result = await logger.trace('tdlib.downloadAsBuffer', () =>
+    tdlib.downloadAsBuffer(photo.file_id),
+  );
+
+  await tdlib.close();
+
+  const file = new File([result], photo.file_id, {
+    type: 'mime_type' in photo ? (photo.mime_type ?? undefined) : undefined,
+  });
+
+  return logger.trace('uploadImg', () => uploadImg(file));
 }
