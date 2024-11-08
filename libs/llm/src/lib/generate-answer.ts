@@ -75,23 +75,6 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
       isEnabled: true,
     },
     maxTokens: env.MAX_TOKENS,
-    onStepFinish: async (event) => {
-      for (const toolCall of event.toolCalls) {
-        await track(`toolCall:${toolCall.toolName}`, {
-          chatId: ctx.chatId ?? 'Unknown',
-          userId: ctx.from?.id ?? 'Unknown',
-          plan: ctx.session.plan ?? 'Unknown',
-        });
-      }
-
-      for (const toolCall of event.toolResults) {
-        await track(`toolResult:${toolCall.toolName}`, {
-          chatId: ctx.chatId ?? 'Unknown',
-          userId: ctx.from?.id ?? 'Unknown',
-          plan: ctx.session.plan ?? 'Unknown',
-        });
-      }
-    },
   });
 
   await addToChatHistory(ctx, {
