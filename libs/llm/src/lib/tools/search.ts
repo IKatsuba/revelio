@@ -25,8 +25,28 @@ class XJinaClient extends JinaClient {
     });
   }
 
-  async checkFact(query: string) {
-    return this.kyFactCheck.get(query, { headers: this._getHeadersFromOptions({ json: true }) });
+  async checkFact(query: string): Promise<{
+    code: number;
+    status: number;
+    data: {
+      factuality: number;
+      result: boolean;
+      reason: string;
+      usage: {
+        tokens: number;
+      };
+      references: {
+        url: string;
+        keyQuote: string;
+        isSupportive: string;
+      }[];
+    };
+  }> {
+    const response = await this.kyFactCheck.get(query, {
+      headers: this._getHeadersFromOptions({ json: true }),
+    });
+
+    return response.json();
   }
 }
 
@@ -98,7 +118,11 @@ export function searchToolsFactory(ctx: BotContext) {
       async execute({ query }) {
         const response = await jinaClient.checkFact(query);
 
-        return response.json();
+        return {
+          result: response.data.result,
+          factuality: response.data.factuality,
+          reason: response.data.reason,
+        };
       },
     }),
   };
