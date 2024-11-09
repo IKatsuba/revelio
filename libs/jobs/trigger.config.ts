@@ -21,7 +21,7 @@ export default defineConfig({
   },
   dirs: ['libs/jobs/src/lib'],
   build: {
-    external: ['@mtcute/wasm'],
+    external: ['@mtcute/wasm', 'node-fetch', 'abort-controller'],
     extensions: [
       syncEnvVars(() => Object.entries(process.env).map(([name, value]) => ({ name, value }))),
       prismaExtension({
