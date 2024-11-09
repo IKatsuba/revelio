@@ -54,6 +54,9 @@ Always answer in a language that user is using.`,
   UPSTASH_VECTOR_REST_URL: z.string(),
   UPSTASH_VECTOR_REST_TOKEN: z.string(),
 
+  WEB_SEARCH_VECTOR_REST_URL: z.string(),
+  WEB_SEARCH_VECTOR_REST_TOKEN: z.string(),
+
   QSTASH_URL: z.string(),
   QSTASH_TOKEN: z.string(),
   QSTASH_CURRENT_SIGNING_KEY: z.string(),

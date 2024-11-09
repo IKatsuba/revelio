@@ -5,8 +5,8 @@ import { initTaskBot } from './bot/bot';
 
 export const promptTask = task({
   id: 'prompt',
-  async run(payload: Update) {
-    const bot = await logger.trace('init-bot', () => initTaskBot());
+  async run(payload: Update, { signal }) {
+    const bot = await logger.trace('init-bot', () => initTaskBot({ signal }));
 
     await logger.trace('handle-update', () => bot.handleUpdate(payload));
   },

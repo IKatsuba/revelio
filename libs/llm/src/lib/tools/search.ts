@@ -1,7 +1,10 @@
 import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
+import { MarkdownTextSplitter } from '@langchain/textsplitters';
+import { Index } from '@upstash/vector';
 import { tool } from 'ai';
 import ky from 'ky';
+import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -9,6 +12,11 @@ import { env } from '@revelio/env/server';
 
 const jinaApi = ky.extend({
   timeout: 1000 * 60 * 5,
+});
+
+const index = new Index({
+  url: env.WEB_SEARCH_VECTOR_REST_URL,
+  token: env.WEB_SEARCH_VECTOR_REST_TOKEN,
 });
 
 class XJinaClient extends JinaClient {
@@ -60,19 +68,75 @@ export function searchToolsFactory(ctx: BotContext) {
         query: z.string(),
       }),
       async execute({ query }) {
-        const result = await jinaClient.search({ query, json: true });
+        console.log('searching', query);
+        const { data: items } = await jinaClient.search({ query, json: true });
 
-        return result.data.map((item) => {
-          const tokens = (item as unknown as { usage: { tokens: number } })?.usage?.tokens;
-
-          return {
-            title: item.title,
-            description: item.description,
-            url: item.url,
-            publishedTime: item.publishedTime,
-            content: tokens && tokens >= 10000 ? 'Content too long to display' : item.content,
-          };
+        console.log('items', items);
+        const mdSplitter = new MarkdownTextSplitter({
+          chunkSize: 1000,
+          chunkOverlap: 0,
         });
+
+        for (const item of items) {
+          const docs = await mdSplitter.createDocuments([item.content || item.title]);
+
+          docs.length &&
+            (await index.upsert(
+              docs.map((doc) => ({
+                id: nanoid(),
+                data: doc.pageContent,
+                metadata: {
+                  title: item.title,
+                  url: item.url,
+                  loc: doc.metadata.loc,
+                },
+              })),
+            ));
+          console.log('indexed', item.url);
+        }
+
+        const searchContext = await index.query<{
+          url: string;
+          title: string;
+          loc: {
+            lines: {
+              from: number;
+              to: number;
+            };
+          };
+        }>({
+          data: query,
+          filter: items.map((item) => `url = '${item.url}'`).join(' OR '),
+          topK: 10,
+          includeData: true,
+          includeMetadata: true,
+        });
+
+        const groupedSearchContext = searchContext.reduce(
+          (acc, item) => {
+            if (!acc[item.metadata!.url]) {
+              acc[item.metadata!.url] = [];
+            }
+
+            acc[item.metadata!.url].push(item);
+
+            return acc;
+          },
+          {} as Record<string, typeof searchContext>,
+        );
+
+        const sortedSearchContext = Object.entries(groupedSearchContext).map(([, items]) =>
+          items.sort((a, b) => a.metadata!.loc.lines.from - b.metadata!.loc.lines.from),
+        );
+
+        return {
+          result: sortedSearchContext
+            .map(
+              (items) =>
+                `## ${items[0].metadata!.title}\n\n${items.map((item) => item.data).join('\n\n')}`,
+            )
+            .join('\n\n---\n\n'),
+        };
       },
     }),
     readUrl: tool({
