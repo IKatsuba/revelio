@@ -1,3 +1,4 @@
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 import { OpenAIInstrumentation } from '@traceloop/instrumentation-openai';
 import { syncEnvVars } from '@trigger.dev/build/extensions/core';
@@ -30,5 +31,9 @@ export default defineConfig({
       }),
     ],
   },
-  instrumentations: [new PrismaInstrumentation(), new OpenAIInstrumentation()],
+  instrumentations: [
+    new PrismaInstrumentation(),
+    new OpenAIInstrumentation(),
+    new UndiciInstrumentation(),
+  ],
 });

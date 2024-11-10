@@ -1,6 +1,7 @@
 import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
 import { MarkdownTextSplitter } from '@langchain/textsplitters';
+import { Redis } from '@upstash/redis';
 import { Index } from '@upstash/vector';
 import { tool } from 'ai';
 import ky from 'ky';
@@ -17,6 +18,11 @@ const jinaApi = ky.extend({
 const index = new Index({
   url: env.WEB_SEARCH_VECTOR_REST_URL,
   token: env.WEB_SEARCH_VECTOR_REST_TOKEN,
+});
+
+const redis = new Redis({
+  url: env.UPSTASH_REDIS_URL,
+  token: env.UPSTASH_REDIS_TOKEN,
 });
 
 class XJinaClient extends JinaClient {
@@ -78,6 +84,11 @@ export function searchToolsFactory(ctx: BotContext) {
         });
 
         for (const item of items) {
+          if (await redis.get(`indexed:${item.url}`)) {
+            console.log('already indexed', item.url);
+            continue;
+          }
+
           const docs = await mdSplitter.createDocuments([item.content || item.title]);
 
           docs.length &&
@@ -92,7 +103,11 @@ export function searchToolsFactory(ctx: BotContext) {
                 },
               })),
             ));
+
           console.log('indexed', item.url);
+          await redis.set(`indexed:${item.url}`, true, {
+            ex: 60 * 60 * 24 * 7,
+          });
         }
 
         const searchContext = await index.query<{
@@ -107,7 +122,7 @@ export function searchToolsFactory(ctx: BotContext) {
         }>({
           data: query,
           filter: items.map((item) => `url = '${item.url}'`).join(' OR '),
-          topK: 10,
+          topK: 5,
           includeData: true,
           includeMetadata: true,
         });
@@ -125,15 +140,21 @@ export function searchToolsFactory(ctx: BotContext) {
           {} as Record<string, typeof searchContext>,
         );
 
-        const sortedSearchContext = Object.entries(groupedSearchContext).map(([, items]) =>
+        const sortedSearchContext = Object.entries(groupedSearchContext).map(([url, items]) => [
+          url,
           items.sort((a, b) => a.metadata!.loc.lines.from - b.metadata!.loc.lines.from),
-        );
+        ]) as [string, typeof searchContext][];
 
         return {
           result: sortedSearchContext
-            .map(
-              (items) =>
-                `## ${items[0].metadata!.title}\n\n${items.map((item) => item.data).join('\n\n')}`,
+            .map(([url, items]) =>
+              items
+                .map((item) => {
+                  const { title } = item.metadata!;
+
+                  return `**[${title}](${url})**\n\nContext:\n${item.data}`;
+                })
+                .join('\n\n---\n\n'),
             )
             .join('\n\n---\n\n'),
         };
