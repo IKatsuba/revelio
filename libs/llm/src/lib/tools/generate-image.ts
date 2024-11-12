@@ -3,7 +3,6 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
-import { redis } from '@revelio/redis';
 import { formatSeconds } from '@revelio/utils';
 
 import { generateImage as openAIGenerateImage } from '../generate-image';
@@ -18,7 +17,7 @@ export function generateImageFactory(ctx: BotContext) {
       const limit = ctx.session.plan === 'premium' ? 50 : 20;
 
       const imageRateLimit = new Ratelimit({
-        redis,
+        redis: ctx.redis,
         prefix: 'image-rate-limit',
         limiter: Ratelimit.fixedWindow(limit, '28d'),
       });
@@ -31,7 +30,7 @@ export function generateImageFactory(ctx: BotContext) {
         return `You are out of image generation limits. Please try again in ${formatSeconds(Math.floor(remaining / 1000))}.`;
       }
 
-      const url = await openAIGenerateImage(prompt, {
+      const url = await openAIGenerateImage(ctx, prompt, {
         signal: abortSignal,
       });
 

@@ -1,9 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 
 import { BotContext, plansDescription, telegramify } from '@revelio/bot-utils';
-import { generateAnswer } from '@revelio/llm/server';
-import { prisma } from '@revelio/prisma/server';
-import { stripe } from '@revelio/stripe/server';
+import { generateAnswer } from '@revelio/llm';
 
 const howYouPay = `Choose a subscription plan that suits your needs:
 
@@ -18,18 +16,18 @@ export async function billing(ctx: BotContext) {
   }
 
   const customer =
-    (await prisma.customer.findUnique({
+    (await ctx.prisma.customer.findUnique({
       where: {
         id: ctx.chatId.toString(),
       },
     })) ??
-    (await stripe.customers
+    (await ctx.stripe.customers
       .create({
         name:
           ctx.chat?.title ?? ctx.chat?.username ?? `${ctx.chat?.first_name} ${ctx.chat?.last_name}`,
       })
       .then((customer) =>
-        prisma.customer.create({
+        ctx.prisma.customer.create({
           data: {
             id: ctx.chatId!.toString(),
             stripeCustomerId: customer.id,
@@ -43,7 +41,7 @@ export async function billing(ctx: BotContext) {
   }
 
   if (ctx.session.plan && ctx.session.plan !== 'free') {
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await ctx.stripe.billingPortal.sessions.create({
       customer: customer?.stripeCustomerId,
       return_url: 'https://t.me/RevelioGPTBot',
     });
@@ -66,7 +64,7 @@ export async function billing(ctx: BotContext) {
     return;
   }
 
-  const prices = await prisma.price.findMany({
+  const prices = await ctx.prisma.price.findMany({
     where: {
       active: true,
       lookupKey: {
@@ -91,7 +89,7 @@ export async function billing(ctx: BotContext) {
 
   const sessions = await Promise.all(
     prices.map(async (price) => {
-      const session = await stripe.checkout.sessions.create({
+      const session = await ctx.stripe.checkout.sessions.create({
         after_expiration: {
           recovery: {
             enabled: true,

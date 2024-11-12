@@ -1,19 +1,23 @@
 import { Bot, Context } from 'grammy';
+import { Context as HonoContext } from 'hono';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
+import { getEnv } from '@revelio/env';
 
 import { groupWebhookComposer } from './composers/group-webhook-composer';
 import { privateWebhookComposer } from './composers/private-webhook-composer';
+import { configureBot } from './middlewares/configure';
 
-export async function initWebhookBot(): Promise<Bot<BotContext>> {
+export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
+  const env = getEnv(c);
   const bot = new Bot<BotContext>(env.BOT_TOKEN, {
     client: {
       apiRoot: env.TELEGRAM_API_URL,
     },
   });
 
-  bot.use(sessionMiddleware);
+  bot.use(configureBot(c));
+  bot.use(sessionMiddleware(c));
 
   bot.filter(Context.has.chatType('private'), privateWebhookComposer);
 

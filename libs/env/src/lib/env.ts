@@ -1,6 +1,7 @@
+import { Context } from 'hono';
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
   OPENAI_API_URL: z.string().default('https://api.openai.com/v1'),
   STREAM: z
@@ -65,13 +66,26 @@ Always answer in a language that user is using.`,
   REMINDERS_AFTER_NOTIFY_CALLBACK_URL: z.string(),
 
   CLOUDFLARE_ACCOUNT_ID: z.string(),
-  CLOUDFLARE_API_TOKEN: z.string(),
+  CLOUDFLARE_IMAGE_API_TOKEN: z.string(),
 
   JINA_API_KEY: z.string(),
 
   NODE_ENV: z.enum(['development', 'production']).default('development'),
+
+  WEATHER_API_KEY: z.string(),
+  TRIGGER_SECRET_KEY: z.string(),
 });
 
-export const env = envSchema.parse({
-  ...process.env,
-});
+export function getEnv(c: Context) {
+  const { data, error } = envSchema.safeParse(c.env);
+
+  if (error) {
+    error.errors.forEach((e) => {
+      console.error(e.message);
+    });
+
+    throw new Error(error.message);
+  }
+
+  return data;
+}

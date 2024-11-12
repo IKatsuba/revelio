@@ -6,17 +6,17 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext, telegramify } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { prisma } from '@revelio/prisma/server';
 
-const client = new Client({
-  token: env.QSTASH_TOKEN,
-  baseUrl: env.QSTASH_URL,
-  retry: {
-    retries: 6,
-    backoff: (retry_count) => Math.exp(retry_count) * 50,
-  },
-});
+function createClient(ctx: BotContext) {
+  return new Client({
+    token: ctx.env.QSTASH_TOKEN,
+    baseUrl: ctx.env.QSTASH_URL,
+    retry: {
+      retries: 6,
+      backoff: (retry_count) => Math.exp(retry_count) * 50,
+    },
+  });
+}
 
 export function reminderToolFactory(ctx: BotContext) {
   return {
@@ -63,8 +63,8 @@ export function reminderToolFactory(ctx: BotContext) {
 
         const id = nanoid();
 
-        const { messageId } = await client.publishJSON({
-          url: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
+        const { messageId } = await createClient(ctx).publishJSON({
+          url: ctx.env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -76,7 +76,7 @@ export function reminderToolFactory(ctx: BotContext) {
           notBefore: Math.floor(date.getTime() / 1000),
         });
 
-        await prisma.reminder.create({
+        await ctx.prisma.reminder.create({
           data: {
             id,
             messageId,
@@ -112,7 +112,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await prisma.reminder.findMany({
+        const reminders = await ctx.prisma.reminder.findMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -146,7 +146,7 @@ export function reminderToolFactory(ctx: BotContext) {
         id: z.string().describe('the id of the reminder to delete'),
       }),
       async execute({ id }) {
-        const result = await prisma.reminder.update({
+        const result = await ctx.prisma.reminder.update({
           where: {
             id,
           },
@@ -158,7 +158,7 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await client.messages.delete(result.messageId);
+        await createClient(ctx).messages.delete(result.messageId);
 
         return {
           status: 'success',
@@ -183,7 +183,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await prisma.reminder.findMany({
+        const reminders = await ctx.prisma.reminder.findMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -194,7 +194,7 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await prisma.reminder.updateMany({
+        await ctx.prisma.reminder.updateMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -205,7 +205,9 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await client.messages.deleteMany(reminders.map((reminder) => reminder.messageId));
+        await createClient(ctx).messages.deleteMany(
+          reminders.map((reminder) => reminder.messageId),
+        );
 
         return {
           status: 'success',

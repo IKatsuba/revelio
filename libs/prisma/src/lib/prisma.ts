@@ -1,13 +1,14 @@
+import { Pool } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
 import { PrismaClient } from '@prisma/client';
+import { Context } from 'hono';
 
-import { env } from '@revelio/env/server';
+import { getEnv } from '@revelio/env';
 
-declare const globalThis: {
-  prismaGlobal: PrismaClient;
-} & typeof global;
+export function createPrisma(c: Context) {
+  const env = getEnv(c);
 
-export const prisma = globalThis.prismaGlobal ?? new PrismaClient();
-
-if (env.NODE_ENV !== 'production') {
-  globalThis.prismaGlobal = prisma;
+  const neon = new Pool({ connectionString: env.POSTGRES_PRISMA_URL });
+  const adapter = new PrismaNeon(neon);
+  return new PrismaClient({ adapter });
 }

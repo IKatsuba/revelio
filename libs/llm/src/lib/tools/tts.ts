@@ -4,7 +4,6 @@ import { InputFile } from 'grammy';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
-import { redis } from '@revelio/redis';
 import { formatSeconds } from '@revelio/utils';
 
 import { textToSpeech } from '../text-to-speech';
@@ -19,7 +18,7 @@ export function ttsFactory(ctx: BotContext) {
       const limit = ctx.session.plan === 'premium' ? 50000 : 10000;
 
       const imageRateLimit = new Ratelimit({
-        redis,
+        redis: ctx.redis,
         prefix: 'tts-rate-limit',
         limiter: Ratelimit.fixedWindow(limit, '28d'),
       });
@@ -34,7 +33,7 @@ export function ttsFactory(ctx: BotContext) {
         return `You are out of limit. Please wait ${formatSeconds(Math.floor(remaining / 1000))} to try again.`;
       }
 
-      const audioBuffer = await textToSpeech(text, {
+      const audioBuffer = await textToSpeech(ctx, text, {
         abortSignal,
       });
 

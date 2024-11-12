@@ -2,14 +2,13 @@ import { CommandContext } from 'grammy';
 import { nanoid } from 'nanoid';
 
 import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
-import { generateAnswer } from '@revelio/llm/server';
-import { prisma } from '@revelio/prisma/server';
+import { generateAnswer } from '@revelio/llm';
 
 export async function start(ctx: CommandContext<BotContext>) {
   await ctx.replyWithChatAction('typing');
 
   if (ctx.from) {
-    await prisma.user.upsert({
+    await ctx.prisma.user.upsert({
       where: { id: ctx.from.id.toString() },
       update: {
         username: ctx.from.username,
@@ -20,7 +19,7 @@ export async function start(ctx: CommandContext<BotContext>) {
       },
     });
 
-    await prisma.group.upsert({
+    await ctx.prisma.group.upsert({
       where: { id: ctx.chatId.toString() },
       update: {},
       create: {
@@ -29,7 +28,7 @@ export async function start(ctx: CommandContext<BotContext>) {
       },
     });
 
-    await prisma.groupMember.upsert({
+    await ctx.prisma.groupMember.upsert({
       where: { userId_groupId: { userId: ctx.from.id.toString(), groupId: ctx.chatId.toString() } },
       update: {},
       create: {

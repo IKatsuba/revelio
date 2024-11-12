@@ -1,7 +1,12 @@
 import { Api } from 'grammy';
+import { Context } from 'hono';
 
-import { env } from '@revelio/env/server';
+import { getEnv } from '@revelio/env';
 
-export const api = new Api(env.BOT_TOKEN, {
-  apiRoot: env.TELEGRAM_API_URL,
-});
+export function createBotApi(c: Context) {
+  const env = getEnv(c);
+
+  return new Api(env.BOT_TOKEN, {
+    apiRoot: env.TELEGRAM_API_URL,
+  });
+}

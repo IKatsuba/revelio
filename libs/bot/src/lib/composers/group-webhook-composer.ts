@@ -2,7 +2,6 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Composer, Context } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
-import { prisma } from '@revelio/prisma/server';
 
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
 import { delegate } from '../commands/delegate';
@@ -19,7 +18,7 @@ groupWebhookComposer.on(
   track('msg:new_chat_members:me'),
   async (ctx) => {
     console.log('New chat members');
-    await prisma.group.upsert({
+    await ctx.prisma.group.upsert({
       where: { id: ctx.chat.id.toString() },
       update: {},
       create: {
@@ -31,7 +30,7 @@ groupWebhookComposer.on(
     const admins = await ctx.getChatAdministrators();
 
     for (const admin of admins) {
-      await prisma.groupMember.upsert({
+      await ctx.prisma.groupMember.upsert({
         where: {
           userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
         },

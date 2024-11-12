@@ -1,5 +1,5 @@
-import { prisma } from '@revelio/prisma/server';
-import { stripe } from '@revelio/stripe/server';
+import { prisma } from '@revelio/prisma';
+import { stripe } from '@revelio/stripe';
 
 const subscriptionPlans = [
   {

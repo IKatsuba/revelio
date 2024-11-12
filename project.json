@@ -8,7 +8,7 @@
       "options": {
         "commands": [
           {
-            "command": "nx dev web",
+            "command": "nx serve worker",
             "prefix": "[bot]"
           },
           {

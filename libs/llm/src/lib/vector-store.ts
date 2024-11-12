@@ -1,8 +1,10 @@
 import { Index } from '@upstash/vector';
 
-import { env } from '@revelio/env/server';
+import { BotContext } from '@revelio/bot-utils';
 
-export const index = new Index({
-  url: env.UPSTASH_VECTOR_REST_URL,
-  token: env.UPSTASH_VECTOR_REST_TOKEN,
-});
+export function createVectorStore(ctx: BotContext) {
+  return new Index({
+    url: ctx.env.UPSTASH_VECTOR_REST_URL,
+    token: ctx.env.UPSTASH_VECTOR_REST_TOKEN,
+  });
+}

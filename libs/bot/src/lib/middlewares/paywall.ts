@@ -1,4 +1,3 @@
-import { track } from '@vercel/analytics/server';
 import { NextFunction } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -10,7 +9,7 @@ export async function paywall(ctx: BotContext, next: NextFunction) {
     await ctx.reply('You need an active subscription to use this feature');
 
     await billing(ctx);
-    await track('paywall', {
+    console.log('paywall', {
       fromUser: ctx.from?.username ?? 'unknown',
       chatId: ctx.chat?.id ?? 0,
     });

@@ -1,16 +1,15 @@
-import { env } from '@revelio/env/server';
-
-import { openaiClient } from './openai';
+import { BotContext } from '@revelio/bot-utils';
 
 export async function textToSpeech(
+  ctx: BotContext,
   text: string,
   { abortSignal }: { abortSignal?: AbortSignal } = {},
 ) {
-  const result = await openaiClient.audio.speech.create(
+  const result = await ctx.openai.audio.speech.create(
     {
       input: text,
-      voice: env.TTS_VOICE,
-      model: env.TTS_MODEL,
+      voice: ctx.env.TTS_VOICE,
+      model: ctx.env.TTS_MODEL,
       response_format: 'opus',
     },
     {

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
 
-import { index } from '../vector-store';
+import { createVectorStore } from '../vector-store';
 
 export function addToMemoryToolFactory(ctx: BotContext) {
   return tool({
@@ -20,7 +20,7 @@ export function addToMemoryToolFactory(ctx: BotContext) {
         return 'No message_id found';
       }
 
-      const namespace = index.namespace(ctx.chatId.toString());
+      const namespace = createVectorStore(ctx).namespace(ctx.chatId.toString());
 
       return namespace.upsert({
         id: ctx.message.message_id,
@@ -45,7 +45,7 @@ export function getFromMemoryToolFactory(ctx: BotContext) {
         return 'No chatId found';
       }
 
-      const namespace = index.namespace(ctx.chatId.toString());
+      const namespace = createVectorStore(ctx).namespace(ctx.chatId.toString());
 
       return namespace.query({
         data: context,

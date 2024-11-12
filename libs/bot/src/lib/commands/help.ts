@@ -1,8 +1,7 @@
-import { convertToCoreMessages } from 'ai';
 import { nanoid } from 'nanoid';
 
 import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
-import { generateAnswer } from '@revelio/llm/server';
+import { generateAnswer } from '@revelio/llm';
 
 export async function help(ctx: BotContext) {
   const toolCallId = `tool_${nanoid()}`;

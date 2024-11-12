@@ -3,7 +3,7 @@ import { Middleware } from 'grammy';
 import { nanoid } from 'nanoid';
 
 import { BotContext } from '@revelio/bot-utils';
-import { generateAnswer, transcribe } from '@revelio/llm/server';
+import { generateAnswer, transcribe } from '@revelio/llm';
 
 import { createTDLib } from '../tdlib';
 
@@ -77,7 +77,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       });
 
       ctx.transcription = await logger.trace('transcribe', () =>
-        transcribe(file.file_unique_id, blob),
+        transcribe(ctx, file.file_unique_id, blob),
       );
 
       await tdlib.close();
