@@ -8,13 +8,13 @@ enabled = true
 head_sampling_rate = 1
 
 [vars]
-BOT_WEBHOOK_URL="https://revelio.igor-536.workers.dev/api/tg/webhook"
+BOT_WEBHOOK_URL="https://revelio.katsuba.workers.dev/api/tg/webhook"
 CLOUDFLARE_ACCOUNT_ID="53683e9c95b74c0aae7b4b9821b8c53f"
 IMAGE_MODEL="dall-e-3"
 OPENAI_API_URL="https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b8c53f/revelio-prod/openai"
 PERPLEXITY_API_URL="https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b8c53f/revelio-prod/perplexity-ai"
 QSTASH_URL="https://qstash.upstash.io"
-REMINDERS_AFTER_NOTIFY_CALLBACK_URL="https://revelio.igor-536.workers.dev/api/reminders/after-notify"
+REMINDERS_AFTER_NOTIFY_CALLBACK_URL="https://revelio.katsuba.workers.dev/api/reminders/after-notify"
 TELEGRAM_API_ID="73603"
 UPSTASH_REDIS_URL="https://settled-skylark-22019.upstash.io"
 UPSTASH_VECTOR_REST_URL="https://known-lamb-99258-eu1-vector.upstash.io"
