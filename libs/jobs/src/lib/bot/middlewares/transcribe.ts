@@ -3,7 +3,7 @@ import { Middleware } from 'grammy';
 import { nanoid } from 'nanoid';
 
 import { BotContext } from '@revelio/bot-utils';
-import { generateAnswer, transcribe } from '@revelio/llm/server';
+import { generateAnswer, transcribe } from '@revelio/llm';
 
 import { createTDLib } from '../tdlib';
 
@@ -24,6 +24,43 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       console.log('No chatId found');
       await ctx.reply('Failed to transcribe audio');
       return;
+    }
+
+    if (file.file_size && file.file_size > 20 * 1024 * 1024) {
+      const toolCallId = `tool_${nanoid()}`;
+
+      await generateAnswer(ctx, {
+        messages: [
+          {
+            role: 'user',
+            content: 'Some audio file',
+          },
+          {
+            role: 'assistant',
+            content: [
+              {
+                type: 'tool-call',
+                toolCallId,
+                toolName: 'transcribe',
+                args: {},
+              },
+            ],
+          },
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId,
+                toolName: 'transcribe',
+                result: {
+                  error: `This audio file is too large to transcribe. Please try with a file that is less than 20 MB.`,
+                },
+              },
+            ],
+          },
+        ],
+      });
     }
 
     if (file.duration > 60) {
@@ -77,7 +114,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       });
 
       ctx.transcription = await logger.trace('transcribe', () =>
-        transcribe(file.file_unique_id, blob),
+        transcribe(ctx, file.file_unique_id, blob),
       );
 
       await tdlib.close();

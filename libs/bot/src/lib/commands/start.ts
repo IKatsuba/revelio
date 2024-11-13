@@ -2,42 +2,32 @@ import { CommandContext } from 'grammy';
 import { nanoid } from 'nanoid';
 
 import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
-import { generateAnswer } from '@revelio/llm/server';
-import { prisma } from '@revelio/prisma/server';
+import { generateAnswer } from '@revelio/llm';
 
 export async function start(ctx: CommandContext<BotContext>) {
   await ctx.replyWithChatAction('typing');
 
   if (ctx.from) {
-    await prisma.user.upsert({
-      where: { id: ctx.from.id.toString() },
-      update: {
-        username: ctx.from.username,
-      },
-      create: {
-        id: ctx.from.id.toString(),
-        username: ctx.from.username,
-      },
-    });
+    await ctx.sql`
+      INSERT INTO "User" ("id", "username")
+      VALUES (${ctx.from.id.toString()}, ${ctx.from.username})
+      ON CONFLICT ("id")
+        DO UPDATE SET "username" = ${ctx.from.username}
+    `;
 
-    await prisma.group.upsert({
-      where: { id: ctx.chatId.toString() },
-      update: {},
-      create: {
-        id: ctx.chatId.toString(),
-        type: ctx.chat.type,
-      },
-    });
+    await ctx.sql`
+      INSERT INTO "Group" ("id", "type")
+      VALUES (${ctx.chatId.toString()}, ${ctx.chat.type})
+      ON CONFLICT ("id")
+        DO UPDATE SET "type" = ${ctx.chat.type}
+    `;
 
-    await prisma.groupMember.upsert({
-      where: { userId_groupId: { userId: ctx.from.id.toString(), groupId: ctx.chatId.toString() } },
-      update: {},
-      create: {
-        userId: ctx.from.id.toString(),
-        groupId: ctx.chatId.toString(),
-        role: 'creator',
-      },
-    });
+    await ctx.sql`
+      INSERT INTO "GroupMember" ("userId", "groupId", "role")
+      VALUES (${ctx.from.id.toString()}, ${ctx.chatId.toString()}, 'creator')
+      ON CONFLICT ("userId", "groupId")
+        DO UPDATE SET "role" = 'creator'
+    `;
   }
 
   const toolCallId = `tool_${nanoid()}`;

@@ -1,5 +1,10 @@
+import { Context } from 'hono';
 import Stripe from 'stripe';
 
-import { env } from '@revelio/env/server';
+import { getEnv } from '@revelio/env';
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+export function createStripe(c: Context) {
+  const env = getEnv(c);
+
+  return new Stripe(env.STRIPE_SECRET_KEY);
+}

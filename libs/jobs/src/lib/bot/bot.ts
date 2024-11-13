@@ -1,7 +1,7 @@
 import { Bot, Context } from 'grammy';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
+import { env } from '@revelio/env';
 
 import { groupTaskComposer } from './composers/group-task-composer';
 import { privateTaskComposer } from './composers/private-task-composer';

@@ -6,17 +6,17 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext, telegramify } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { prisma } from '@revelio/prisma/server';
 
-const client = new Client({
-  token: env.QSTASH_TOKEN,
-  baseUrl: env.QSTASH_URL,
-  retry: {
-    retries: 6,
-    backoff: (retry_count) => Math.exp(retry_count) * 50,
-  },
-});
+function createClient(ctx: BotContext) {
+  return new Client({
+    token: ctx.env.QSTASH_TOKEN,
+    baseUrl: ctx.env.QSTASH_URL,
+    retry: {
+      retries: 6,
+      backoff: (retry_count) => Math.exp(retry_count) * 50,
+    },
+  });
+}
 
 export function reminderToolFactory(ctx: BotContext) {
   return {
@@ -63,8 +63,8 @@ export function reminderToolFactory(ctx: BotContext) {
 
         const id = nanoid();
 
-        const { messageId } = await client.publishJSON({
-          url: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
+        const { messageId } = await createClient(ctx).publishJSON({
+          url: ctx.env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -76,18 +76,11 @@ export function reminderToolFactory(ctx: BotContext) {
           notBefore: Math.floor(date.getTime() / 1000),
         });
 
-        await prisma.reminder.create({
-          data: {
-            id,
-            messageId,
-            message: formattedMessage,
-            remindAt: date,
-            userId: ctx.from.id.toString(),
-            groupId: ctx.chatId.toString(),
-            timezone,
-            status: ReminderStatus.SCHEDULED,
-          },
-        });
+        await ctx.sql`
+          INSERT INTO "Reminder" ("id", "messageId", "message", "remindAt", "userId", "groupId", "timezone", "status")
+          VALUES (${id}, ${messageId}, ${formattedMessage}, ${date}, ${ctx.from.id.toString()},
+                  ${ctx.chatId.toString()}, ${timezone}, ${ReminderStatus.SCHEDULED})
+        `;
 
         return {
           status: 'success',
@@ -112,19 +105,13 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await prisma.reminder.findMany({
-          where: {
-            groupId: ctx.chatId.toString(),
-            userId: ctx.from.id.toString(),
-            status: ReminderStatus.SCHEDULED,
-          },
-          select: {
-            id: true,
-            message: true,
-            remindAt: true,
-            timezone: true,
-          },
-        });
+        const reminders = await ctx.sql`
+          SELECT "id", "message", "remindAt", "timezone"
+          FROM "Reminder"
+          WHERE "groupId" = ${ctx.chatId.toString()}
+            AND "userId" = ${ctx.from.id.toString()}
+            AND "status" = ${ReminderStatus.SCHEDULED}
+        `;
 
         return {
           status: 'success',
@@ -146,19 +133,14 @@ export function reminderToolFactory(ctx: BotContext) {
         id: z.string().describe('the id of the reminder to delete'),
       }),
       async execute({ id }) {
-        const result = await prisma.reminder.update({
-          where: {
-            id,
-          },
-          data: {
-            status: ReminderStatus.CANCELLED,
-          },
-          select: {
-            messageId: true,
-          },
-        });
+        const [result] = await ctx.sql`
+          UPDATE "Reminder"
+          SET "status" = ${ReminderStatus.CANCELLED}
+          WHERE "id" = ${id}
+          RETURNING "messageId";
+        `;
 
-        await client.messages.delete(result.messageId);
+        await createClient(ctx).messages.delete(result.messageId);
 
         return {
           status: 'success',
@@ -183,29 +165,25 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await prisma.reminder.findMany({
-          where: {
-            groupId: ctx.chatId.toString(),
-            userId: ctx.from.id.toString(),
-            status: ReminderStatus.SCHEDULED,
-          },
-          select: {
-            messageId: true,
-          },
-        });
+        const reminders = await ctx.sql`
+          SELECT "messageId"
+          FROM "Reminder"
+          WHERE "groupId" = ${ctx.chatId.toString()}
+            AND "userId" = ${ctx.from.id.toString()}
+            AND "status" = ${ReminderStatus.SCHEDULED}
+        `;
 
-        await prisma.reminder.updateMany({
-          where: {
-            groupId: ctx.chatId.toString(),
-            userId: ctx.from.id.toString(),
-            status: ReminderStatus.SCHEDULED,
-          },
-          data: {
-            status: ReminderStatus.CANCELLED,
-          },
-        });
+        await ctx.sql`
+          UPDATE "Reminder"
+          SET "status" = ${ReminderStatus.CANCELLED}
+          WHERE "groupId" = ${ctx.chatId.toString()}
+            AND "userId" = ${ctx.from.id.toString()}
+            AND "status" = ${ReminderStatus.SCHEDULED}
+        `;
 
-        await client.messages.deleteMany(reminders.map((reminder) => reminder.messageId));
+        await createClient(ctx).messages.deleteMany(
+          reminders.map((reminder) => reminder.messageId),
+        );
 
         return {
           status: 'success',

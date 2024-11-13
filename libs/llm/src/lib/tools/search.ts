@@ -1,41 +1,25 @@
 import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
 import { MarkdownTextSplitter } from '@langchain/textsplitters';
-import { Redis } from '@upstash/redis';
-import { Index } from '@upstash/vector';
+import { Redis } from '@upstash/redis/cloudflare';
+import { Index } from '@upstash/vector/cloudflare';
 import { tool } from 'ai';
 import ky from 'ky';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-
-const jinaApi = ky.extend({
-  timeout: 1000 * 60 * 5,
-});
-
-const index = new Index({
-  url: env.WEB_SEARCH_VECTOR_REST_URL,
-  token: env.WEB_SEARCH_VECTOR_REST_TOKEN,
-});
-
-const redis = new Redis({
-  url: env.UPSTASH_REDIS_URL,
-  token: env.UPSTASH_REDIS_TOKEN,
-});
 
 class XJinaClient extends JinaClient {
   kyFactCheck: KyInstance;
 
-  constructor() {
+  constructor(ky: KyInstance) {
     super({
-      ky: jinaApi,
+      ky,
     });
 
-    this.kyFactCheck = jinaApi.extend({
+    this.kyFactCheck = ky.extend({
       prefixUrl: 'https://g.jina.ai',
-      headers: { Authorization: `Bearer ${env.JINA_API_KEY}` },
     });
   }
 
@@ -64,9 +48,26 @@ class XJinaClient extends JinaClient {
   }
 }
 
-const jinaClient = new XJinaClient();
-
 export function searchToolsFactory(ctx: BotContext) {
+  const index = new Index({
+    url: ctx.env.WEB_SEARCH_VECTOR_REST_URL,
+    token: ctx.env.WEB_SEARCH_VECTOR_REST_TOKEN,
+  });
+
+  const redis = new Redis({
+    url: ctx.env.UPSTASH_REDIS_URL,
+    token: ctx.env.UPSTASH_REDIS_TOKEN,
+  });
+
+  const jinaApi = ky.extend({
+    timeout: 1000 * 60 * 5,
+    headers: {
+      Authorization: `Bearer ${ctx.env.JINA_API_KEY}`,
+    },
+  });
+
+  const jinaClient = new XJinaClient(jinaApi);
+
   return {
     webSearch: tool({
       description: 'Search the web',

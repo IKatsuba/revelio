@@ -1,6 +1,8 @@
 import { Api } from 'grammy';
 
-import { env } from '@revelio/env/server';
+import { envSchema } from '@revelio/env';
+
+const env = envSchema.parse(process.env);
 
 const api = new Api(env.BOT_TOKEN);
 

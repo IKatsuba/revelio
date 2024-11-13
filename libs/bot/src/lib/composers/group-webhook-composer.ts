@@ -2,11 +2,10 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Composer, Context } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
-import { prisma } from '@revelio/prisma/server';
 
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
-import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
+import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
@@ -19,29 +18,23 @@ groupWebhookComposer.on(
   track('msg:new_chat_members:me'),
   async (ctx) => {
     console.log('New chat members');
-    await prisma.group.upsert({
-      where: { id: ctx.chat.id.toString() },
-      update: {},
-      create: {
-        id: ctx.chat.id.toString(),
-        type: ctx.chat.type,
-      },
-    });
+
+    await ctx.sql`
+      INSERT INTO "Group" ("id", "type")
+      VALUES (${ctx.chat.id.toString()}, ${ctx.chat.type})
+      ON CONFLICT ("id")
+        DO UPDATE SET "type" = ${ctx.chat.type}
+    `;
 
     const admins = await ctx.getChatAdministrators();
 
     for (const admin of admins) {
-      await prisma.groupMember.upsert({
-        where: {
-          userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
-        },
-        update: {},
-        create: {
-          userId: admin.user.id.toString(),
-          groupId: ctx.chat.id.toString(),
-          role: admin.status,
-        },
-      });
+      await ctx.sql`
+        INSERT INTO "GroupMember" ("userId", "groupId", "role")
+        VALUES (${admin.user.id.toString()}, ${ctx.chat.id.toString()}, ${admin.status})
+        ON CONFLICT ("userId", "groupId")
+          DO UPDATE SET "role" = ${admin.status}
+      `;
     }
 
     await help(ctx);
@@ -74,5 +67,5 @@ groupWebhookComposer.filter(mentionFilter).on(
     },
     name: 'text',
   }),
-  delegate,
+  prompt,
 );

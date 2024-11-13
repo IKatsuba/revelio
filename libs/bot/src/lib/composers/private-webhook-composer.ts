@@ -4,13 +4,14 @@ import { Composer } from 'grammy';
 import { BotContext } from '@revelio/bot-utils';
 
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
-import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
+import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
+import { transcribeMiddleware } from '../middlewares/transcribe';
 
 export const privateWebhookComposer = new Composer<BotContext>();
 
@@ -44,5 +45,6 @@ privateWebhookComposer.on(
     },
     name: 'text',
   }),
-  delegate,
+  transcribeMiddleware(),
+  prompt,
 );

@@ -3,8 +3,7 @@ import { logger } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext } from '@revelio/bot-utils';
-import { env } from '@revelio/env/server';
-import { generateAnswer } from '@revelio/llm/server';
+import { generateAnswer } from '@revelio/llm';
 
 import { createTDLib } from '../tdlib';
 
@@ -54,7 +53,7 @@ ${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
-              image: await logger.trace('getPhotoUrl', () => getPhotoUrl(photo)),
+              image: await logger.trace('getPhotoUrl', () => getPhotoUrl(ctx, photo)),
             },
           ],
         },
@@ -85,20 +84,24 @@ async function getPhoto(ctx: BotContext) {
     return null;
   }
 
+  if (photo.file_size > 20 * 1024 * 1024) {
+    return null;
+  }
+
   return photo;
 }
 
-async function uploadImg(blob: Blob) {
+async function uploadImg(ctx: BotContext, blob: Blob) {
   const formData = new FormData();
   formData.append('file', blob);
   formData.append('requireSignedURLs', 'false');
 
   const response = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
+    `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
     {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${ctx.env.CLOUDFLARE_IMAGE_API_TOKEN}`,
       },
       body: formData,
     },
@@ -124,7 +127,7 @@ async function uploadImg(blob: Blob) {
   return new URL(result.variants[0]);
 }
 
-async function getPhotoUrl(photo: PhotoSize | Document) {
+async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
   const tdlib = await logger.trace('createTDLib', () => createTDLib());
 
   const result = await logger.trace('tdlib.downloadAsBuffer', () =>
@@ -137,5 +140,5 @@ async function getPhotoUrl(photo: PhotoSize | Document) {
     type: 'mime_type' in photo ? (photo.mime_type ?? undefined) : undefined,
   });
 
-  return logger.trace('uploadImg', () => uploadImg(file));
+  return logger.trace('uploadImg', () => uploadImg(ctx, file));
 }

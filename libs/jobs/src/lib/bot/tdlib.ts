@@ -6,9 +6,9 @@ import {
   TelegramClient,
 } from '@mtcute/node';
 import { logger } from '@trigger.dev/sdk/v3';
-import { Redis } from '@upstash/redis';
+import { Redis } from '@upstash/redis/cloudflare';
 
-import { env } from '@revelio/env/server';
+import { env } from '@revelio/env';
 
 const tdlibRedis = new Redis({
   url: env.UPSTASH_REDIS_URL,
