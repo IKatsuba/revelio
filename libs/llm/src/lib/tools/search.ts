@@ -2,7 +2,7 @@ import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
 import { MarkdownTextSplitter } from '@langchain/textsplitters';
 import { Redis } from '@upstash/redis/cloudflare';
-import { Index } from '@upstash/vector';
+import { Index } from '@upstash/vector/cloudflare';
 import { tool } from 'ai';
 import ky from 'ky';
 import { nanoid } from 'nanoid';
@@ -13,10 +13,9 @@ import { BotContext } from '@revelio/bot-utils';
 class XJinaClient extends JinaClient {
   kyFactCheck: KyInstance;
 
-  constructor(ky: KyInstance, apiKey: string) {
+  constructor(ky: KyInstance) {
     super({
       ky,
-      apiKey,
     });
 
     this.kyFactCheck = ky.extend({
@@ -62,9 +61,12 @@ export function searchToolsFactory(ctx: BotContext) {
 
   const jinaApi = ky.extend({
     timeout: 1000 * 60 * 5,
+    headers: {
+      Authorization: `Bearer ${ctx.env.JINA_API_KEY}`,
+    },
   });
 
-  const jinaClient = new XJinaClient(jinaApi, ctx.env.JINA_API_KEY);
+  const jinaClient = new XJinaClient(jinaApi);
 
   return {
     webSearch: tool({

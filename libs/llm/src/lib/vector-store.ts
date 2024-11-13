@@ -1,4 +1,4 @@
-import { Index } from '@upstash/vector';
+import { Index } from '@upstash/vector/cloudflare';
 
 import { BotContext } from '@revelio/bot-utils';
 

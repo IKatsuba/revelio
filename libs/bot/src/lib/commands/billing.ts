@@ -56,6 +56,8 @@ export async function billing(ctx: BotContext) {
       return_url: 'https://t.me/RevelioGPTBot',
     });
 
+    console.log('[billing] session was created');
+
     await generateAnswer(
       ctx,
       {
