@@ -8,15 +8,13 @@
     "serve": {
       "executor": "@naxodev/nx-cloudflare:serve",
       "options": {
-        "port": 3000,
-        "latest": true
+        "port": 3000
       }
     },
     "deploy": {
       "executor": "@naxodev/nx-cloudflare:deploy",
       "options": {
-        "outdir": "dist/apps/worker",
-        "latest": true
+        "outdir": "dist/apps/worker"
       }
     }
   }
