@@ -9,17 +9,18 @@ export async function start(ctx: CommandContext<BotContext>) {
 
   if (ctx.from) {
     await ctx.sql`
-      INSERT INTO "User" ("id", "username")
-      VALUES (${ctx.from.id.toString()}, ${ctx.from.username})
+      INSERT INTO "User" ("id", "username", "updatedAt")
+      VALUES (${ctx.from.id.toString()}, ${ctx.from.username}, NOW())
       ON CONFLICT ("id")
-        DO UPDATE SET "username" = ${ctx.from.username}
+        DO UPDATE SET "username"  = ${ctx.from.username},
+                      "updatedAt" = NOW()
     `;
 
     await ctx.sql`
-      INSERT INTO "Group" ("id", "type")
-      VALUES (${ctx.chatId.toString()}, ${ctx.chat.type})
+      INSERT INTO "Group" ("id", "type", "updatedAt")
+      VALUES (${ctx.chatId.toString()}, ${ctx.chat.type}, NOW())
       ON CONFLICT ("id")
-        DO UPDATE SET "type" = ${ctx.chat.type}
+        DO UPDATE SET "type" = ${ctx.chat.type}, "updatedAt" = NOW()
     `;
 
     await ctx.sql`

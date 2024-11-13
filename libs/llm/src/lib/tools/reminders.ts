@@ -77,9 +77,10 @@ export function reminderToolFactory(ctx: BotContext) {
         });
 
         await ctx.sql`
-          INSERT INTO "Reminder" ("id", "messageId", "message", "remindAt", "userId", "groupId", "timezone", "status")
+          INSERT INTO "Reminder" ("id", "messageId", "message", "remindAt", "userId", "groupId", "timezone", "status",
+                                  "updatedAt")
           VALUES (${id}, ${messageId}, ${formattedMessage}, ${date}, ${ctx.from.id.toString()},
-                  ${ctx.chatId.toString()}, ${timezone}, ${ReminderStatus.SCHEDULED})
+                  ${ctx.chatId.toString()}, ${timezone}, ${ReminderStatus.SCHEDULED}, NOW())
         `;
 
         return {
@@ -135,7 +136,8 @@ export function reminderToolFactory(ctx: BotContext) {
       async execute({ id }) {
         const [result] = await ctx.sql`
           UPDATE "Reminder"
-          SET "status" = ${ReminderStatus.CANCELLED}
+          SET "status"    = ${ReminderStatus.CANCELLED},
+              "updatedAt" = NOW()
           WHERE "id" = ${id}
           RETURNING "messageId";
         `;
@@ -175,7 +177,8 @@ export function reminderToolFactory(ctx: BotContext) {
 
         await ctx.sql`
           UPDATE "Reminder"
-          SET "status" = ${ReminderStatus.CANCELLED}
+          SET "status"    = ${ReminderStatus.CANCELLED},
+              "updatedAt" = NOW()
           WHERE "groupId" = ${ctx.chatId.toString()}
             AND "userId" = ${ctx.from.id.toString()}
             AND "status" = ${ReminderStatus.SCHEDULED}

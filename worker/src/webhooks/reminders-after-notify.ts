@@ -53,7 +53,8 @@ export async function remindersAfterNotify(c: Context) {
 
     await sql`
       UPDATE "Reminder"
-      SET "status" = ${ReminderStatus.SENT}
+      SET "status"    = ${ReminderStatus.SENT},
+          "updatedAt" = NOW()
       WHERE "id" = ${id}
     `;
 
