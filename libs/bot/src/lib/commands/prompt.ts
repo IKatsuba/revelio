@@ -8,7 +8,7 @@ export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
 
   const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
-  const photo = await getPhoto(ctx);
+  const photo = ctx.session.plan === 'free' ? null : await getPhoto(ctx);
 
   if (!prompt && !photo) {
     await ctx.reply('Please provide a prompt');

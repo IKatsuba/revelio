@@ -9,7 +9,8 @@
       "executor": "@naxodev/nx-cloudflare:serve",
       "options": {
         "port": 3000
-      }
+      },
+      "dependsOn": ["revelio:prisma:generate"]
     },
     "deploy": {
       "executor": "@naxodev/nx-cloudflare:deploy",

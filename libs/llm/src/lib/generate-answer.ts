@@ -1,8 +1,9 @@
 import { generateText as __generateText, CoreMessage } from 'ai';
 import { nanoid } from 'nanoid';
 
-import { BotContext, sendLongText } from '@revelio/bot-utils';
+import { BotContext, plansDescription, sendLongText } from '@revelio/bot-utils';
 import { createOpenaiProvider } from '@revelio/openai';
+import { createCustomer, createKeyboardWithPaymentLinks, getCustomer } from '@revelio/stripe';
 
 import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
@@ -34,7 +35,11 @@ export async function generateAnswer(
       : [];
 
   const allMessages =
-    messageIds && messageIds.length > 0 ? await ctx.redis.mget<CoreMessage[]>(messageIds) : [];
+    ctx.session.plan === 'free'
+      ? (messages ?? [])
+      : messageIds && messageIds.length > 0
+        ? await ctx.redis.mget<CoreMessage[]>(messageIds)
+        : [];
 
   const tools = {
     getCryptoRate,
@@ -58,14 +63,14 @@ export async function generateAnswer(
     messages: excludeToolResultIfItFirst(allMessages),
     system:
       system ||
-      `${ctx.env.ASSISTANT_PROMPT}
+      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Plan descriptions: ${plansDescription}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
 Current chat: ${ctx.chat?.title ?? 'Unknown'}
 Current chat language: ${ctx.session.language ?? 'Unknown'}
 `,
-    maxSteps: ctx.env.MAX_STEPS,
+    maxSteps: ctx.session.plan === 'free' ? 1 : ctx.env.MAX_STEPS,
     experimental_continueSteps: true,
     tools: ctx.session.plan === 'free' ? ({} as typeof tools) : tools,
     experimental_telemetry: {
@@ -78,7 +83,18 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     messages: result.response.messages,
   });
 
-  await sendLongText(ctx, result.text, other);
+  const paymentKeyboard =
+    ctx.session.plan === 'free'
+      ? await createKeyboardWithPaymentLinks(
+          (await getCustomer(ctx)) ?? (await createCustomer(ctx)),
+          ctx,
+        )
+      : undefined;
+
+  await sendLongText(ctx, result.text, {
+    reply_markup: paymentKeyboard,
+    ...other,
+  });
 
   return result;
 }

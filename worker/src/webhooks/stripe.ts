@@ -36,7 +36,7 @@ export async function stripeWebhook(c: Context) {
     if (!sig || !webhookSecret) {
       return new Response('Webhook secret not found.', { status: 400 });
     }
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
     console.log(`🔔  Webhook received: ${event.type}`);
   } catch (err: any) {
     console.log(`❌ Error message: ${err.message}`);
@@ -266,7 +266,8 @@ async function manageSubscriptionStatusChange(
     await setSession(c, Number(group.id), (session) => {
       session.plan =
         subscriptionData.status === 'active'
-          ? ((dbSubscription.price.lookupKey as 'free' | 'basic' | 'premium') ?? 'free')
+          ? ((subscription.items.data[0].price.lookup_key as 'free' | 'basic' | 'premium') ??
+            'free')
           : 'free';
     });
 
