@@ -1,11 +1,7 @@
 import { KyInstance } from '@agentic/core';
 import { jina, JinaClient } from '@agentic/jina';
-import { MarkdownTextSplitter } from '@langchain/textsplitters';
-import { Redis } from '@upstash/redis/cloudflare';
-import { Index } from '@upstash/vector/cloudflare';
 import { tool } from 'ai';
 import ky from 'ky';
-import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -49,16 +45,6 @@ class XJinaClient extends JinaClient {
 }
 
 export function searchToolsFactory(ctx: BotContext) {
-  const index = new Index({
-    url: ctx.env.WEB_SEARCH_VECTOR_REST_URL,
-    token: ctx.env.WEB_SEARCH_VECTOR_REST_TOKEN,
-  });
-
-  const redis = new Redis({
-    url: ctx.env.UPSTASH_REDIS_URL,
-    token: ctx.env.UPSTASH_REDIS_TOKEN,
-  });
-
   const jinaApi = ky.extend({
     timeout: 1000 * 60 * 5,
     headers: {
@@ -75,89 +61,59 @@ export function searchToolsFactory(ctx: BotContext) {
         query: z.string(),
       }),
       async execute({ query }) {
-        console.log('searching', query);
-        const { data: items } = await jinaClient.search({ query, json: true });
-
-        console.log('items', items);
-        const mdSplitter = new MarkdownTextSplitter({
-          chunkSize: 1000,
-          chunkOverlap: 0,
-        });
-
-        for (const item of items) {
-          if (await redis.get(`indexed:${item.url}`)) {
-            console.log('already indexed', item.url);
-            continue;
-          }
-
-          const docs = await mdSplitter.createDocuments([item.content || item.title]);
-
-          docs.length &&
-            (await index.upsert(
-              docs.map((doc) => ({
-                id: nanoid(),
-                data: doc.pageContent,
-                metadata: {
-                  title: item.title,
-                  url: item.url,
-                  loc: doc.metadata.loc,
-                },
-              })),
-            ));
-
-          console.log('indexed', item.url);
-          await redis.set(`indexed:${item.url}`, true, {
-            ex: 60 * 60 * 24 * 7,
-          });
-        }
-
-        const searchContext = await index.query<{
-          url: string;
-          title: string;
-          loc: {
-            lines: {
-              from: number;
-              to: number;
-            };
-          };
-        }>({
-          data: query,
-          filter: items.map((item) => `url = '${item.url}'`).join(' OR '),
-          topK: 5,
-          includeData: true,
-          includeMetadata: true,
-        });
-
-        const groupedSearchContext = searchContext.reduce(
-          (acc, item) => {
-            if (!acc[item.metadata!.url]) {
-              acc[item.metadata!.url] = [];
-            }
-
-            acc[item.metadata!.url].push(item);
-
-            return acc;
+        const response = await fetch(`${ctx.env.PERPLEXITY_API_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ctx.env.PERPLEXITY_API_KEY}`,
+            'Content-Type': 'application/json',
           },
-          {} as Record<string, typeof searchContext>,
-        );
+          body: JSON.stringify({
+            model: 'llama-3.1-sonar-small-128k-online',
+            messages: [
+              { role: 'system', content: 'Be precise and concise.' },
+              { role: 'user', content: query },
+            ],
+            stream: false,
+          }),
+        });
 
-        const sortedSearchContext = Object.entries(groupedSearchContext).map(([url, items]) => [
-          url,
-          items.sort((a, b) => a.metadata!.loc.lines.from - b.metadata!.loc.lines.from),
-        ]) as [string, typeof searchContext][];
+        const result = (await response.json()) as {
+          id: string;
+          model: string;
+          created: number;
+          usage: {
+            prompt_tokens: number;
+            completion_tokens: number;
+            total_tokens: number;
+          };
+          citations: string[];
+          object: string;
+          choices: {
+            index: number;
+            finish_reason: string;
+            message: {
+              role: string;
+              content: string;
+            };
+            delta: {
+              role: string;
+              content: string;
+            };
+          }[];
+        };
+
+        const { choices, citations } = result;
+
+        const {
+          message: { content },
+        } = choices.find((choice) => choice.finish_reason === 'stop') ?? {
+          message: { content: 'No results found' },
+          citations: [],
+        };
 
         return {
-          result: sortedSearchContext
-            .map(([url, items]) =>
-              items
-                .map((item) => {
-                  const { title } = item.metadata!;
-
-                  return `**[${title}](${url})**\n\nContext:\n${item.data}`;
-                })
-                .join('\n\n---\n\n'),
-            )
-            .join('\n\n---\n\n'),
+          result: content,
+          citations,
         };
       },
     }),

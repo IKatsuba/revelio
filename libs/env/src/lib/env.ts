@@ -4,6 +4,8 @@ import { z } from 'zod';
 export const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
   OPENAI_API_URL: z.string().default('https://api.openai.com/v1'),
+  PERPLEXITY_API_KEY: z.string(),
+  PERPLEXITY_API_URL: z.string().default('https://api.perplexity.ai'),
   STREAM: z
     .string()
     .default('true')
