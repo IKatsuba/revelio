@@ -1,8 +1,7 @@
 import { Middleware } from 'grammy';
-import { nanoid } from 'nanoid';
 
 import { BotContext } from '@revelio/bot-utils';
-import { generateAnswer, transcribe } from '@revelio/llm';
+import { createToolMessages, generateAnswer, transcribe } from '@revelio/llm';
 
 export function transcribeMiddleware(): Middleware<BotContext> {
   return async (ctx: BotContext, next) => {
@@ -23,75 +22,35 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     }
 
     if (file.file_size && file.file_size > 20 * 1024 * 1024) {
-      const toolCallId = `tool_${nanoid()}`;
-
       await generateAnswer(ctx, {
         messages: [
           {
             role: 'user',
             content: 'Some audio file',
           },
-          {
-            role: 'assistant',
-            content: [
-              {
-                type: 'tool-call',
-                toolCallId,
-                toolName: 'transcribe',
-                args: {},
-              },
-            ],
-          },
-          {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId,
-                toolName: 'transcribe',
-                result: {
-                  error: `This audio file is too large to transcribe. Please try with a file that is less than 20 MB.`,
-                },
-              },
-            ],
-          },
+          ...createToolMessages({
+            toolName: 'transcribe',
+            result: {
+              error: `This audio file is too large to transcribe. Please try with a file that is less than 20 MB.`,
+            },
+          }),
         ],
       });
     }
 
     if (file.duration > 60) {
-      const toolCallId = `tool_${nanoid()}`;
-
       await generateAnswer(ctx, {
         messages: [
           {
             role: 'user',
             content: 'Some audio file',
           },
-          {
-            role: 'assistant',
-            content: [
-              {
-                type: 'tool-call',
-                toolCallId,
-                toolName: 'transcribe',
-                args: {},
-              },
-            ],
-          },
-          {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId,
-                toolName: 'transcribe',
-                result: {
-                  error: `This audio file is too long to transcribe. Please try with a file that is less than 60 seconds long.`,
-                },
-              },
-            ],
-          },
+          ...createToolMessages({
+            toolName: 'transcribe',
+            result: {
+              error: `This audio file is too long to transcribe. Please try with a file that is less than 60 seconds long.`,
+            },
+          }),
         ],
       });
 

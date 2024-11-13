@@ -3,11 +3,10 @@ import { ReminderStatus } from '@prisma/client';
 import { Receiver } from '@upstash/qstash';
 import { Bot } from 'grammy';
 import { Context, MiddlewareHandler } from 'hono';
-import { nanoid } from 'nanoid';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
-import { generateAnswer } from '@revelio/llm';
+import { createToolMessages, generateAnswer } from '@revelio/llm';
 import { createSQLClient } from '@revelio/prisma';
 
 function createReceiver(c: Context) {
@@ -68,43 +67,24 @@ export async function remindersAfterNotify(c: Context) {
     bot.on('message', async (ctx) => {
       await ctx.replyWithChatAction('typing');
 
-      const toolCallId = `tool_${nanoid()}`;
-
       await generateAnswer(
         ctx,
         {
           messages: [
-            {
-              role: 'assistant',
-              content: [
-                {
-                  type: 'tool-call',
-                  toolCallId,
-                  toolName: 'sendReminder',
-                  args: {},
-                },
-              ],
-            },
-            {
-              role: 'tool',
-              content: [
-                {
-                  type: 'tool-result',
-                  toolCallId,
-                  toolName: 'sendReminder',
-                  result: {
-                    reminderText: text,
-                    originalMessage: update,
-                  },
-                },
-              ],
-            },
+            ...createToolMessages({
+              toolName: 'sendReminder',
+              result: {
+                reminderText: text,
+                originalMessage: update,
+              },
+            }),
           ],
         },
         {
           reply_parameters: {
             message_id: ctx.message.message_id,
           },
+          parse_mode: 'MarkdownV2',
         },
       );
     });

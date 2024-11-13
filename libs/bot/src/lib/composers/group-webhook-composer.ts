@@ -23,7 +23,7 @@ groupWebhookComposer.on(
       INSERT INTO "Group" ("id", "type", "updatedAt")
       VALUES (${ctx.chat.id.toString()}, ${ctx.chat.type}, NOW())
       ON CONFLICT ("id")
-        DO UPDATE SET "type" = ${ctx.chat.type},
+        DO UPDATE SET "type"      = ${ctx.chat.type},
                       "updatedAt" = NOW()
     `;
 

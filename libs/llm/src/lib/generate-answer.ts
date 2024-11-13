@@ -71,7 +71,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     experimental_telemetry: {
       isEnabled: true,
     },
-    maxTokens: ctx.env.MAX_TOKENS,
+    maxTokens: ctx.session.plan === 'free' ? 200 : ctx.env.MAX_TOKENS,
   });
 
   await addToChatHistory(ctx, {

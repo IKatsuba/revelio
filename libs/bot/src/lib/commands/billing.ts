@@ -1,11 +1,11 @@
 import { InlineKeyboard } from 'grammy';
 
-import { BotContext, plansDescription, telegramify } from '@revelio/bot-utils';
-import { generateAnswer } from '@revelio/llm';
+import { BotContext, plansDescription } from '@revelio/bot-utils';
+import { createToolMessages, generateAnswer } from '@revelio/llm';
 
-const howYouPay = `Choose a subscription plan that suits your needs:
-
-${plansDescription}`;
+// const howYouPay = `Choose a subscription plan that suits your needs:
+//
+// ${plansDescription}`;
 
 export async function billing(ctx: BotContext) {
   console.log('[billing] start');
@@ -22,10 +22,10 @@ export async function billing(ctx: BotContext) {
   const customer =
     (
       await ctx.sql`
-    SELECT "id", "stripeCustomerId"
-    FROM "Customer"
-    WHERE "id" = ${ctx.chatId!.toString()}
-  `
+        SELECT "id", "stripeCustomerId"
+        FROM "Customer"
+        WHERE "id" = ${ctx.chatId!.toString()}
+      `
     )?.[0] ??
     (await ctx.stripe.customers
       .create({
@@ -36,10 +36,10 @@ export async function billing(ctx: BotContext) {
         async (customer) =>
           (
             await ctx.sql`
-          INSERT INTO "Customer" ("id", "stripeCustomerId")
-          VALUES (${ctx.chatId!.toString()}, ${customer.id})
-          RETURNING "id", "stripeCustomerId";
-        `
+              INSERT INTO "Customer" ("id", "stripeCustomerId")
+              VALUES (${ctx.chatId!.toString()}, ${customer.id})
+              RETURNING "id", "stripeCustomerId";
+            `
           )?.[0],
       ));
 
@@ -66,6 +66,13 @@ export async function billing(ctx: BotContext) {
             role: 'user',
             content: '/billing',
           },
+          ...createToolMessages({
+            toolName: 'getCurrentPlan',
+            result: {
+              plan: ctx.session.plan,
+              plansDescription,
+            },
+          }),
         ],
       },
       {
@@ -132,13 +139,25 @@ export async function billing(ctx: BotContext) {
   }
 
   console.log('[billing] reply');
-  await ctx.reply(
-    telegramify(`
-${howYouPay}
-    `),
+
+  await generateAnswer(
+    ctx,
+    {
+      messages: [
+        {
+          role: 'user',
+          content: '/plans',
+        },
+        ...createToolMessages({
+          toolName: 'getPlans',
+          result: {
+            plansDescription,
+          },
+        }),
+      ],
+    },
     {
       reply_markup: keyboard,
-      parse_mode: 'MarkdownV2',
     },
   );
 }
