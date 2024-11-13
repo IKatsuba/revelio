@@ -18,29 +18,23 @@ groupWebhookComposer.on(
   track('msg:new_chat_members:me'),
   async (ctx) => {
     console.log('New chat members');
-    await ctx.prisma.group.upsert({
-      where: { id: ctx.chat.id.toString() },
-      update: {},
-      create: {
-        id: ctx.chat.id.toString(),
-        type: ctx.chat.type,
-      },
-    });
+
+    await ctx.sql`
+      INSERT INTO "Group" ("id", "type")
+      VALUES (${ctx.chat.id.toString()}, ${ctx.chat.type})
+      ON CONFLICT ("id")
+        DO UPDATE SET "type" = ${ctx.chat.type}
+    `;
 
     const admins = await ctx.getChatAdministrators();
 
     for (const admin of admins) {
-      await ctx.prisma.groupMember.upsert({
-        where: {
-          userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
-        },
-        update: {},
-        create: {
-          userId: admin.user.id.toString(),
-          groupId: ctx.chat.id.toString(),
-          role: admin.status,
-        },
-      });
+      await ctx.sql`
+        INSERT INTO "GroupMember" ("userId", "groupId", "role")
+        VALUES (${admin.user.id.toString()}, ${ctx.chat.id.toString()}, ${admin.status})
+        ON CONFLICT ("userId", "groupId")
+          DO UPDATE SET "role" = ${admin.status}
+      `;
     }
 
     await help(ctx);

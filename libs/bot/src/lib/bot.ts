@@ -9,6 +9,8 @@ import { privateWebhookComposer } from './composers/private-webhook-composer';
 import { configureBot } from './middlewares/configure';
 
 export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
+  console.log('initWebhookBot');
+
   const env = getEnv(c);
   const bot = new Bot<BotContext>(env.BOT_TOKEN, {
     client: {
@@ -23,6 +25,7 @@ export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
 
   bot.filter(Context.has.chatType(['group', 'supergroup']), groupWebhookComposer);
 
+  console.log('bot.init');
   await bot.init();
 
   return bot;

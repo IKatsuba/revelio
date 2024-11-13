@@ -1,5 +1,7 @@
+import * as console from 'node:console';
 import { configure } from '@trigger.dev/sdk/v3';
 import { Hono } from 'hono';
+import { logger } from 'hono/logger';
 
 import { getEnv } from '@revelio/env';
 
@@ -8,6 +10,8 @@ import { stripeWebhook } from './webhooks/stripe';
 import { tgWebhook, validateWebhook } from './webhooks/tg-webhook';
 
 export const app = new Hono();
+
+app.use(logger());
 
 app.use(async (c, next) => {
   configure({
@@ -21,4 +25,10 @@ app.post('/api/reminders/after-notify', qstashVerify(), remindersAfterNotify);
 
 app.post('/api/stripe/webhook', stripeWebhook);
 
-app.post('/api/tg/webhook', validateWebhook(), tgWebhook);
+app.post('/api/tg/webhook', validateWebhook(), ...tgWebhook);
+
+app.onError((err, c) => {
+  console.error(err);
+
+  return new Response('Ok', { status: 200 });
+});

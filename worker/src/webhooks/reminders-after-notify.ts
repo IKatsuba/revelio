@@ -8,7 +8,7 @@ import { nanoid } from 'nanoid';
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
 import { generateAnswer } from '@revelio/llm';
-import { createPrisma } from '@revelio/prisma';
+import { createSQLClient } from '@revelio/prisma';
 
 function createReceiver(c: Context) {
   const env = getEnv(c);
@@ -43,7 +43,7 @@ export function qstashVerify(): MiddlewareHandler {
 
 export async function remindersAfterNotify(c: Context) {
   const env = getEnv(c);
-  const prisma = createPrisma(c);
+  const sql = createSQLClient(c);
   try {
     const { id, update, text } = (await c.req.json()) as {
       id: string;
@@ -51,14 +51,11 @@ export async function remindersAfterNotify(c: Context) {
       text: string;
     };
 
-    await prisma.reminder.update({
-      where: {
-        id,
-      },
-      data: {
-        status: ReminderStatus.SENT,
-      },
-    });
+    await sql`
+      UPDATE "Reminder"
+      SET "status" = ${ReminderStatus.SENT}
+      WHERE "id" = ${id}
+    `;
 
     const bot = new Bot<BotContext>(env.BOT_TOKEN, {
       client: {

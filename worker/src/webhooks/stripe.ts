@@ -1,11 +1,12 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { NeonQueryFunction } from '@neondatabase/serverless';
+import { Prisma } from '@prisma/client';
 import { Api } from 'grammy';
 import { Context } from 'hono';
 import { Stripe } from 'stripe';
 
 import { createBotApi, setSession } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
-import { createPrisma } from '@revelio/prisma';
+import { createSQLClient } from '@revelio/prisma';
 import { createStripe } from '@revelio/stripe';
 
 const relevantEvents = new Set([
@@ -25,7 +26,7 @@ export async function stripeWebhook(c: Context) {
   const botApi = createBotApi(c);
 
   const env = getEnv(c);
-  const prisma = createPrisma(c);
+  const sql = createSQLClient(c);
   const body = await c.req.text();
   const sig = c.req.header('stripe-signature') as string;
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
@@ -47,17 +48,17 @@ export async function stripeWebhook(c: Context) {
       switch (event.type) {
         case 'product.created':
         case 'product.updated':
-          await upsertProductRecord(prisma, event.data.object as Stripe.Product);
+          await upsertProductRecord(sql, event.data.object as Stripe.Product);
           break;
         case 'price.created':
         case 'price.updated':
-          await upsertPriceRecord(prisma, event.data.object as Stripe.Price);
+          await upsertPriceRecord(sql, event.data.object as Stripe.Price);
           break;
         case 'price.deleted':
-          await deletePriceRecord(prisma, event.data.object as Stripe.Price);
+          await deletePriceRecord(sql, event.data.object as Stripe.Price);
           break;
         case 'product.deleted':
-          await deleteProductRecord(prisma, event.data.object as Stripe.Product);
+          await deleteProductRecord(sql, event.data.object as Stripe.Product);
           break;
         case 'customer.subscription.created': {
           const subscription = event.data.object as Stripe.Subscription;
@@ -65,7 +66,7 @@ export async function stripeWebhook(c: Context) {
             c,
             botApi,
             stripe,
-            prisma,
+            sql,
             subscription.id,
             subscription.customer as string,
             true,
@@ -79,7 +80,7 @@ export async function stripeWebhook(c: Context) {
             c,
             botApi,
             stripe,
-            prisma,
+            sql,
             subscription.id,
             subscription.customer as string,
           );
@@ -113,88 +114,70 @@ export async function stripeWebhook(c: Context) {
   return new Response(JSON.stringify({ received: true }));
 }
 
-async function upsertProductRecord(prisma: PrismaClient, object: Stripe.Product) {
+async function upsertProductRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Product) {
   try {
-    await prisma.product.upsert({
-      where: { id: object.id },
-      update: {
-        name: object.name,
-        active: object.active,
-        metadata: object.metadata,
-      },
-      create: {
-        id: object.id,
-        name: object.name,
-        active: object.active,
-        metadata: object.metadata,
-      },
-    });
+    await sql`
+      INSERT INTO "Product" (id, name, active, metadata)
+      VALUES (${object.id}, ${object.name}, ${object.active}, ${object.metadata})
+      ON CONFLICT (id) DO UPDATE
+        SET name     = ${object.name},
+            active   = ${object.active},
+            metadata = ${object.metadata};
+    `;
+
     console.log(`Product ${object.id} upserted successfully.`);
   } catch (error) {
     console.error(`Failed to upsert product ${object.id}:`, error);
   }
 }
 
-async function upsertPriceRecord(prisma: PrismaClient, object: Stripe.Price) {
+async function upsertPriceRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Price) {
   try {
-    await prisma.price.upsert({
-      where: { id: object.id },
-      update: {
-        active: object.active,
-        currency: object.currency,
-        unitAmount: object.unit_amount,
-        type: object.type,
-        interval: object.recurring?.interval,
-        intervalCount: object.recurring?.interval_count,
-        trialPeriodDays: object.recurring?.trial_period_days,
-        product: {
-          connect: {
-            id: object.product as string,
-          },
-        },
-        lookupKey: object.lookup_key,
-        metadata: object.metadata,
-      },
-      create: {
-        id: object.id,
-        active: object.active,
-        currency: object.currency,
-        unitAmount: object.unit_amount,
-        type: object.type,
-        interval: object.recurring?.interval,
-        intervalCount: object.recurring?.interval_count,
-        trialPeriodDays: object.recurring?.trial_period_days,
-        product: {
-          connect: {
-            id: object.product as string,
-          },
-        },
-        lookupKey: object.lookup_key,
-        metadata: object.metadata,
-      },
-    });
+    await sql`
+      INSERT INTO "Price" (id, active, currency, "unitAmount", type, interval, "intervalCount", "trialPeriodDays",
+                           "lookupKey", metadata, "productId")
+      VALUES (${object.id}, ${object.active}, ${object.currency}, ${object.unit_amount}, ${object.type},
+              ${object.recurring?.interval}, ${object.recurring?.interval_count},
+              ${object.recurring?.trial_period_days}, ${object.lookup_key}, ${object.metadata}, ${object.product})
+      ON CONFLICT (id) DO UPDATE
+        SET active            = ${object.active},
+            currency          = ${object.currency},
+            "unitAmount"      = ${object.unit_amount},
+            type              = ${object.type},
+            interval          = ${object.recurring?.interval},
+            "intervalCount"   = ${object.recurring?.interval_count},
+            "trialPeriodDays" = ${object.recurring?.trial_period_days},
+            "lookupKey"       = ${object.lookup_key},
+            metadata          = ${object.metadata},
+            "productId"       = ${object.product};
+    `;
+
     console.log(`Price ${object.id} upserted successfully.`);
   } catch (error) {
     console.error(`Failed to upsert price ${object.id}:`, error);
   }
 }
 
-async function deletePriceRecord(prisma: PrismaClient, object: Stripe.Price) {
+async function deletePriceRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Price) {
   try {
-    await prisma.price.delete({
-      where: { id: object.id },
-    });
+    await sql`
+      DELETE
+      FROM "Price"
+      WHERE id = ${object.id};
+    `;
     console.log(`Price ${object.id} deleted successfully.`);
   } catch (error) {
     console.error(`Failed to delete price ${object.id}:`, error);
   }
 }
 
-async function deleteProductRecord(prisma: PrismaClient, object: Stripe.Product) {
+async function deleteProductRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Product) {
   try {
-    await prisma.product.delete({
-      where: { id: object.id },
-    });
+    await sql`
+      DELETE
+      FROM "Product"
+      WHERE id = ${object.id};
+    `;
     console.log(`Product ${object.id} deleted successfully.`);
   } catch (error) {
     console.error(`Failed to delete product ${object.id}:`, error);
@@ -205,18 +188,18 @@ async function manageSubscriptionStatusChange(
   c: Context,
   botApi: Api,
   stripe: Stripe,
-  prisma: PrismaClient,
+  sql: NeonQueryFunction<false, false>,
   subscriptionId: string,
   customerId: string,
   isCreating = false,
 ) {
-  const group = await prisma.group.findFirst({
-    where: {
-      customer: {
-        stripeCustomerId: customerId,
-      },
-    },
-  });
+  const [group] = await sql`
+    SELECT "Group".id
+    FROM "Group"
+           JOIN "Customer" ON "Group".id = "Customer"."id"
+    WHERE "Customer"."stripeCustomerId" = ${customerId}
+    LIMIT 1;
+  `;
 
   if (!group) {
     throw new Error(`Customer lookup failed for`);
@@ -259,18 +242,26 @@ async function manageSubscriptionStatusChange(
   });
 
   try {
-    const dbSubscription = await prisma.subscription.upsert({
-      where: { id: subscription.id },
-      update: subscriptionData,
-      create: subscriptionData,
-      include: {
-        price: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    });
+    const [dbSubscription] = await sql`
+      INSERT INTO "Subscription" (id, status, quantity, "cancelAtPeriodEnd", "endedAt", "cancelAt", "canceledAt",
+                                  "trialStart", "trialEnd", "groupId", "priceId")
+      VALUES (${subscriptionData.id}, ${subscriptionData.status}, ${subscriptionData.quantity},
+              ${subscriptionData.cancelAtPeriodEnd}, ${subscriptionData.endedAt},
+              ${subscriptionData.cancelAt}, ${subscriptionData.canceledAt}, ${subscriptionData.trialStart},
+              ${subscriptionData.trialEnd}, ${group.id}, ${subscriptionData.price.connect.id})
+      ON CONFLICT (id) DO UPDATE
+        SET status              = ${subscriptionData.status},
+            quantity            = ${subscriptionData.quantity},
+            "cancelAtPeriodEnd" = ${subscriptionData.cancelAtPeriodEnd},
+            "endedAt"           = ${subscriptionData.endedAt},
+            "cancelAt"          = ${subscriptionData.cancelAt},
+            "canceledAt"        = ${subscriptionData.canceledAt},
+            "trialStart"        = ${subscriptionData.trialStart},
+            "trialEnd"          = ${subscriptionData.trialEnd},
+            "groupId"           = ${group.id},
+            "priceId"           = ${subscriptionData.price.connect.id}
+      RETURNING *;
+    `;
 
     await setSession(c, Number(group.id), (session) => {
       session.plan =

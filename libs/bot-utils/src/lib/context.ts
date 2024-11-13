@@ -1,3 +1,4 @@
+import { NeonQueryFunction } from '@neondatabase/serverless';
 import { PrismaClient } from '@prisma/client';
 import { Redis } from '@upstash/redis/cloudflare';
 import { Context, SessionFlavor } from 'grammy';
@@ -20,4 +21,5 @@ export type BotContext = Context &
     stripe: Stripe;
     redis: Redis;
     openai: OpenAI;
+    sql: NeonQueryFunction<false, false>;
   };

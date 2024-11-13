@@ -4,6 +4,7 @@ import { app } from './app';
 
 export interface Env {
   API_HOST: string;
+  HYPERDRIVE: Hyperdrive;
 }
 
 export default {

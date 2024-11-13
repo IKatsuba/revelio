@@ -1,8 +1,10 @@
 import { Api } from 'grammy';
 
-import { env } from '@revelio/env';
+import { envSchema } from '@revelio/env';
 
-const api = new Api('7409250764:AAGKHImCzpAGULGfgrs5Yd5sSb4CoInyyzA', {
+const env = envSchema.parse(process.env);
+
+const api = new Api(env.BOT_TOKEN, {
   apiRoot: env.TELEGRAM_API_URL,
 });
 
@@ -12,8 +14,8 @@ api
     console.log(`Bot:`, me);
   })
   .then(() =>
-    api.setWebhook('https://revelio.katsuba.dev/api/tg/webhook', {
-      secret_token: 'Ee5rSVSANcvQBQwrSDyGvWa6PVlSS00G' || undefined,
+    api.setWebhook(env.BOT_WEBHOOK_URL, {
+      secret_token: env.BOT_WEBHOOK_SECRET || undefined,
     }),
   )
   .then(() => {

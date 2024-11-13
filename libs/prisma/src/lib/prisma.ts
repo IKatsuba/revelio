@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless';
+import { neon, Pool } from '@neondatabase/serverless';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { PrismaClient } from '@prisma/client';
 import { Context } from 'hono';
@@ -11,4 +11,10 @@ export function createPrisma(c: Context) {
   const neon = new Pool({ connectionString: env.POSTGRES_PRISMA_URL });
   const adapter = new PrismaNeon(neon);
   return new PrismaClient({ adapter });
+}
+
+export function createSQLClient(c: Context) {
+  const env = getEnv(c);
+
+  return neon(env.POSTGRES_PRISMA_URL);
 }

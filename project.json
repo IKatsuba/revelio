@@ -20,8 +20,8 @@
             "prefix": "[docker-compose]"
           },
           {
-            "command": "nx dev jobs",
-            "prefix": "[jobs]"
+            "command": "nx bind:webhook",
+            "prefix": "[bind-webhook]"
           }
         ],
         "parallel": true

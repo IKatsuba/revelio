@@ -76,8 +76,8 @@ Always answer in a language that user is using.`,
   TRIGGER_SECRET_KEY: z.string(),
 });
 
-export function getEnv(c: Context) {
-  const { data, error } = envSchema.safeParse(c.env);
+export function getEnv(c?: Context) {
+  const { data, error } = envSchema.safeParse(c?.env ?? process.env);
 
   if (error) {
     error.errors.forEach((e) => {
