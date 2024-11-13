@@ -4,8 +4,8 @@ import { Composer, Context } from 'grammy';
 import { BotContext } from '@revelio/bot-utils';
 
 import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
-import { delegate } from '../commands/delegate';
 import { help } from '../commands/help';
+import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
@@ -67,5 +67,5 @@ groupWebhookComposer.filter(mentionFilter).on(
     },
     name: 'text',
   }),
-  delegate,
+  prompt,
 );

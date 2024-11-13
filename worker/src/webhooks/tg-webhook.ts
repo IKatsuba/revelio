@@ -1,4 +1,3 @@
-import { MiddlewareHandler } from 'hono';
 import { createFactory } from 'hono/factory';
 
 import { initWebhookBot } from '@revelio/bot';
@@ -6,7 +5,7 @@ import { getEnv } from '@revelio/env';
 
 const factory = createFactory();
 
-export const tgWebhook = factory.createHandlers(async (c) => {
+export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => {
   const body = await c.req.json();
 
   try {
@@ -21,8 +20,8 @@ export const tgWebhook = factory.createHandlers(async (c) => {
   return new Response('Ok');
 });
 
-export function validateWebhook(): MiddlewareHandler {
-  return async (c, next) => {
+export function validateWebhook() {
+  return factory.createMiddleware(async (c, next) => {
     console.log('validateWebhook');
 
     const env = getEnv(c);
@@ -40,5 +39,5 @@ export function validateWebhook(): MiddlewareHandler {
         return new Response('Ok');
       }
     }
-  };
+  });
 }

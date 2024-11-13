@@ -1,11 +1,8 @@
 import { Document, PhotoSize } from '@grammyjs/types';
-import { logger } from '@trigger.dev/sdk/v3';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext } from '@revelio/bot-utils';
 import { generateAnswer } from '@revelio/llm';
-
-import { createTDLib } from '../tdlib';
 
 export async function prompt(ctx: BotContext) {
   await ctx.replyWithChatAction('typing');
@@ -53,7 +50,7 @@ ${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
-              image: await logger.trace('getPhotoUrl', () => getPhotoUrl(ctx, photo)),
+              image: await getPhotoUrl(ctx, photo),
             },
           ],
         },
@@ -84,6 +81,10 @@ async function getPhoto(ctx: BotContext) {
     return null;
   }
 
+  if (!photo.file_size) {
+    return null;
+  }
+
   if (photo.file_size > 20 * 1024 * 1024) {
     return null;
   }
@@ -91,9 +92,19 @@ async function getPhoto(ctx: BotContext) {
   return photo;
 }
 
-async function uploadImg(ctx: BotContext, blob: Blob) {
+async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
+  const fileDescription = await ctx.api.getFile(photo.file_id);
+
+  const telegramFileUrl = `${ctx.env.TELEGRAM_API_URL}/file/bot${ctx.env.BOT_TOKEN}/${fileDescription.file_path}`;
+
   const formData = new FormData();
-  formData.append('file', blob);
+  formData.append('url', telegramFileUrl);
+  formData.append(
+    'metadata',
+    JSON.stringify({
+      fileId: photo.file_id,
+    }),
+  );
   formData.append('requireSignedURLs', 'false');
 
   const response = await fetch(
@@ -125,20 +136,4 @@ async function uploadImg(ctx: BotContext, blob: Blob) {
   }
 
   return new URL(result.variants[0]);
-}
-
-async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
-  const tdlib = await logger.trace('createTDLib', () => createTDLib());
-
-  const result = await logger.trace('tdlib.downloadAsBuffer', () =>
-    tdlib.downloadAsBuffer(photo.file_id),
-  );
-
-  await tdlib.close();
-
-  const file = new File([result], photo.file_id, {
-    type: 'mime_type' in photo ? (photo.mime_type ?? undefined) : undefined,
-  });
-
-  return logger.trace('uploadImg', () => uploadImg(ctx, file));
 }

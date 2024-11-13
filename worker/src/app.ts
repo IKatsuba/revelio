@@ -7,7 +7,7 @@ import { getEnv } from '@revelio/env';
 
 import { qstashVerify, remindersAfterNotify } from './webhooks/reminders-after-notify';
 import { stripeWebhook } from './webhooks/stripe';
-import { tgWebhook, validateWebhook } from './webhooks/tg-webhook';
+import { tgWebhook } from './webhooks/tg-webhook';
 
 export const app = new Hono();
 
@@ -25,7 +25,7 @@ app.post('/api/reminders/after-notify', qstashVerify(), remindersAfterNotify);
 
 app.post('/api/stripe/webhook', stripeWebhook);
 
-app.post('/api/tg/webhook', validateWebhook(), ...tgWebhook);
+app.post('/api/tg/webhook', ...tgWebhook);
 
 app.onError((err, c) => {
   console.error(err);
