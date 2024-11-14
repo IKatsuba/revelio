@@ -32,6 +32,6 @@ export default instrument(handler, (_env: Env, _trigger) => {
           headers: { 'x-api-key': env.BASELIME_API_KEY },
         }
       : new ConsoleSpanExporter(),
-    service: { name: 'revelio-cf-worker' },
+    service: { name: 'revelio' },
   };
 });
