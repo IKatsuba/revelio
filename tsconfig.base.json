@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@revelio/analytics": ["libs/analytics/src/index.ts"],
       "@revelio/bot": ["libs/bot/src/index.ts"],
       "@revelio/bot-utils": ["libs/bot-utils/src/index.ts"],
       "@revelio/env": ["libs/env/src/index.ts"],

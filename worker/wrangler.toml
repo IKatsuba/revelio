@@ -7,6 +7,10 @@ main = "src/index.ts"
 enabled = true
 head_sampling_rate = 1
 
+[[analytics_engine_datasets]]
+binding = "analytics"
+dataset = "revelio"
+
 [vars]
 BOT_WEBHOOK_URL="https://revelio.katsuba.workers.dev/api/tg/webhook"
 CLOUDFLARE_ACCOUNT_ID="53683e9c95b74c0aae7b4b9821b8c53f"

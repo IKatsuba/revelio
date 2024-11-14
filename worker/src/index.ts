@@ -3,8 +3,7 @@ import * as process from 'node:process';
 import { app } from './app';
 
 export interface Env {
-  API_HOST: string;
-  HYPERDRIVE: Hyperdrive;
+  analytics: AnalyticsEngineDataset;
 }
 
 export default {

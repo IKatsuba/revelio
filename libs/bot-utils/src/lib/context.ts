@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { Stripe } from 'stripe';
 import { z } from 'zod';
 
+import { Analytics } from '@revelio/analytics';
 import { envSchema } from '@revelio/env';
 
 export interface SessionData {
@@ -22,4 +23,5 @@ export type BotContext = Context &
     redis: Redis;
     openai: OpenAI;
     sql: NeonQueryFunction<false, false>;
+    analytics: Analytics;
   };
