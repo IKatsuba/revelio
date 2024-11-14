@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 
 import { BotContext, plansDescription, sendLongText } from '@revelio/bot-utils';
 import { createOpenaiProvider } from '@revelio/openai';
-import { createCustomer, createKeyboardWithPaymentLinks, getCustomer } from '@revelio/stripe';
+import { createKeyboardWithPaymentLinks } from '@revelio/stripe';
 
 import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
@@ -84,12 +84,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
   });
 
   const paymentKeyboard =
-    ctx.session.plan === 'free'
-      ? await createKeyboardWithPaymentLinks(
-          (await getCustomer(ctx)) ?? (await createCustomer(ctx)),
-          ctx,
-        )
-      : undefined;
+    ctx.session.plan === 'free' ? await createKeyboardWithPaymentLinks(ctx) : undefined;
 
   await sendLongText(ctx, result.text, {
     reply_markup: paymentKeyboard,

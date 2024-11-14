@@ -2,6 +2,7 @@ import { NeonQueryFunction } from '@neondatabase/serverless';
 import { PrismaClient } from '@prisma/client';
 import { Redis } from '@upstash/redis/cloudflare';
 import { Context, SessionFlavor } from 'grammy';
+import { Context as HonoContext } from 'hono';
 import OpenAI from 'openai';
 import { Stripe } from 'stripe';
 import { z } from 'zod';
@@ -24,4 +25,5 @@ export type BotContext = Context &
     openai: OpenAI;
     sql: NeonQueryFunction<false, false>;
     analytics: Analytics;
+    c: HonoContext;
   };

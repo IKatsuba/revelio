@@ -1,4 +1,5 @@
 import { Update } from '@grammyjs/types';
+import { trace } from '@opentelemetry/api';
 import { ReminderStatus } from '@prisma/client';
 import { Receiver } from '@upstash/qstash';
 import { Bot } from 'grammy';
@@ -94,6 +95,7 @@ export async function remindersAfterNotify(c: Context) {
     await bot.handleUpdate(update);
   } catch (error) {
     console.error(error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 
   return Response.json({ status: 'ok' });

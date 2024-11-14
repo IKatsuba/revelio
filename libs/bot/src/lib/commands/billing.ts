@@ -20,7 +20,13 @@ export async function billing(ctx: BotContext) {
 
   console.log('[billing] find customer');
 
-  const customer = (await getCustomer(ctx)) ?? (await createCustomer(ctx));
+  const customer =
+    (await getCustomer(ctx.c, ctx.chatId.toString())) ??
+    (await createCustomer(
+      ctx.c,
+      ctx.chatId.toString(),
+      ctx.chat?.title ?? ctx.chat?.username ?? `${ctx.chat?.first_name} ${ctx.chat?.last_name}`,
+    ));
 
   if (!customer) {
     console.log('[billing] No customer');

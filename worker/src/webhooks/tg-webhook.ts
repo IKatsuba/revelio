@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import { createFactory } from 'hono/factory';
 
 import { initWebhookBot } from '@revelio/bot';
@@ -12,9 +13,16 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
     const bot = await initWebhookBot(c);
 
     console.log('bot.handleUpdate');
-    c.executionCtx.waitUntil(bot.handleUpdate(body).catch(console.error));
+    c.executionCtx.waitUntil(
+      bot.handleUpdate(body).catch((err) => {
+        console.error(err);
+
+        trace.getActiveSpan()?.recordException(err);
+      }),
+    );
   } catch (error) {
     console.error('internal error', error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 
   return new Response('Ok');
@@ -36,6 +44,7 @@ export function validateWebhook() {
         await next();
       } else {
         console.error('Invalid secret token');
+        trace.getActiveSpan()?.recordException('Invalid secret token');
         return new Response('Ok');
       }
     }

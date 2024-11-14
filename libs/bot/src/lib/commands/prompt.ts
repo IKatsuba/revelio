@@ -1,4 +1,5 @@
 import { Document, PhotoSize } from '@grammyjs/types';
+import { trace } from '@opentelemetry/api';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
 import { BotContext } from '@revelio/bot-utils';
@@ -128,6 +129,7 @@ async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
 
   if (!success) {
     console.error(errors);
+    trace.getActiveSpan()?.recordException(errors.join('. '));
     throw new Error(errors.join(', '));
   }
 

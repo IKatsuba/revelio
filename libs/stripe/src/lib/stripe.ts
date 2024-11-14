@@ -1,10 +1,12 @@
 import { Customer } from '@prisma/client';
 import { InlineKeyboard } from 'grammy';
 import { Context } from 'hono';
+import { nanoid } from 'nanoid';
 import Stripe from 'stripe';
 
 import { BotContext } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
+import { createSQLClient } from '@revelio/prisma';
 
 export function createStripe(c: Context) {
   const env = getEnv(c);
@@ -12,31 +14,34 @@ export function createStripe(c: Context) {
   return new Stripe(env.STRIPE_SECRET_KEY);
 }
 
-export async function getCustomer(ctx: BotContext) {
+export async function getCustomer(c: Context, chatId: string) {
+  const sql = createSQLClient(c);
+
   return (
-    await ctx.sql`
+    await sql`
       SELECT "id", "stripeCustomerId"
       FROM "Customer"
-      WHERE "id" = ${ctx.chatId!.toString()}
+      WHERE "id" = ${chatId}
     `
   )?.[0] as Customer;
 }
 
-export async function createCustomer(ctx: BotContext) {
-  const customer = await ctx.stripe.customers.create({
-    name: ctx.chat?.title ?? ctx.chat?.username ?? `${ctx.chat?.first_name} ${ctx.chat?.last_name}`,
-  });
+export async function createCustomer(c: Context, chatId: string, name: string) {
+  const stripe = createStripe(c);
+  const sql = createSQLClient(c);
+
+  const customer = await stripe.customers.create({ name });
 
   return (
-    await ctx.sql`
+    await sql`
       INSERT INTO "Customer" ("id", "stripeCustomerId")
-      VALUES (${ctx.chatId!.toString()}, ${customer.id})
+      VALUES (${chatId}, ${customer.id})
       RETURNING "id", "stripeCustomerId";
     `
   )?.[0] as Customer;
 }
 
-export async function createKeyboardWithPaymentLinks(customer: Customer, ctx: BotContext) {
+export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
   const prices = await ctx.sql`
     SELECT "Price"."id", "currency", "lookupKey", "unitAmount", "productId", "Product"."name" as "productName"
     FROM "Price"
@@ -48,39 +53,37 @@ export async function createKeyboardWithPaymentLinks(customer: Customer, ctx: Bo
 
   console.log('[billing] create sessions');
 
-  const sessions = await Promise.all(
-    prices.map(async (price) => {
-      const session = await ctx.stripe.checkout.sessions.create({
-        after_expiration: {
-          recovery: {
-            enabled: true,
-          },
+  const sessions = prices.map((price) => {
+    const token = nanoid(20);
+
+    const requestUrl = new URL(ctx.c.req.url);
+    requestUrl.pathname = `/b/${token}`;
+
+    return {
+      name: price.productName,
+      url: requestUrl.toString(),
+      key: `bs:${token}`,
+      payload: {
+        chatId: ctx.chatId!.toString(),
+        chatName:
+          ctx.chat?.title ?? ctx.chat?.username ?? `${ctx.chat?.first_name} ${ctx.chat?.last_name}`,
+        price: {
+          id: price.id,
+          productName: price.productName,
         },
-        customer: customer.stripeCustomerId,
-        success_url: 'https://t.me/RevelioGPTBot',
-        cancel_url: 'https://t.me/RevelioGPTBot',
-        mode: 'subscription',
-        line_items: [
-          {
-            price: price.id,
-            quantity: 1,
-          },
-        ],
-        allow_promotion_codes: true,
-        expand: ['line_items.data.price.product'],
-      });
+      },
+    };
+  });
 
-      return {
-        id: price.id,
-        name: price.productName,
-        url: session.url!,
-      };
-    }),
-  );
+  const pipeline = ctx.redis.pipeline();
 
-  if (sessions.find((session) => !session.url)) {
-    throw new Error('[billing] No session url');
+  for (const session of sessions) {
+    pipeline.set(session.key, session.payload, {
+      ex: 60 * 60,
+    });
   }
+
+  await pipeline.exec();
 
   const keyboard = new InlineKeyboard().text('Free', 'subscription:free');
 

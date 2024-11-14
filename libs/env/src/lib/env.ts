@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import { Context } from 'hono';
 import { z } from 'zod';
 
@@ -83,6 +84,8 @@ export function getEnv(c?: Context) {
   if (error) {
     error.errors.forEach((e) => {
       console.error(e.message);
+
+      trace.getActiveSpan()?.recordException(e);
     });
 
     throw new Error(error.message);

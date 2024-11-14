@@ -1,4 +1,5 @@
 import { NeonQueryFunction } from '@neondatabase/serverless';
+import { trace } from '@opentelemetry/api';
 import { Prisma } from '@prisma/client';
 import { Api } from 'grammy';
 import { Context } from 'hono';
@@ -128,6 +129,7 @@ async function upsertProductRecord(sql: NeonQueryFunction<false, false>, object:
     console.log(`Product ${object.id} upserted successfully.`);
   } catch (error) {
     console.error(`Failed to upsert product ${object.id}:`, error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
@@ -155,6 +157,7 @@ async function upsertPriceRecord(sql: NeonQueryFunction<false, false>, object: S
     console.log(`Price ${object.id} upserted successfully.`);
   } catch (error) {
     console.error(`Failed to upsert price ${object.id}:`, error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
@@ -168,6 +171,7 @@ async function deletePriceRecord(sql: NeonQueryFunction<false, false>, object: S
     console.log(`Price ${object.id} deleted successfully.`);
   } catch (error) {
     console.error(`Failed to delete price ${object.id}:`, error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
@@ -181,6 +185,7 @@ async function deleteProductRecord(sql: NeonQueryFunction<false, false>, object:
     console.log(`Product ${object.id} deleted successfully.`);
   } catch (error) {
     console.error(`Failed to delete product ${object.id}:`, error);
+    trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
@@ -263,7 +268,7 @@ async function manageSubscriptionStatusChange(
       RETURNING *;
     `;
 
-    await setSession(c, Number(group.id), (session) => {
+    const session = await setSession(c, Number(group.id), (session) => {
       session.plan =
         subscriptionData.status === 'active'
           ? ((subscription.items.data[0].price.lookup_key as 'free' | 'basic' | 'premium') ??
@@ -271,7 +276,12 @@ async function manageSubscriptionStatusChange(
           : 'free';
     });
 
-    await botApi.sendMessage(group.id, `Now you have a ${subscriptionData.status} subscription.`);
+    const message =
+      session.plan === 'free'
+        ? 'You have a free subscription! Upgrade to a premium or basic subscription to get more tokens!'
+        : `Congratulations! You have a ${session.plan} subscription!`;
+
+    await botApi.sendMessage(group.id, message);
   } catch (e) {
     throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
   }
