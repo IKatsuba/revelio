@@ -10,12 +10,12 @@ export class Analytics {
     this.cfAnalytics.writeDataPoint({
       indexes: [
         this.ctx.chatId.toString(), // index1
-        this.ctx.from.id.toString(), // index2
       ],
       blobs: [
         this.ctx.chat.type, // blob1
-        this.ctx.from.username, // blob2
-        event, // blob3
+        this.ctx.from.id.toString(), // blob2
+        this.ctx.from.username, // blob3
+        event, // blob4
       ],
     });
   }
