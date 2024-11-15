@@ -7,6 +7,7 @@ import { Stripe } from 'stripe';
 
 import { createBotApi, setSession } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
+import { createLogger } from '@revelio/logger';
 import { createSQLClient } from '@revelio/prisma';
 import { createStripe } from '@revelio/stripe';
 
@@ -25,9 +26,10 @@ const relevantEvents = new Set([
 export async function stripeWebhook(c: Context) {
   const stripe = createStripe(c);
   const botApi = createBotApi(c);
-
   const env = getEnv(c);
   const sql = createSQLClient(c);
+  const logger = createLogger(c);
+
   const body = await c.req.text();
   const sig = c.req.header('stripe-signature') as string;
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
@@ -38,9 +40,9 @@ export async function stripeWebhook(c: Context) {
       return new Response('Webhook secret not found.', { status: 400 });
     }
     event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-    console.log(`🔔  Webhook received: ${event.type}`);
+    logger.info(`🔔  Webhook received: ${event.type}`);
   } catch (err: any) {
-    console.log(`❌ Error message: ${err.message}`);
+    logger.error(`❌ Error message: ${err.message}`);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -102,7 +104,7 @@ export async function stripeWebhook(c: Context) {
           throw new Error('Unhandled relevant event!');
       }
     } catch (error) {
-      console.log(error);
+      logger.error('Webhook handler failed.', { error });
       return new Response('Webhook handler failed. View your Next.js function logs.', {
         status: 400,
       });
@@ -115,7 +117,13 @@ export async function stripeWebhook(c: Context) {
   return new Response(JSON.stringify({ received: true }));
 }
 
-async function upsertProductRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Product) {
+async function upsertProductRecord(
+  c: Context,
+  sql: NeonQueryFunction<false, false>,
+  object: Stripe.Product,
+) {
+  const logger = createLogger(c);
+
   try {
     await sql`
       INSERT INTO "Product" (id, name, active, metadata)
@@ -126,14 +134,19 @@ async function upsertProductRecord(sql: NeonQueryFunction<false, false>, object:
             metadata = ${object.metadata};
     `;
 
-    console.log(`Product ${object.id} upserted successfully.`);
+    logger.info(`Product ${object.id} upserted successfully.`);
   } catch (error) {
-    console.error(`Failed to upsert product ${object.id}:`, error);
+    logger.error(`Failed to upsert product ${object.id}:`, { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
-async function upsertPriceRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Price) {
+async function upsertPriceRecord(
+  c: Context,
+  sql: NeonQueryFunction<false, false>,
+  object: Stripe.Price,
+) {
+  const logger = createLogger(c);
   try {
     await sql`
       INSERT INTO "Price" (id, active, currency, "unitAmount", type, interval, "intervalCount", "trialPeriodDays",
@@ -154,37 +167,47 @@ async function upsertPriceRecord(sql: NeonQueryFunction<false, false>, object: S
             "productId"       = ${object.product};
     `;
 
-    console.log(`Price ${object.id} upserted successfully.`);
+    logger.info(`Price ${object.id} upserted successfully.`);
   } catch (error) {
-    console.error(`Failed to upsert price ${object.id}:`, error);
+    logger.error(`Failed to upsert price ${object.id}`, { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
-async function deletePriceRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Price) {
+async function deletePriceRecord(
+  c: Context,
+  sql: NeonQueryFunction<false, false>,
+  object: Stripe.Price,
+) {
+  const logger = createLogger(c);
   try {
     await sql`
       DELETE
       FROM "Price"
       WHERE id = ${object.id};
     `;
-    console.log(`Price ${object.id} deleted successfully.`);
+    logger.info(`Price ${object.id} deleted successfully.`);
   } catch (error) {
-    console.error(`Failed to delete price ${object.id}:`, error);
+    logger.error(`Failed to delete price ${object.id}`, { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 }
 
-async function deleteProductRecord(sql: NeonQueryFunction<false, false>, object: Stripe.Product) {
+async function deleteProductRecord(
+  c: Context,
+  sql: NeonQueryFunction<false, false>,
+  object: Stripe.Product,
+) {
+  const logger = createLogger(c);
   try {
     await sql`
       DELETE
       FROM "Product"
       WHERE id = ${object.id};
     `;
-    console.log(`Product ${object.id} deleted successfully.`);
+    logger.info(`Product ${object.id} deleted successfully.`);
   } catch (error) {
-    console.error(`Failed to delete product ${object.id}:`, error);
+    logger.error(`Failed to delete product ${object.id}`, { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 }
@@ -198,6 +221,8 @@ async function manageSubscriptionStatusChange(
   customerId: string,
   isCreating = false,
 ) {
+  const logger = createLogger(c);
+
   const [group] = await sql`
     SELECT "Group".id
     FROM "Group"
@@ -283,10 +308,12 @@ async function manageSubscriptionStatusChange(
 
     await botApi.sendMessage(group.id, message);
   } catch (e) {
-    throw new Error(`Subscription insert/update failed: ${(e as Error).message}`);
+    logger.error(`Subscription insert/update failed`, { error: e });
+    trace.getActiveSpan()?.recordException(e as any);
+    return;
   }
 
-  console.log(`Inserted/updated subscription [${subscription.id}] for group [${group.id}]`);
+  logger.info(`Inserted/updated subscription [${subscription.id}] for group [${group.id}]`);
 }
 
 function toDateTime(secs: number) {

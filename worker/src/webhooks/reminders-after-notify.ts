@@ -8,6 +8,7 @@ import { Context, MiddlewareHandler } from 'hono';
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createLogger } from '@revelio/logger';
 import { createSQLClient } from '@revelio/prisma';
 
 function createReceiver(c: Context) {
@@ -44,6 +45,7 @@ export function qstashVerify(): MiddlewareHandler {
 export async function remindersAfterNotify(c: Context) {
   const env = getEnv(c);
   const sql = createSQLClient(c);
+  const logger = createLogger(c);
   try {
     const { id, update, text } = (await c.req.json()) as {
       id: string;
@@ -94,7 +96,7 @@ export async function remindersAfterNotify(c: Context) {
 
     await bot.handleUpdate(update);
   } catch (error) {
-    console.error(error);
+    logger.error('Failed to send reminder', { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 

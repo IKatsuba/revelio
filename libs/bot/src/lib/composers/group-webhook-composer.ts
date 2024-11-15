@@ -17,7 +17,7 @@ groupWebhookComposer.on(
   'msg:new_chat_members:me',
   track('msg:new_chat_members:me'),
   async (ctx) => {
-    console.log('New chat members');
+    ctx.logger.info('Bot added to the new chat', { chatId: ctx.chat.id });
 
     await ctx.sql`
       INSERT INTO "Group" ("id", "type", "updatedAt")

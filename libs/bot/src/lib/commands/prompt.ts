@@ -6,6 +6,8 @@ import { BotContext } from '@revelio/bot-utils';
 import { generateAnswer } from '@revelio/llm';
 
 export async function prompt(ctx: BotContext) {
+  ctx.logger.debug('Prompt command');
+
   await ctx.replyWithChatAction('typing');
 
   const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
@@ -128,7 +130,7 @@ async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
   };
 
   if (!success) {
-    console.error(errors);
+    ctx.logger.error('Failed to upload image to Cloudflare', { errors });
     trace.getActiveSpan()?.recordException(errors.join('. '));
     throw new Error(errors.join(', '));
   }

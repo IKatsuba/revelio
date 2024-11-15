@@ -80,38 +80,37 @@ export class WorkerLogger {
     this.logger = loggerProvider.getLogger('default', '1.0.0');
   }
 
-  private emit(severity: string, body?: Record<string, any>) {
+  private emit(severity: string, body: string, attrs?: Record<string, any>) {
     this.logger.emit({
       severityText: severity,
-      body: {
-        ...body,
-      },
+      body,
       attributes: {
         requestId: this.requestId,
         namespace: this.namespace,
         service: 'revelio',
+        ...attrs,
       },
     });
   }
 
   debug(message: string, attributes?: Record<string, any>) {
-    this.emit('debug', { message, ...attributes });
+    this.emit('debug', message, { ...attributes });
   }
 
   info(message: string, attributes?: Record<string, any>) {
-    this.emit('info', { message, ...attributes });
+    this.emit('info', message, { ...attributes });
   }
 
   warn(message: string, attributes?: Record<string, any>) {
-    this.emit('warn', { message, ...attributes });
+    this.emit('warn', message, { ...attributes });
   }
 
   error(message: string, attributes?: Record<string, any>) {
-    this.emit('error', { message, ...attributes });
+    this.emit('error', null, { ...attributes });
   }
 
   fatal(message: string, attributes?: Record<string, any>) {
-    this.emit('fatal', { message, ...attributes });
+    this.emit('fatal', message, { ...attributes });
   }
 
   trace<T>(id: string, fn: (span: Span) => Promise<T>): Promise<T> {

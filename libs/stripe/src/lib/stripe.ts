@@ -51,7 +51,7 @@ export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
     ORDER BY "unitAmount" ASC;
   `;
 
-  console.log('[billing] create sessions');
+  ctx.logger.info('[billing] create sessions');
 
   const sessions = prices.map((price) => {
     const token = nanoid(20);

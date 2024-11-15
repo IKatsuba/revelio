@@ -16,7 +16,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     }
 
     if (!ctx.chatId) {
-      console.log('No chatId found');
+      ctx.logger.error('No chatId found');
       await ctx.reply('Failed to transcribe audio');
       return;
     }

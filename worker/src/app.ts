@@ -2,6 +2,7 @@ import * as console from 'node:console';
 import { trace } from '@opentelemetry/api';
 import { configure } from '@trigger.dev/sdk/v3';
 import { Hono } from 'hono';
+import { createMiddleware } from 'hono/factory';
 
 import { getEnv } from '@revelio/env';
 import { createLogger } from '@revelio/logger';
@@ -15,24 +16,28 @@ import { tgWebhook } from './webhooks/tg-webhook';
 export const app = new Hono();
 
 app.use(async (c, next) => {
-  const logger = createLogger(c);
-
   configure({
     accessToken: getEnv(c).TRIGGER_SECRET_KEY,
   });
+
+  await next();
+});
+
+const logMiddleware = createMiddleware(async (c, next) => {
+  const logger = createLogger(c);
 
   await next();
 
   c.executionCtx.waitUntil(logger.flush());
 });
 
-app.post('/api/reminders/after-notify', qstashVerify(), remindersAfterNotify);
+app.post('/api/reminders/after-notify', logMiddleware, qstashVerify(), remindersAfterNotify);
 
-app.post('/api/stripe/webhook', stripeWebhook);
+app.post('/api/stripe/webhook', logMiddleware, stripeWebhook);
 
 app.post('/api/tg/webhook', ...tgWebhook);
 
-app.get('/b/:token', async (c) => {
+app.get('/b/:token', logMiddleware, async (c) => {
   const redis = createRedisClient(c);
 
   const token = c.req.param('token');
@@ -74,10 +79,12 @@ app.get('/b/:token', async (c) => {
   return Response.redirect(session.url!);
 });
 
-app.onError((err, c) => {
-  console.error(err);
+app.onError((error, c) => {
+  const logger = createLogger(c);
 
-  trace.getActiveSpan()?.recordException(err);
+  logger.error('internal error', { error });
+
+  trace.getActiveSpan()?.recordException(error);
 
   return new Response('Ok', { status: 200 });
 });

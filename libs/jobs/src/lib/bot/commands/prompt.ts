@@ -116,7 +116,7 @@ async function uploadImg(ctx: BotContext, blob: Blob) {
   };
 
   if (!success) {
-    console.error(errors);
+    ctx.logger.error('Failed to upload image', { errors });
     throw new Error(errors.join(', '));
   }
 

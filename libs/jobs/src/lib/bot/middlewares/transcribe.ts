@@ -15,13 +15,13 @@ export function transcribeMiddleware(): Middleware<BotContext> {
       ctx.message?.voice ?? ctx.message?.audio ?? ctx.message?.video_note ?? ctx.message?.video;
 
     if (!file) {
-      console.log('No audio file found');
+      ctx.logger.error('No audio file found');
       await ctx.reply('Failed to transcribe audio');
       return;
     }
 
     if (!ctx.chatId) {
-      console.log('No chatId found');
+      ctx.logger.error('No chatId found');
       await ctx.reply('Failed to transcribe audio');
       return;
     }

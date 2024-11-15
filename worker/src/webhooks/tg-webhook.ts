@@ -3,25 +3,31 @@ import { createFactory } from 'hono/factory';
 
 import { initWebhookBot } from '@revelio/bot';
 import { getEnv } from '@revelio/env';
+import { createLogger } from '@revelio/logger';
 
 const factory = createFactory();
 
 export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => {
+  const logger = createLogger(c);
+
   const body = await c.req.json();
 
   try {
     const bot = await initWebhookBot(c);
 
-    console.log('bot.handleUpdate');
+    logger.info('bot.handleUpdate');
     c.executionCtx.waitUntil(
-      bot.handleUpdate(body).catch((err) => {
-        console.error(err);
+      bot
+        .handleUpdate(body)
+        .catch((error) => {
+          logger.error('bot.handleUpdate error', { error });
 
-        trace.getActiveSpan()?.recordException(err);
-      }),
+          trace.getActiveSpan()?.recordException(error);
+        })
+        .then(() => logger.flush()),
     );
   } catch (error) {
-    console.error('internal error', error);
+    logger.error('internal error', { error });
     trace.getActiveSpan()?.recordException(error as any);
   }
 
@@ -30,20 +36,22 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
 
 export function validateWebhook() {
   return factory.createMiddleware(async (c, next) => {
-    console.log('validateWebhook');
+    const logger = createLogger(c);
+
+    logger.info('validateWebhook');
 
     const env = getEnv(c);
 
     if (!env.BOT_WEBHOOK_SECRET) {
-      console.log('No secret token');
+      logger.info('No secret token');
       await next();
     } else {
       const token = c.req.header('x-telegram-bot-api-secret-token');
       if (env.BOT_WEBHOOK_SECRET === token) {
-        console.log('Valid secret token');
+        logger.info('Valid secret token');
         await next();
       } else {
-        console.error('Invalid secret token');
+        logger.error('Invalid secret token');
         trace.getActiveSpan()?.recordException('Invalid secret token');
         return new Response('Ok');
       }

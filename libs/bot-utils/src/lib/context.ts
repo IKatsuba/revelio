@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import { Analytics } from '@revelio/analytics';
 import { envSchema } from '@revelio/env';
+import { WorkerLogger } from '@revelio/logger';
 
 export interface SessionData {
   plan?: 'free' | 'basic' | 'premium';
@@ -26,4 +27,5 @@ export type BotContext = Context &
     sql: NeonQueryFunction<false, false>;
     analytics: Analytics;
     c: HonoContext;
+    logger: WorkerLogger;
   };

@@ -46,7 +46,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        console.log('Creating reminder:', message, time, timezone);
+        ctx.logger.info('Creating reminder', { message, time, timezone });
 
         const date = parseDate(time, {
           timezone,
