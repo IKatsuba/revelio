@@ -34,12 +34,13 @@ export async function generateAnswer(
         })
       : [];
 
-  const allMessages =
+  const allMessages = (
     ctx.session.plan === 'free'
       ? (messages ?? [])
       : messageIds && messageIds.length > 0
         ? await ctx.redis.mget<CoreMessage[]>(messageIds)
-        : [];
+        : []
+  ).filter((msg) => !!msg);
 
   const tools = {
     getCryptoRate,
@@ -95,11 +96,15 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
 }
 
 function excludeToolResultIfItFirst(messages: CoreMessage[]): CoreMessage[] {
-  if (messages.length === 0) {
+  if (!messages.length) {
     return messages;
   }
 
   const message = messages[0];
+
+  if (!message) {
+    return messages.slice(1);
+  }
 
   if (message.role !== 'tool') {
     return messages;
