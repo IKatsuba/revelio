@@ -2,9 +2,9 @@ import * as console from 'node:console';
 import { trace } from '@opentelemetry/api';
 import { configure } from '@trigger.dev/sdk/v3';
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
 
 import { getEnv } from '@revelio/env';
+import { createLogger } from '@revelio/logger';
 import { createRedisClient } from '@revelio/redis';
 import { createCustomer, createStripe, getCustomer } from '@revelio/stripe';
 
@@ -14,14 +14,16 @@ import { tgWebhook } from './webhooks/tg-webhook';
 
 export const app = new Hono();
 
-app.use(logger());
-
 app.use(async (c, next) => {
+  const logger = createLogger(c);
+
   configure({
     accessToken: getEnv(c).TRIGGER_SECRET_KEY,
   });
 
   await next();
+
+  c.executionCtx.waitUntil(logger.flush());
 });
 
 app.post('/api/reminders/after-notify', qstashVerify(), remindersAfterNotify);

@@ -1,10 +1,13 @@
 import * as process from 'node:process';
 import { instrument } from '@microlabs/otel-cf-workers';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node';
 
 import { envSchema } from '@revelio/env';
 
 import { app } from './app';
+
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 export interface Env {
   analytics: AnalyticsEngineDataset;
