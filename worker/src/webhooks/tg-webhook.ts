@@ -42,10 +42,12 @@ export function validateWebhook() {
 
     const env = getEnv(c);
 
-    if (!env.BOT_WEBHOOK_SECRET) {
+    if (!env.BOT_WEBHOOK_SECRET || env.NODE_ENV === 'development') {
       logger.info('No secret token');
       await next();
     } else {
+      console.log(c.req.header());
+
       const token = c.req.header('x-telegram-bot-api-secret-token');
       if (env.BOT_WEBHOOK_SECRET === token) {
         logger.info('Valid secret token');

@@ -1,3 +1,4 @@
+import { BaselimeLogger } from '@baselime/edge-logger';
 import { context, diag, Span, trace } from '@opentelemetry/api';
 import { Logger } from '@opentelemetry/api-logs';
 import {
@@ -132,22 +133,41 @@ export class WorkerLogger {
   }
 }
 
-let _logger: WorkerLogger | null = null;
+// let _logger: WorkerLogger | null = null;
+
+// export function createLogger(c: Context) {
+//   if (_logger) {
+//     return _logger;
+//   }
+
+//   const collectorOptions = {
+//     url: 'https://otel.baselime.io/v1/logs',
+//   };
+//   const logExporter = new LogExporter(collectorOptions, c.env.BASELIME_API_KEY);
+//   const loggerProvider = new LoggerProvider();
+
+//   loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter));
+
+//   _logger = new WorkerLogger(loggerProvider, c.req.raw);
+
+//   return _logger;
+// }
+
+let _logger: BaselimeLogger | null = null;
 
 export function createLogger(c: Context) {
   if (_logger) {
     return _logger;
   }
 
-  const collectorOptions = {
-    url: 'https://otel.baselime.io/v1/logs',
-  };
-  const logExporter = new LogExporter(collectorOptions, c.env.BASELIME_API_KEY);
-  const loggerProvider = new LoggerProvider();
-
-  loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter));
-
-  _logger = new WorkerLogger(loggerProvider, c.req.raw);
+  _logger = new BaselimeLogger({
+    ctx: c.executionCtx,
+    apiKey: c.env.BASELIME_API_KEY,
+    service: 'revelio',
+    dataset: 'cloudflare',
+    namespace: new URL(c.req.url).pathname,
+    requestId: c.req.header('cf-ray'),
+  });
 
   return _logger;
 }
