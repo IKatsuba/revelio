@@ -19,7 +19,7 @@ export function configureBot(c: Context): Middleware<BotContext> {
     ctx.sql = createSQLClient(c);
     ctx.analytics = new Analytics(c.env.analytics, ctx);
     ctx.c = c;
-    ctx.logger = createLogger(c);
+    ctx.logger = createLogger(c, ctx);
 
     await next();
   };
