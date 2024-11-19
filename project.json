@@ -12,11 +12,7 @@
             "prefix": "[bot]"
           },
           {
-            "command": "npx -y -p localtunnel lt --port 3000 -s revelio",
-            "prefix": "[bot-proxy]"
-          },
-          {
-            "command": "docker-compose up",
+            "command": "docker-compose up -d",
             "prefix": "[docker-compose]"
           },
           {
@@ -38,6 +34,9 @@
     "bot:logout": {
       "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/logout.ts",
       "envFile": ".env"
+    },
+    "tunnel": {
+      "command": "cloudflared tunnel --url http://localhost:3000"
     }
   }
 }

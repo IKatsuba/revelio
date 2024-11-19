@@ -4,37 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("POSTGRES_PRISMA_URL")
-}
-
-enum GroupRole {
-  member
-  administrator
-  creator
-}
-
-enum PricingType {
-  one_time
-  recurring
-}
-
-enum PricingPlanInterval {
-  day
-  week
-  month
-  year
-}
-
-enum SubscriptionStatus {
-  trialing
-  active
-  canceled
-  incomplete
-  incomplete_expired
-  past_due
-  unpaid
-  paused
 }
 
 model User {
@@ -49,102 +20,39 @@ model User {
   reminders        Reminder[]
 }
 
-model Customer {
-  id               String @id
-  group            Group  @relation(fields: [id], references: [id])
-  stripeCustomerId String @unique
-}
-
-model Product {
-  id     String  @id
-  active Boolean
-  name   String
-
-  metadata Json?
-
-  prices Price[]
-}
-
-model Price {
-  id              String               @id
-  active          Boolean
-  unitAmount      Int?
-  currency        String?              @db.VarChar(3)
-  type            PricingType?
-  interval        PricingPlanInterval?
-  intervalCount   Int?
-  trialPeriodDays Int?
-  lookupKey       String?
-
-  metadata Json?
-
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
-
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id                 String             @id
-  status             SubscriptionStatus
-  quantity           Int?
-  cancelAtPeriodEnd  Boolean?
-  created            DateTime           @default(now())
-  currentPeriodStart DateTime           @default(now())
-  currentPeriodEnd   DateTime           @default(now())
-  endedAt            DateTime?
-  cancelAt           DateTime?
-  canceledAt         DateTime?
-  trialStart         DateTime?
-  trialEnd           DateTime?
-
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId String
-
-  price   Price  @relation(fields: [priceId], references: [id])
-  priceId String
-
-  @@index([groupId])
-}
-
-enum GroupType {
-  private
-  group
-  supergroup
-  channel
-}
-
 model Group {
-  id   String    @id
-  type GroupType
+  id   String @id
+  type String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customer     Customer?
-  members      GroupMember[]
-  subscription Subscription[]
-  usageLogs    UsageLog[]
-  reminders    Reminder[]
+  members   GroupMember[]
+  reminders Reminder[]
+  payments  Payment[]
 }
 
-model UsageLog {
-  id Int @id @default(autoincrement())
+model Payment {
+  id String @id
 
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId String
+  currency    String
+  totalAmount Int
 
-  outputTokens    Int
-  voiceMinutes    Int
-  imageGeneration Int
+  invoicePayload String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  subscriptionExpirationDate DateTime
+
+  isFirstRecurring Boolean
+
+  telegramPaymentChargeId String
+
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId String?
 }
 
 model GroupMember {
-  role     GroupRole
-  joinedAt DateTime  @default(now())
+  role     String
+  joinedAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
@@ -153,12 +61,6 @@ model GroupMember {
   groupId String
 
   @@id([userId, groupId])
-}
-
-enum ReminderStatus {
-  SCHEDULED
-  CANCELLED
-  SENT
 }
 
 model Reminder {
@@ -172,7 +74,7 @@ model Reminder {
   updatedAt DateTime @updatedAt
   timezone  String
 
-  status ReminderStatus
+  status String
 
   user   User   @relation(fields: [userId], references: [id])
   userId String

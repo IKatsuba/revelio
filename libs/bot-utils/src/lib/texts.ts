@@ -12,7 +12,7 @@ export const plansDescription = `- **Free Plan**
 
 
 - **Basic Plan**
-  - Price: $4.99 per month
+  - Price: ⭐️400 per month
   - Includes:
     - 📝 Text messages: Up to 100 messages per day
     - 🖼️ Image generation: Up to 10 images per month
@@ -22,7 +22,7 @@ export const plansDescription = `- **Free Plan**
     - 📩 Priority support
 
 - **Premium Plan**
-  - Price: $9.99 per month
+  - Price: ⭐️800 per month
   - Includes:
     - 📝 Text messages: Up to 500 messages per day
     - 🖼️ Image generation: Up to 50 images per month

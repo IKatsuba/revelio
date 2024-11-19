@@ -14,6 +14,7 @@ export class WorkerLogger extends BaselimeLogger {
       dataset: 'cloudflare',
       namespace: new URL(c.req.url).pathname,
       requestId: c.req.header('cf-ray'),
+      isLocalDev: true,
     });
 
     this.additionalFields = {
