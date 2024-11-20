@@ -44,7 +44,6 @@
     "openai": "^4.68.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "stripe": "^17.3.0",
     "telegramify-markdown": "^1.2.2",
     "tslib": "^2.3.0",
     "url": "^0.11.4",

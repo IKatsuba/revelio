@@ -25,7 +25,7 @@
       "@revelio/openai": ["libs/openai/src/index.ts"],
       "@revelio/prisma": ["libs/prisma/src/index.ts"],
       "@revelio/redis": ["libs/redis/src/index.ts"],
-      "@revelio/stripe": ["libs/stripe/src/index.ts"],
+      "@revelio/billing": ["libs/billing/src/index.ts"],
       "@revelio/utils": ["libs/utils/src/index.ts"]
     }
   },

@@ -1,9 +1,9 @@
 import { generateText as __generateText, CoreMessage } from 'ai';
 import { nanoid } from 'nanoid';
 
+import { createKeyboardWithPaymentLinks } from '@revelio/billing';
 import { BotContext, plansDescription, sendLongText } from '@revelio/bot-utils';
 import { createOpenaiProvider } from '@revelio/openai';
-import { createKeyboardWithPaymentLinks } from '@revelio/stripe';
 
 import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';

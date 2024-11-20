@@ -27,10 +27,6 @@
       "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/bind-webhook.ts",
       "envFile": ".env"
     },
-    "stripe:fixtures": {
-      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/stripe-fixtures.ts",
-      "envFile": ".env"
-    },
     "bot:logout": {
       "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/logout.ts",
       "envFile": ".env"
