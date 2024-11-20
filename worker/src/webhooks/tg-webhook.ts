@@ -21,7 +21,7 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
         .handleUpdate(body)
         .catch((error) => {
           console.error(error);
-          logger.error('bot.handleUpdate error', { error });
+          logger.error('bot.handleUpdate error');
 
           trace.getActiveSpan()?.recordException(error);
         })
