@@ -2,7 +2,7 @@ import { generateText as __generateText, CoreMessage } from 'ai';
 import { nanoid } from 'nanoid';
 
 import { createKeyboardWithPaymentLinks } from '@revelio/billing';
-import { BotContext, plansDescription, sendLongText } from '@revelio/bot-utils';
+import { BotContext, getPlansDescription, sendLongText } from '@revelio/bot-utils';
 import { createOpenaiProvider } from '@revelio/openai';
 
 import { generateImageFactory } from './tools/generate-image';
@@ -64,7 +64,7 @@ export async function generateAnswer(
     messages: excludeToolResultIfItFirst(allMessages),
     system:
       system ||
-      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${plansDescription}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
+      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(ctx.env)}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}

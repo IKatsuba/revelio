@@ -1,7 +1,7 @@
 import { Client } from '@upstash/qstash';
 import { Composer } from 'grammy';
 
-import { BotContext, plansDescription } from '@revelio/bot-utils';
+import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 
 function createClient(ctx: BotContext) {
@@ -99,7 +99,7 @@ billingComposer.on('message:successful_payment', async (ctx) => {
       ...createToolMessages({
         toolName: 'updateBillingPlan',
         result: {
-          plansDescription,
+          plansDescription: getPlansDescription(ctx.env),
           result: `User ${ctx.from.username} has successfully subscribed to the ${plan} plan.`,
         },
       }),

@@ -1,6 +1,6 @@
 import { InlineKeyboard } from 'grammy';
 
-import { BotContext, plansDescription } from '@revelio/bot-utils';
+import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 
 export async function billing(ctx: BotContext) {
@@ -28,7 +28,7 @@ export async function billing(ctx: BotContext) {
             toolName: 'getCurrentPlan',
             result: {
               plan: ctx.session.plan,
-              plansDescription,
+              plansDescription: getPlansDescription(ctx.env),
             },
           }),
         ],
@@ -52,7 +52,7 @@ export async function billing(ctx: BotContext) {
       ...createToolMessages({
         toolName: 'getPlans',
         result: {
-          plansDescription,
+          plansDescription: getPlansDescription(ctx.env),
         },
       }),
     ],

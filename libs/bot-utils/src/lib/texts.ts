@@ -1,4 +1,9 @@
-export const plansDescription = `- **Free Plan**
+import { z } from 'zod';
+
+import { envSchema } from '@revelio/env';
+
+export function getPlansDescription(env: z.infer<typeof envSchema>) {
+  return `- **Free Plan**
   - Price: Free
   - Includes:
     - 📝 Text messages: Up to 10 messages per day
@@ -12,7 +17,7 @@ export const plansDescription = `- **Free Plan**
 
 
 - **Basic Plan**
-  - Price: ⭐️400 per month
+  - Price: ⭐${env.BASIC_PLAN_PRICE} per month
   - Includes:
     - 📝 Text messages: Up to 100 messages per day
     - 🖼️ Image generation: Up to 10 images per month
@@ -22,7 +27,7 @@ export const plansDescription = `- **Free Plan**
     - 📩 Priority support
 
 - **Premium Plan**
-  - Price: ⭐️800 per month
+  - Price: ⭐️${env.PREMIUM_PLAN_PRICE} per month
   - Includes:
     - 📝 Text messages: Up to 500 messages per day
     - 🖼️ Image generation: Up to 50 images per month
@@ -31,6 +36,7 @@ export const plansDescription = `- **Free Plan**
     - 💾 Bot can remember any kind of information
     - 🚀 Access to new features: Early access
     - 📩 Priority support`;
+}
 
 export const helpText = `👋 **I'm Revelio, your personal assistant!**
 

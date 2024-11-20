@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
-import { BotContext, plansDescription } from '@revelio/bot-utils';
+import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 
 export function getCurrentPlanToolFactory(ctx: BotContext) {
   return {
@@ -17,7 +17,7 @@ export function getCurrentPlanToolFactory(ctx: BotContext) {
 
         return {
           plan: ctx.session.plan,
-          plansDescription,
+          plansDescription: getPlansDescription(ctx.env),
         };
       },
     }),

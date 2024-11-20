@@ -1,6 +1,6 @@
 import { CommandContext } from 'grammy';
 
-import { BotContext, helpText, plansDescription } from '@revelio/bot-utils';
+import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 
 export async function start(ctx: CommandContext<BotContext>) {
@@ -59,7 +59,7 @@ Describe the plans, if it is unknown, show the user how to upgrade (/billing com
           startMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
 Current plan: ${ctx.session.plan ?? 'Unknown'}
 Plan description:
-${plansDescription}
+${getPlansDescription(ctx.env)}
 
 Help message:
 ${helpText}
