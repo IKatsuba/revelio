@@ -50,9 +50,6 @@ Always answer in a language that user is using.`,
   UPSTASH_REDIS_URL: z.string(),
   UPSTASH_REDIS_TOKEN: z.string(),
 
-  STRIPE_SECRET_KEY: z.string(),
-  STRIPE_WEBHOOK_SECRET: z.string(),
-
   POSTGRES_PRISMA_URL: z.string(),
 
   UPSTASH_VECTOR_REST_URL: z.string(),

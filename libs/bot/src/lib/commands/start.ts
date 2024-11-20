@@ -7,28 +7,40 @@ export async function start(ctx: CommandContext<BotContext>) {
   await ctx.replyWithChatAction('typing');
 
   if (ctx.from) {
-    await ctx.sql`
-      INSERT INTO "User" ("id", "username", "updatedAt")
-      VALUES (${ctx.from.id.toString()}, ${ctx.from.username}, NOW())
-      ON CONFLICT ("id")
-        DO UPDATE SET "username"  = ${ctx.from.username},
-                      "updatedAt" = NOW()
-    `;
+    await ctx.prisma.user.upsert({
+      where: { id: ctx.from.id.toString() },
+      create: {
+        id: ctx.from.id.toString(),
+        username: ctx.from.username,
+      },
+      update: {
+        username: ctx.from.username,
+      },
+    });
 
-    await ctx.sql`
-      INSERT INTO "Group" ("id", "type", "updatedAt")
-      VALUES (${ctx.chatId.toString()}, ${ctx.chat.type}, NOW())
-      ON CONFLICT ("id")
-        DO UPDATE SET "type"      = ${ctx.chat.type},
-                      "updatedAt" = NOW()
-    `;
+    await ctx.prisma.group.upsert({
+      where: { id: ctx.chatId.toString() },
+      create: {
+        id: ctx.chatId.toString(),
+        type: ctx.chat.type,
+        plan: 'free',
+      },
+      update: {
+        type: ctx.chat.type,
+      },
+    });
 
-    await ctx.sql`
-      INSERT INTO "GroupMember" ("userId", "groupId", "role")
-      VALUES (${ctx.from.id.toString()}, ${ctx.chatId.toString()}, 'creator')
-      ON CONFLICT ("userId", "groupId")
-        DO UPDATE SET "role" = 'creator'
-    `;
+    await ctx.prisma.groupMember.upsert({
+      where: { userId_groupId: { userId: ctx.from.id.toString(), groupId: ctx.chatId.toString() } },
+      create: {
+        userId: ctx.from.id.toString(),
+        groupId: ctx.chatId.toString(),
+        role: 'creator',
+      },
+      update: {
+        role: 'creator',
+      },
+    });
   }
 
   await generateAnswer(ctx, {

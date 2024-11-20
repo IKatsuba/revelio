@@ -19,23 +19,34 @@ groupWebhookComposer.on(
   async (ctx) => {
     ctx.logger.info('Bot added to the new chat', { chatId: ctx.chat.id });
 
-    await ctx.sql`
-      INSERT INTO "Group" ("id", "type", "updatedAt")
-      VALUES (${ctx.chat.id.toString()}, ${ctx.chat.type}, NOW())
-      ON CONFLICT ("id")
-        DO UPDATE SET "type"      = ${ctx.chat.type},
-                      "updatedAt" = NOW()
-    `;
+    await ctx.prisma.group.upsert({
+      where: { id: ctx.chat.id.toString() },
+      create: {
+        id: ctx.chat.id.toString(),
+        type: ctx.chat.type,
+        plan: 'free',
+      },
+      update: {
+        type: ctx.chat.type,
+      },
+    });
 
     const admins = await ctx.getChatAdministrators();
 
     for (const admin of admins) {
-      await ctx.sql`
-        INSERT INTO "GroupMember" ("userId", "groupId", "role")
-        VALUES (${admin.user.id.toString()}, ${ctx.chat.id.toString()}, ${admin.status})
-        ON CONFLICT ("userId", "groupId")
-          DO UPDATE SET "role" = ${admin.status}
-      `;
+      await ctx.prisma.groupMember.upsert({
+        where: {
+          userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
+        },
+        create: {
+          userId: admin.user.id.toString(),
+          groupId: ctx.chat.id.toString(),
+          role: admin.status,
+        },
+        update: {
+          role: admin.status,
+        },
+      });
     }
 
     await help(ctx);

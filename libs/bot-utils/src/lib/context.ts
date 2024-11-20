@@ -1,10 +1,8 @@
-import { NeonQueryFunction } from '@neondatabase/serverless';
 import { PrismaClient } from '@prisma/client';
 import { Redis } from '@upstash/redis/cloudflare';
 import { Context, SessionFlavor } from 'grammy';
 import { Context as HonoContext } from 'hono';
 import OpenAI from 'openai';
-import { Stripe } from 'stripe';
 import { z } from 'zod';
 
 import { Analytics } from '@revelio/analytics';
@@ -21,10 +19,8 @@ export type BotContext = Context &
     transcription?: string;
     prisma: PrismaClient;
     env: z.infer<typeof envSchema>;
-    stripe: Stripe;
     redis: Redis;
     openai: OpenAI;
-    sql: NeonQueryFunction<false, false>;
     analytics: Analytics;
     c: HonoContext;
     logger: WorkerLogger;

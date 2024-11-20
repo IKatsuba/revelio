@@ -1,6 +1,5 @@
 import { Update } from '@grammyjs/types';
 import { trace } from '@opentelemetry/api';
-import { ReminderStatus } from '@prisma/client';
 import { Receiver } from '@upstash/qstash';
 import { Bot } from 'grammy';
 import { Context, MiddlewareHandler } from 'hono';
@@ -9,7 +8,7 @@ import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 import { createLogger } from '@revelio/logger';
-import { createSQLClient } from '@revelio/prisma';
+import { createPrisma } from '@revelio/prisma';
 
 function createReceiver(c: Context) {
   const env = getEnv(c);
@@ -44,7 +43,7 @@ export function qstashVerify(): MiddlewareHandler {
 
 export async function remindersAfterNotify(c: Context) {
   const env = getEnv(c);
-  const sql = createSQLClient(c);
+  const prisma = createPrisma(c);
   const logger = createLogger(c);
   try {
     const { id, update, text } = (await c.req.json()) as {
@@ -53,12 +52,21 @@ export async function remindersAfterNotify(c: Context) {
       text: string;
     };
 
-    await sql`
-      UPDATE "Reminder"
-      SET "status"    = ${ReminderStatus.SENT},
-          "updatedAt" = NOW()
-      WHERE "id" = ${id}
-    `;
+    // await sql`
+    //   UPDATE "Reminder"
+    //   SET "status"    = ${ReminderStatus.SENT},
+    //       "updatedAt" = NOW()
+    //   WHERE "id" = ${id}
+    // `;
+
+    await prisma.reminder.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'sent',
+      },
+    });
 
     const bot = new Bot<BotContext>(env.BOT_TOKEN, {
       client: {
