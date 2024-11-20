@@ -3,6 +3,8 @@ import { trace } from '@opentelemetry/api';
 import { Context as GrammyContext } from 'grammy';
 import { Context } from 'hono';
 
+import { getEnv } from '@revelio/env';
+
 export class WorkerLogger extends BaselimeLogger {
   private readonly additionalFields: { chatId: number; user: number; username: string };
 
@@ -14,7 +16,7 @@ export class WorkerLogger extends BaselimeLogger {
       dataset: 'cloudflare',
       namespace: new URL(c.req.url).pathname,
       requestId: c.req.header('cf-ray'),
-      isLocalDev: true,
+      isLocalDev: getEnv(c).NODE_ENV === 'development',
     });
 
     this.additionalFields = {
