@@ -6,7 +6,9 @@ import { createMiddleware } from 'hono/factory';
 import { getEnv } from '@revelio/env';
 import { createLogger } from '@revelio/logger';
 
-import { qstashVerify, remindersAfterNotify } from './webhooks/reminders-after-notify';
+import { checkPlanHandlers } from './webhooks/check-plan';
+import { qstashVerify } from './webhooks/qstash-verify';
+import { remindersAfterNotify } from './webhooks/reminders-after-notify';
 import { tgWebhook } from './webhooks/tg-webhook';
 
 export const app = new Hono();
@@ -30,6 +32,8 @@ const logMiddleware = createMiddleware(async (c, next) => {
 app.post('/api/reminders/after-notify', logMiddleware, qstashVerify(), remindersAfterNotify);
 
 app.post('/api/tg/webhook', logMiddleware, ...tgWebhook);
+
+app.post('/api/billing/check-plan', logMiddleware, ...checkPlanHandlers);
 
 app.onError((error, c) => {
   const logger = createLogger(c);

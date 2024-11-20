@@ -47,8 +47,6 @@ export function validateWebhook() {
       logger.info('No secret token');
       await next();
     } else {
-      console.log(c.req.header());
-
       const token = c.req.header('x-telegram-bot-api-secret-token');
       if (env.BOT_WEBHOOK_SECRET === token) {
         logger.info('Valid secret token');

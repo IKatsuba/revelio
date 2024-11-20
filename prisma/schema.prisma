@@ -18,6 +18,7 @@ model User {
 
   groupMemberships GroupMember[]
   reminders        Reminder[]
+  payment          Payment[]
 }
 
 model Group {
@@ -27,7 +28,8 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  plan String
+  plan                    String  @default("free")
+  telegramPaymentChargeId String?
 
   members   GroupMember[]
   reminders Reminder[]
@@ -35,7 +37,7 @@ model Group {
 }
 
 model Payment {
-  id String @id
+  id String @id @default(uuid())
 
   currency    String
   totalAmount Int
@@ -47,6 +49,11 @@ model Payment {
   isFirstRecurring Boolean
 
   telegramPaymentChargeId String
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
+
+  createdAt DateTime @default(now())
 
   group   Group?  @relation(fields: [groupId], references: [id])
   groupId String?

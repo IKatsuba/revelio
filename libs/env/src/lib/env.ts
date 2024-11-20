@@ -73,6 +73,11 @@ Always answer in a language that user is using.`,
   TRIGGER_SECRET_KEY: z.string(),
 
   BASELIME_API_KEY: z.string().optional(),
+
+  CHECK_PLAN_CALLBACK_URL: z.string(),
+
+  BASIC_PLAN_PRICE: z.coerce.number().int().default(400),
+  PREMIUM_PLAN_PRICE: z.coerce.number().int().default(800),
 });
 
 export function getEnv(c?: Context) {

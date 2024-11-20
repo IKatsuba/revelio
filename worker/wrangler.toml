@@ -24,6 +24,7 @@ OPENAI_API_URL="https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b
 PERPLEXITY_API_URL="https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b8c53f/revelio-prod/perplexity-ai"
 QSTASH_URL="https://qstash.upstash.io"
 REMINDERS_AFTER_NOTIFY_CALLBACK_URL="https://revelio.katsuba.workers.dev/api/reminders/after-notify"
+CHECK_PLAN_CALLBACK_URL="https://revelio.katsuba.workers.dev/api/billing/check-plan"
 TELEGRAM_API_ID="73603"
 UPSTASH_REDIS_URL="https://settled-skylark-22019.upstash.io"
 UPSTASH_VECTOR_REST_URL="https://known-lamb-99258-eu1-vector.upstash.io"

@@ -3,7 +3,11 @@ import { Composer, Context } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
 
-import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
+import {
+  billing,
+  callbackQuerySubscriptionCancel,
+  callbackQuerySubscriptionFree,
+} from '../commands/billing';
 import { help } from '../commands/help';
 import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
@@ -58,8 +62,13 @@ groupWebhookComposer.command('reset', track('command:reset'), paywall, reset);
 groupWebhookComposer.command('billing', track('command:billing'), billing);
 groupWebhookComposer.callbackQuery(
   'subscription:free',
-  track('callbackQuery:billing'),
+  track('callbackQuery:subscription:free'),
   callbackQuerySubscriptionFree,
+);
+groupWebhookComposer.callbackQuery(
+  'subscription:cancel',
+  track('callbackQuery:subscription:cancel'),
+  callbackQuerySubscriptionCancel,
 );
 
 const mentionFilter = (ctx: Context) =>

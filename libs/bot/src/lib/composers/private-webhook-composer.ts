@@ -3,7 +3,11 @@ import { Composer } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
 
-import { billing, callbackQuerySubscriptionFree } from '../commands/billing';
+import {
+  billing,
+  callbackQuerySubscriptionCancel,
+  callbackQuerySubscriptionFree,
+} from '../commands/billing';
 import { help } from '../commands/help';
 import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
@@ -21,8 +25,13 @@ privateWebhookComposer.command('reset', track('command:reset'), paywall, reset);
 privateWebhookComposer.command('billing', track('command:billing'), billing);
 privateWebhookComposer.callbackQuery(
   'subscription:free',
-  track('callbackQuery:billing'),
+  track('callbackQuery:subscription:free'),
   callbackQuerySubscriptionFree,
+);
+privateWebhookComposer.callbackQuery(
+  'subscription:cancel',
+  track('callbackQuery:subscription:cancel'),
+  callbackQuerySubscriptionCancel,
 );
 
 privateWebhookComposer.on(

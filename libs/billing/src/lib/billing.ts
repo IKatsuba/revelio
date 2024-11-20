@@ -15,7 +15,12 @@ export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
           name.toLowerCase(),
           undefined as any,
           'XTR',
-          [{ label: name, amount: name === 'Basic' ? 400 : 800 }],
+          [
+            {
+              label: name,
+              amount: name === 'Basic' ? ctx.env.BASIC_PLAN_PRICE : ctx.env.PREMIUM_PLAN_PRICE,
+            },
+          ],
           {
             subscription_period: 2592000,
           },
@@ -27,7 +32,10 @@ export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
   const keyboard = new InlineKeyboard().text('Free', 'subscription:free');
 
   for (const [name, url] of links) {
-    keyboard.url(`${name} — ⭐️${name === 'Basic' ? 400 : 800}`, url);
+    keyboard.url(
+      `${name} — ⭐️${name === 'Basic' ? ctx.env.BASIC_PLAN_PRICE : ctx.env.PREMIUM_PLAN_PRICE}`,
+      url,
+    );
   }
 
   return keyboard;

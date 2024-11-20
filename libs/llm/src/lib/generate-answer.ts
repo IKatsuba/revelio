@@ -64,7 +64,7 @@ export async function generateAnswer(
     messages: excludeToolResultIfItFirst(allMessages),
     system:
       system ||
-      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Plan descriptions: ${plansDescription}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
+      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${plansDescription}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
@@ -77,7 +77,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     experimental_telemetry: {
       isEnabled: true,
     },
-    maxTokens: ctx.session.plan === 'free' ? 200 : ctx.env.MAX_TOKENS,
+    maxTokens: ctx.env.MAX_TOKENS,
   });
 
   await addToChatHistory(ctx, {

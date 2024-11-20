@@ -5,6 +5,7 @@ import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
 import { createLogger } from '@revelio/logger';
 
+import { billingComposer } from './composers/billing-composer';
 import { groupWebhookComposer } from './composers/group-webhook-composer';
 import { privateWebhookComposer } from './composers/private-webhook-composer';
 import { configureBot } from './middlewares/configure';
@@ -45,8 +46,9 @@ export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
   bot.use(configureBot(c));
   bot.use(sessionMiddleware(c));
 
-  bot.filter(Context.has.chatType('private'), privateWebhookComposer);
+  bot.use(billingComposer);
 
+  bot.filter(Context.has.chatType('private'), privateWebhookComposer);
   bot.filter(Context.has.chatType(['group', 'supergroup']), groupWebhookComposer);
 
   logger.info('bot.init');
