@@ -70,7 +70,6 @@ Always answer in a language that user is using. You are based on GPT-4o model.`,
   NODE_ENV: z.enum(['development', 'production']).default('development'),
 
   WEATHER_API_KEY: z.string(),
-  TRIGGER_SECRET_KEY: z.string(),
 
   BASELIME_API_KEY: z.string().optional(),
 

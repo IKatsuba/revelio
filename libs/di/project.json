@@ -1,0 +1,9 @@
+{
+  "name": "di",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/di/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project di --web",
+  "targets": {}
+}

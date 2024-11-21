@@ -1,9 +1,7 @@
 import { trace } from '@opentelemetry/api';
-import { configure } from '@trigger.dev/sdk/v3';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
-import { getEnv } from '@revelio/env';
 import { createLogger } from '@revelio/logger';
 
 import { checkPlanHandlers } from './webhooks/check-plan';
@@ -14,10 +12,6 @@ import { tgWebhook } from './webhooks/tg-webhook';
 export const app = new Hono();
 
 app.use(async (c, next) => {
-  configure({
-    accessToken: getEnv(c).TRIGGER_SECRET_KEY,
-  });
-
   await next();
 });
 

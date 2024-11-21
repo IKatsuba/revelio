@@ -15,17 +15,18 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@revelio/ai": ["libs/ai/src/index.ts"],
       "@revelio/analytics": ["libs/analytics/src/index.ts"],
+      "@revelio/billing": ["libs/billing/src/index.ts"],
       "@revelio/bot": ["libs/bot/src/index.ts"],
       "@revelio/bot-utils": ["libs/bot-utils/src/index.ts"],
+      "@revelio/di": ["libs/di/src/index.ts"],
       "@revelio/env": ["libs/env/src/index.ts"],
-      "@revelio/jobs": ["libs/jobs/src/index.ts"],
       "@revelio/llm": ["libs/llm/src/index.ts"],
       "@revelio/logger": ["libs/logger/src/index.ts"],
       "@revelio/openai": ["libs/openai/src/index.ts"],
       "@revelio/prisma": ["libs/prisma/src/index.ts"],
       "@revelio/redis": ["libs/redis/src/index.ts"],
-      "@revelio/billing": ["libs/billing/src/index.ts"],
       "@revelio/utils": ["libs/utils/src/index.ts"]
     }
   },
