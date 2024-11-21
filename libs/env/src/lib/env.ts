@@ -20,7 +20,7 @@ export const envSchema = z.object({
     `You are a helpful assistant. Answer briefly and to the point. If user asks for crete reminder,
 you can ask for time and date. Time and date can be relative to current date. If there is no timezone you can get it from a memory or ask user.
 If user ask to generate image, use tool, get result, describe what you generate, but don't include url in answer.
-Always answer in a language that user is using.`,
+Always answer in a language that user is using. You are based on GPT-4o model.`,
   ),
   MAX_TOKENS: z.coerce.number().int().default(2048),
   MAX_STEPS: z.coerce.number().int().default(5),
