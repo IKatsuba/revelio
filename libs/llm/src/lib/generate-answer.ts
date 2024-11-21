@@ -47,21 +47,28 @@ export async function generateAnswer(
     ...searchToolsFactory(ctx),
   };
 
-  const result = await __generateText<typeof tools>({
-    model: createOpenaiProvider(ctx)(ctx.env.OPENAI_MODEL, {
-      structuredOutputs: true,
-    }),
-    temperature: ctx.env.TEMPERATURE,
-    messages: excludeToolResultIfItFirst(allMessages),
-    system:
-      system ||
-      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(ctx.env)}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
+  const chat: CoreMessage[] = [
+    {
+      role: 'system',
+      content:
+        system ||
+        `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(ctx.env)}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
 Current chat: ${ctx.chat?.title ?? 'Unknown'}
 Current chat language: ${ctx.session.language ?? 'Unknown'}
 `,
+    },
+    ...excludeToolResultIfItFirst(allMessages),
+  ];
+
+  const result = await __generateText<typeof tools>({
+    model: createOpenaiProvider(ctx)(ctx.env.OPENAI_MODEL, {
+      structuredOutputs: true,
+    }),
+    temperature: ctx.env.TEMPERATURE,
+    messages: chat,
     maxSteps: ctx.session.plan === 'free' ? 1 : ctx.env.MAX_STEPS,
     experimental_continueSteps: true,
     tools: ctx.session.plan === 'free' ? ({} as typeof tools) : tools,
