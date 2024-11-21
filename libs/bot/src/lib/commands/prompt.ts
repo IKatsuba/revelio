@@ -33,14 +33,6 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  const promptHeader = `Username: ${ctx.from.username ?? 'Unknown'}
-User first name: ${ctx.from.first_name ?? 'Unknown'}
-User second name: ${ctx.from.last_name ?? 'Unknown'}
-User id: ${ctx.from.id ?? 'Unknown'}
-Message id: ${ctx.message.message_id ?? 'Unknown'}
-
-Message text from user:`;
-
   const messages: CoreMessage[] = photo
     ? [
         {
@@ -48,8 +40,7 @@ Message text from user:`;
           content: [
             {
               type: 'text' as const,
-              text: `${promptHeader}
-${prompt ?? 'What’s in this image?'}`,
+              text: `${getMessageHeader(ctx)}\n${prompt ?? 'What’s in this image?'}`,
             },
             {
               type: 'image' as const,
@@ -61,8 +52,7 @@ ${prompt ?? 'What’s in this image?'}`,
     : convertToCoreMessages([
         {
           role: 'user',
-          content: `${promptHeader}
-${prompt ?? ''}`,
+          content: `${getMessageHeader(ctx)}\n${prompt ?? ''}`,
         },
       ]);
 
@@ -140,4 +130,21 @@ async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
   }
 
   return new URL(result.variants[0]);
+}
+
+function getMessageHeader(ctx: BotContext): string {
+  return `Username: ${ctx.from?.username ?? 'Unknown'}
+User first name: ${ctx.from?.first_name ?? 'Unknown'}
+User second name: ${ctx.from?.last_name ?? 'Unknown'}
+User id: ${ctx.from?.id ?? 'Unknown'}
+Message id: ${ctx.message?.message_id ?? 'Unknown'}
+${
+  ctx.message?.reply_to_message
+    ? `---
+Reply to message id: ${ctx.message.reply_to_message.message_id}
+`
+    : ''
+}
+---
+Message text from user:`;
 }

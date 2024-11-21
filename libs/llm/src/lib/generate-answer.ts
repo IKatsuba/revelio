@@ -27,20 +27,11 @@ export async function generateAnswer(
   },
   other?: Parameters<BotContext['reply']>[1],
 ) {
-  const messageIds =
-    messages && messages.length > 0
-      ? await addToChatHistory(ctx, {
-          messages,
-        })
-      : [];
+  const messageIds = await addToChatHistory(ctx, {
+    messages,
+  });
 
-  const allMessages = (
-    ctx.session.plan === 'free'
-      ? (messages ?? [])
-      : messageIds && messageIds.length > 0
-        ? await ctx.redis.mget<CoreMessage[]>(messageIds)
-        : []
-  ).filter((msg) => !!msg);
+  const allMessages = await retrieveChatHistory(ctx, messageIds);
 
   const tools = {
     getCryptoRate,
@@ -120,9 +111,13 @@ async function addToChatHistory(
   {
     messages,
   }: {
-    messages: Array<CoreMessage>;
+    messages?: Array<CoreMessage>;
   },
 ) {
+  if (!messages || messages.length === 0) {
+    return [];
+  }
+
   const messagesWithId: [string, CoreMessage][] = messages.map((message) => [
     `msg_${ctx.chatId}:${nanoid()}`,
     message,
@@ -149,4 +144,14 @@ async function addToChatHistory(
   const [, , messageIds] = await pipeline.exec<[unknown, unknown, string[]]>();
 
   return messageIds;
+}
+
+async function retrieveChatHistory(ctx: BotContext, messageIds?: string[]) {
+  if (!messageIds || messageIds.length === 0) {
+    return [];
+  }
+
+  const messages = await ctx.redis.mget<CoreMessage[]>(messageIds);
+
+  return messages.filter((msg) => !!msg);
 }
