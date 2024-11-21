@@ -37,7 +37,6 @@
     "@upstash/vector": "^1.1.7",
     "ai": "^3.4.27",
     "chrono-node": "^2.7.7",
-    "gpt-tokenizer": "^2.6.2",
     "grammy": "1.32.0",
     "hono": "^4.4.9",
     "nanoid": "^5.0.8",
