@@ -16,19 +16,20 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
     const bot = await initWebhookBot(c);
 
     logger.info('bot.handleUpdate');
-    c.executionCtx.waitUntil(
-      bot
-        .handleUpdate(body)
-        .catch((error) => {
-          console.error(error);
-          logger.error('bot.handleUpdate error');
 
-          trace.getActiveSpan()?.recordException(error);
-        })
-        .then(() => logger.flush()),
-    );
+    await bot.handleUpdate(body).catch((error) => {
+      console.error(error);
+      logger.error('bot.handleUpdate error');
+
+      trace.getActiveSpan()?.recordException(error);
+    });
+
+    c.executionCtx.waitUntil(logger.flush());
   } catch (error) {
-    logger.error('internal error', { error });
+    const message = error && (error as any).message ? (error as any).message : 'Internal error';
+    const stack = error && (error as any).stack ? (error as any).stack : 'No stack trace';
+
+    logger.error('internal error', { error: message, stack });
     trace.getActiveSpan()?.recordException(error as any);
   }
 
