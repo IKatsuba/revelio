@@ -1,10 +1,9 @@
 import { Document, PhotoSize } from '@grammyjs/types';
 import { trace } from '@opentelemetry/api';
-import { convertToCoreMessages, CoreMessage } from 'ai';
 
+import { promptMessage } from '@revelio/ai';
 import { BotContext, injectBotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { generateAnswer } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 
 export async function prompt(ctx: BotContext) {
@@ -37,30 +36,32 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  const messages: CoreMessage[] = photo
-    ? [
-        {
-          role: 'user' as const,
-          content: [
-            {
-              type: 'text' as const,
-              text: `${getMessageHeader(ctx)}\n${prompt ?? 'What’s in this image?'}`,
-            },
-            {
-              type: 'image' as const,
-              image: await getPhotoUrl(photo),
-            },
-          ],
-        },
-      ]
-    : convertToCoreMessages([
-        {
-          role: 'user',
-          content: `${getMessageHeader(ctx)}\n${prompt ?? ''}`,
-        },
-      ]);
+  await ctx.reply(await promptMessage());
 
-  await generateAnswer({ messages });
+  // const messages: CoreMessage[] = photo
+  //   ? [
+  //       {
+  //         role: 'user' as const,
+  //         content: [
+  //           {
+  //             type: 'text' as const,
+  //             text: `${getMessageHeader(ctx)}\n${prompt ?? 'What’s in this image?'}`,
+  //           },
+  //           {
+  //             type: 'image' as const,
+  //             image: await getPhotoUrl(photo),
+  //           },
+  //         ],
+  //       },
+  //     ]
+  //   : convertToCoreMessages([
+  //       {
+  //         role: 'user',
+  //         content: `${getMessageHeader(ctx)}\n${prompt ?? ''}`,
+  //       },
+  //     ]);
+  //
+  // await generateAnswer({ messages });
 }
 
 async function getPhoto(ctx: BotContext) {

@@ -1,7 +1,68 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { Context, MiddlewareHandler } from 'hono';
+import { createMiddleware } from 'hono/factory';
+
+import { provideHonoContext } from './context';
+
 export type Constructor<T = any> = new (...args: any[]) => T;
 
-const _providers = new Map<any, any>();
-const _instances = new Map<any, any>();
+class Injector {
+  private _providers = new WeakMap<any, any>();
+  private _instances = new WeakMap<any, any>();
+
+  provide<T>(token: Constructor<T>, provider: Provider<T>): void {
+    this._providers.set(token, provider);
+
+    if (this._instances.has(token)) {
+      this._instances.delete(token);
+    }
+  }
+
+  inject<T>(token: Constructor<T>): T {
+    if (!this._instances.has(token)) {
+      const provider = this._providers.get(token);
+
+      if (!provider) {
+        throw new Error(`No provider found for ${token.name}`);
+      }
+
+      const instance = provider.instance();
+
+      this._instances.set(token, instance);
+
+      return instance;
+    }
+
+    return this._instances.get(token);
+  }
+}
+
+const injectors = new WeakMap<Context, Injector>();
+const asyncLocalStorage = new AsyncLocalStorage<Context>();
+
+export function runInContextMiddleware(handler: MiddlewareHandler): MiddlewareHandler {
+  return createMiddleware(async (ctx, next) => {
+    const injector = new Injector();
+
+    injectors.set(ctx, injector);
+
+    asyncLocalStorage.run(ctx, async () => {
+      provideHonoContext(ctx);
+
+      await handler(ctx, next);
+    });
+  });
+}
+
+export function runInContext<T>(c: Context, fn: () => T): T {
+  const injector = injectors.get(c);
+
+  if (!injector) {
+    throw new Error('No injector found');
+  }
+
+  return asyncLocalStorage.run(c, () => fn());
+}
 
 abstract class Provider<T> {
   abstract instance(): T;
@@ -36,7 +97,15 @@ export function classProvider<T>(constructor: Constructor<T>): Provider<T> {
 }
 
 export function provide<T>(token: Constructor<T>, provider: Provider<T>): void {
-  _providers.set(token, provider);
+  const ctx = asyncLocalStorage.getStore();
+
+  if (!ctx) {
+    throw new Error('No context found');
+  }
+
+  const injector = injectors.get(ctx);
+
+  injector.provide(token, provider);
 }
 
 export type InjectionToken<T> = Constructor<T>;
@@ -46,19 +115,13 @@ export function createInjectionToken<T>(): InjectionToken<T> {
 }
 
 export function inject<T>(token: Constructor<T> | InjectionToken<T>): T {
-  if (!_instances.has(token)) {
-    const provider = _providers.get(token);
+  const ctx = asyncLocalStorage.getStore();
 
-    if (!provider) {
-      throw new Error(`No provider found for ${token.name}`);
-    }
-
-    const instance = provider.instance();
-
-    _instances.set(token, instance);
-
-    return instance;
+  if (!ctx) {
+    throw new Error(`No context found for token ${token.name}`);
   }
 
-  return _instances.get(token);
+  const injector = injectors.get(ctx);
+
+  return injector.inject(token);
 }

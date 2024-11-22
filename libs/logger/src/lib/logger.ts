@@ -2,7 +2,7 @@ import { BaselimeLogger } from '@baselime/edge-logger';
 import { trace } from '@opentelemetry/api';
 
 import { injectBotContext } from '@revelio/bot-utils';
-import { classProvider, inject, injectHonoContext, provide } from '@revelio/di';
+import { inject, injectHonoContext } from '@revelio/di';
 import { getEnv } from '@revelio/env';
 
 export class WorkerLogger extends BaselimeLogger {
@@ -66,8 +66,6 @@ export class WorkerLogger extends BaselimeLogger {
     });
   }
 }
-
-provide(WorkerLogger, classProvider(WorkerLogger));
 
 export function injectLogger(): WorkerLogger {
   return inject(WorkerLogger);
