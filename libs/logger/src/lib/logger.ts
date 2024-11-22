@@ -2,21 +2,22 @@ import { BaselimeLogger } from '@baselime/edge-logger';
 import { trace } from '@opentelemetry/api';
 
 import { injectBotContext } from '@revelio/bot-utils';
-import { inject, injectHonoContext } from '@revelio/di';
-import { getEnv } from '@revelio/env';
+import { classProvider, inject, injectHonoContext, provide } from '@revelio/di';
+import { injectEnv } from '@revelio/env';
 
 export class WorkerLogger extends BaselimeLogger {
   constructor() {
     const c = injectHonoContext();
+    const env = injectEnv();
 
     super({
       ctx: c.executionCtx,
-      apiKey: c.env.BASELIME_API_KEY,
+      apiKey: env.BASELIME_API_KEY,
       service: 'revelio',
       dataset: 'cloudflare',
       namespace: new URL(c.req.url).pathname,
       requestId: c.req.header('cf-ray'),
-      isLocalDev: getEnv(c).NODE_ENV === 'development',
+      isLocalDev: env.NODE_ENV === 'development',
     });
   }
 
@@ -69,4 +70,8 @@ export class WorkerLogger extends BaselimeLogger {
 
 export function injectLogger(): WorkerLogger {
   return inject(WorkerLogger);
+}
+
+export function provideLogger() {
+  provide(WorkerLogger, classProvider(WorkerLogger));
 }

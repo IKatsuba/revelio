@@ -1,7 +1,7 @@
 import { Receiver } from '@upstash/qstash';
-import { Context, MiddlewareHandler } from 'hono';
+import { MiddlewareHandler } from 'hono';
 
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 
 export function qstashVerify(): MiddlewareHandler {
   return async (c, next) => {
@@ -12,7 +12,7 @@ export function qstashVerify(): MiddlewareHandler {
     }
 
     const body = await c.req.raw.clone().text();
-    const isVerified = await createReceiver(c).verify({
+    const isVerified = await createReceiver().verify({
       body,
       signature,
     });
@@ -25,8 +25,8 @@ export function qstashVerify(): MiddlewareHandler {
   };
 }
 
-function createReceiver(c: Context) {
-  const env = getEnv(c);
+function createReceiver() {
+  const env = injectEnv();
 
   return new Receiver({
     currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,

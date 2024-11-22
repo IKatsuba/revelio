@@ -3,7 +3,13 @@ import { trace } from '@opentelemetry/api';
 import { Context } from 'hono';
 import { z } from 'zod';
 
-import { createInjectionToken, inject } from '@revelio/di';
+import {
+  createInjectionToken,
+  factoryProvider,
+  inject,
+  injectHonoContext,
+  provide,
+} from '@revelio/di';
 
 export const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
@@ -95,7 +101,7 @@ Always answer in a language that user is using. You are based on GPT-4o model.`,
   analytics: z.custom<AnalyticsEngineDataset>(),
 });
 
-export function getEnv(c?: Context) {
+function getEnv(c?: Context) {
   const { data, error } = envSchema.safeParse(c?.env ?? process.env);
 
   if (error) {
@@ -115,4 +121,11 @@ export const ENV_TOKEN = createInjectionToken<z.infer<typeof envSchema>>();
 
 export function injectEnv(): z.infer<typeof envSchema> {
   return inject(ENV_TOKEN);
+}
+
+export function provideEnv() {
+  provide(
+    ENV_TOKEN,
+    factoryProvider(() => getEnv(injectHonoContext())),
+  );
 }

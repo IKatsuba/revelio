@@ -4,13 +4,13 @@ import { Bot } from 'grammy';
 import { Context } from 'hono';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 import { injectPrisma } from '@revelio/prisma';
 
 export async function remindersAfterNotify(c: Context) {
-  const env = getEnv(c);
+  const env = injectEnv();
   const prisma = injectPrisma();
   const logger = injectLogger();
   try {

@@ -2,7 +2,7 @@ import { trace } from '@opentelemetry/api';
 import { createFactory } from 'hono/factory';
 
 import { initWebhookBot } from '@revelio/bot';
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
 
 const factory = createFactory();
@@ -39,10 +39,9 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
 export function validateWebhook() {
   return factory.createMiddleware(async (c, next) => {
     const logger = injectLogger();
+    const env = injectEnv();
 
     logger.info('validateWebhook');
-
-    const env = getEnv(c);
 
     if (!env.BOT_WEBHOOK_SECRET || env.NODE_ENV === 'development') {
       logger.info('No secret token');

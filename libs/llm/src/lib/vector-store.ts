@@ -1,7 +1,15 @@
 import { Index } from '@upstash/vector/cloudflare';
 
-import { inject } from '@revelio/di';
+import { factoryProvider, inject, provide } from '@revelio/di';
+import { injectEnv } from '@revelio/env';
 
 export function injectVectorStore() {
   return inject<Index>(Index);
+}
+
+export function provideVectorStore() {
+  provide(
+    Index,
+    factoryProvider(() => Index.fromEnv(injectEnv())),
+  );
 }

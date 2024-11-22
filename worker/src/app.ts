@@ -2,28 +2,17 @@ import { trace } from '@opentelemetry/api';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
-import {
-  classProvider,
-  factoryProvider,
-  injectHonoContext,
-  provide,
-  runInContext,
-  runInContextMiddleware,
-} from '@revelio/di';
+import { runInContext, runInContextMiddleware } from '@revelio/di';
 
 import '@revelio/logger';
 
-import { createOpenAI } from '@ai-sdk/openai';
-import { D1Database } from '@cloudflare/workers-types';
-import { PrismaD1 } from '@prisma/adapter-d1';
-import { PrismaClient } from '@prisma/client';
-import { Index } from '@upstash/vector/cloudflare';
-import OpenAI from 'openai';
-
-import { Analytics } from '@revelio/analytics';
-import { ENV_TOKEN, getEnv, injectEnv } from '@revelio/env';
-import { injectLogger, WorkerLogger } from '@revelio/logger';
-import { OPENAI_API_PROVIDER } from '@revelio/openai';
+import { provideMessageHistory } from '@revelio/ai';
+import { provideAnalytics } from '@revelio/analytics';
+import { provideEnv } from '@revelio/env';
+import { provideVectorStore } from '@revelio/llm';
+import { injectLogger, provideLogger } from '@revelio/logger';
+import { provideOpenAI, provideOpenaiProvider } from '@revelio/openai';
+import { providePrisma } from '@revelio/prisma';
 
 import { checkPlanHandlers } from './webhooks/check-plan';
 import { qstashVerify } from './webhooks/qstash-verify';
@@ -34,54 +23,14 @@ export const app = new Hono();
 
 app.use(
   runInContextMiddleware(async (c, next) => {
-    provide(
-      ENV_TOKEN,
-      factoryProvider(() => getEnv(injectHonoContext())),
-    );
-
-    provide(Analytics, classProvider(Analytics));
-
-    provide(
-      Index,
-      factoryProvider(() => Index.fromEnv(injectEnv())),
-    );
-
-    provide(WorkerLogger, classProvider(WorkerLogger));
-
-    provide(
-      OpenAI,
-      factoryProvider(() => {
-        const env = injectEnv();
-
-        return new OpenAI({
-          apiKey: env.OPENAI_API_KEY,
-          baseURL: env.OPENAI_API_URL,
-        });
-      }),
-    );
-
-    provide(
-      OPENAI_API_PROVIDER,
-      factoryProvider(() => {
-        const env = injectEnv();
-
-        return createOpenAI({
-          baseURL: env.OPENAI_API_URL,
-          apiKey: env.OPENAI_API_KEY,
-        });
-      }),
-    );
-
-    provide(
-      PrismaClient,
-      factoryProvider(() => {
-        const env = injectEnv();
-
-        const adapter = new PrismaD1(env.revelioDB as D1Database);
-
-        return new PrismaClient({ adapter });
-      }),
-    );
+    provideEnv();
+    provideAnalytics();
+    provideVectorStore();
+    provideLogger();
+    provideOpenAI();
+    provideOpenaiProvider();
+    providePrisma();
+    provideMessageHistory();
 
     await next();
   }),
