@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 
-import { createInjectionToken, inject, provide } from './di';
+import { createInjectionToken, factoryProvider, inject, provide } from './di';
 
 export const HONO_CONTEXT = createInjectionToken<Context>();
 
@@ -15,5 +15,8 @@ export function injectHonoContext(): Context {
 }
 
 export function provideHonoContext(c: Context): void {
-  provide(HONO_CONTEXT, c);
+  provide(
+    HONO_CONTEXT,
+    factoryProvider(() => c),
+  );
 }

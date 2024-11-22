@@ -1,6 +1,5 @@
 import * as Core from 'openai/src/core';
 
-import { BotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectOpenAI } from '@revelio/openai';
 

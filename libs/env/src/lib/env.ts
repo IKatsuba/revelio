@@ -96,11 +96,9 @@ Always answer in a language that user is using. You are based on GPT-4o model.`,
   LANGCHAIN_PROJECT: z.string().optional(),
 
   // D1
-  revelioDB: z.instanceof(D1Database),
-  revelioMessagesDB: z.instanceof(D1Database),
-  analytics: z.object({
-    writeDataPoint: z.function(),
-  }) satisfies z.ZodType<AnalyticsEngineDataset>,
+  revelioDB: z.any() satisfies z.ZodType<D1Database>,
+  revelioMessagesDB: z.any() satisfies z.ZodType<D1Database>,
+  analytics: z.any() satisfies z.ZodType<AnalyticsEngineDataset>,
 });
 
 export function getEnv(c?: Context) {

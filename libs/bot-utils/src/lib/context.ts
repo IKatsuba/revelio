@@ -10,7 +10,13 @@ export interface SessionData {
 }
 
 export function injectBotContext(): BotContext {
-  return inject(BOT_CONTEXT);
+  const ctx = inject(BOT_CONTEXT);
+
+  if (!ctx) {
+    throw new Error('Bot context not found');
+  }
+
+  return ctx;
 }
 
 export function provideBotContext(ctx: BotContext): void {

@@ -35,11 +35,7 @@ export function classProvider<T>(constructor: Constructor<T>): Provider<T> {
   return new ClassProvider(constructor);
 }
 
-export function provide<T>(token: Constructor<T>, provider?: Provider<T>): void {
-  if (!provider) {
-    provider = classProvider(token);
-  }
-
+export function provide<T>(token: Constructor<T>, provider: Provider<T>): void {
   _providers.set(token, provider);
 }
 
@@ -50,12 +46,18 @@ export function createInjectionToken<T>(): InjectionToken<T> {
 }
 
 export function inject<T>(token: Constructor<T> | InjectionToken<T>): T {
-  if (!_providers.has(token)) {
-    provide(token);
-  }
-
   if (!_instances.has(token)) {
-    _instances.set(token, _providers.get(token).instance());
+    const provider = _providers.get(token);
+
+    if (!provider) {
+      throw new Error(`No provider found for ${token.name}`);
+    }
+
+    const instance = provider.instance();
+
+    _instances.set(token, instance);
+
+    return instance;
   }
 
   return _instances.get(token);

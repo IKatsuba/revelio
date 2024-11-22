@@ -8,10 +8,10 @@ const api = new Api(env.BOT_TOKEN, {
   apiRoot: env.TELEGRAM_API_URL,
 });
 
-Promise.all([api.getMe(), api.getWebhookInfo()])
-  .then(([me, info]) => {
+api
+  .getMe()
+  .then((me) => {
     console.log(`Bot:`, me);
-    console.log(`Webhook:`, info);
   })
   .then(() =>
     api.setWebhook(env.BOT_WEBHOOK_URL, {
@@ -20,6 +20,10 @@ Promise.all([api.getMe(), api.getWebhookInfo()])
   )
   .then(() => {
     console.log('Webhook was set successfully');
+
+    api.getWebhookInfo().then((info) => {
+      console.log('Webhook info:', info);
+    });
   })
   .catch((error) => {
     console.error('Error setting webhook:', error);

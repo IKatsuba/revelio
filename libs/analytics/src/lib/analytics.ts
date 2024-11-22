@@ -1,4 +1,5 @@
 import { injectBotContext } from '@revelio/bot-utils';
+import { classProvider, provide } from '@revelio/di';
 import { injectEnv } from '@revelio/env';
 
 export class Analytics {
@@ -19,3 +20,5 @@ export class Analytics {
     });
   }
 }
+
+provide(Analytics, classProvider(Analytics));
