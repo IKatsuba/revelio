@@ -7,16 +7,13 @@ import { ChatOpenAI } from '@langchain/openai';
 import { injectBotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 
+import { injectMessageHistory } from './history';
+
 export async function promptMessage() {
   const env = injectEnv();
   const ctx = injectBotContext();
 
-  const getSessionHistory = async (sessionId: string) => {
-    return new CloudflareD1MessageHistory({
-      sessionId,
-      database: env.revelioMessagesDB,
-    });
-  };
+  const chatHistory = injectMessageHistory();
 
   const llm = new ChatOpenAI(
     {
@@ -44,7 +41,7 @@ export async function promptMessage() {
 
   const chainWithHistory = new RunnableWithMessageHistory({
     runnable: chain,
-    getMessageHistory: getSessionHistory,
+    getMessageHistory: () => chatHistory,
   });
 
   const res = await chainWithHistory.invoke([new HumanMessage(ctx.message.text)], {
