@@ -46,7 +46,7 @@ export function runInContextMiddleware(handler: MiddlewareHandler): MiddlewareHa
 
     injectors.set(ctx, injector);
 
-    asyncLocalStorage.run(ctx, async () => {
+    await asyncLocalStorage.run(ctx, async () => {
       provideHonoContext(ctx);
 
       await handler(ctx, next);
