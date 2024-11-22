@@ -1,6 +1,15 @@
+import { AnalyticsEngineDataset, D1Database } from '@cloudflare/workers-types';
 import { trace } from '@opentelemetry/api';
 import { Context } from 'hono';
 import { z } from 'zod';
+
+import {
+  createInjectionToken,
+  factoryProvider,
+  inject,
+  injectHonoContext,
+  provide,
+} from '@revelio/di';
 
 export const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
@@ -77,6 +86,21 @@ Always answer in a language that user is using. You are based on GPT-4o model.`,
 
   BASIC_PLAN_PRICE: z.coerce.number().int().default(350),
   PREMIUM_PLAN_PRICE: z.coerce.number().int().default(700),
+
+  LANGCHAIN_TRACING_V2: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  LANGCHAIN_ENDPOINT: z.string().default('https://api.smith.langchain.com'),
+  LANGCHAIN_API_KEY: z.string().optional(),
+  LANGCHAIN_PROJECT: z.string().optional(),
+
+  // D1
+  revelioDB: z.instanceof(D1Database),
+  revelioMessagesDB: z.instanceof(D1Database),
+  analytics: z.object({
+    writeDataPoint: z.function(),
+  }) satisfies z.ZodType<AnalyticsEngineDataset>,
 });
 
 export function getEnv(c?: Context) {
@@ -93,4 +117,15 @@ export function getEnv(c?: Context) {
   }
 
   return data;
+}
+
+const ENV_TOKEN = createInjectionToken<z.infer<typeof envSchema>>();
+
+provide(
+  ENV_TOKEN,
+  factoryProvider(() => getEnv(injectHonoContext())),
+);
+
+export function injectEnv(): z.infer<typeof envSchema> {
+  return inject(ENV_TOKEN);
 }

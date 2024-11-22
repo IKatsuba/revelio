@@ -1,23 +1,28 @@
 import { InlineKeyboard } from 'grammy';
 
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
 export async function billing(ctx: BotContext) {
-  ctx.logger.info('[billing] start');
+  const logger = injectLogger();
+  const env = injectEnv();
+
+  logger.info('[billing] start');
   await ctx.replyWithChatAction('typing');
 
   if (!ctx.chatId) {
-    ctx.logger.error('[billing] No chatId');
+    logger.error('[billing] No chatId');
     await ctx.reply('Failed to create a customer. Please try again later.');
     return;
   }
 
   if (ctx.session.plan && ctx.session.plan !== 'free') {
-    ctx.logger.info('[billing] Already subscribed');
+    logger.info('[billing] Already subscribed');
 
     await generateAnswer(
-      ctx,
       {
         messages: [
           {
@@ -28,7 +33,7 @@ export async function billing(ctx: BotContext) {
             toolName: 'getCurrentPlan',
             result: {
               plan: ctx.session.plan,
-              plansDescription: getPlansDescription(ctx.env),
+              plansDescription: getPlansDescription(env),
             },
           }),
         ],
@@ -41,9 +46,9 @@ export async function billing(ctx: BotContext) {
     return;
   }
 
-  ctx.logger.info('[billing] reply');
+  logger.info('[billing] reply');
 
-  await generateAnswer(ctx, {
+  await generateAnswer({
     messages: [
       {
         role: 'user',
@@ -52,7 +57,7 @@ export async function billing(ctx: BotContext) {
       ...createToolMessages({
         toolName: 'getPlans',
         result: {
-          plansDescription: getPlansDescription(ctx.env),
+          plansDescription: getPlansDescription(env),
         },
       }),
     ],
@@ -60,22 +65,27 @@ export async function billing(ctx: BotContext) {
 }
 
 export async function callbackQuerySubscriptionFree(ctx: BotContext) {
+  const logger = injectLogger();
+
   ctx.session.plan = 'free';
-  ctx.logger.info('[callbackQuerySubscriptionFree] plan:free');
+  logger.info('[callbackQuerySubscriptionFree] plan:free');
   await ctx.reply('You have successfully subscribed to the free plan.');
 }
 
 export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
-  ctx.logger.info('[callbackQuerySubscriptionCancel] plan:cancel');
+  const logger = injectLogger();
+  const prisma = injectPrisma();
 
-  const group = await ctx.prisma.group.findFirst({
+  logger.info('[callbackQuerySubscriptionCancel] plan:cancel');
+
+  const group = await prisma.group.findFirst({
     where: {
       id: ctx.chatId!.toString(),
     },
   });
 
   if (!group) {
-    ctx.logger.error('[callbackQuerySubscriptionCancel] No group');
+    logger.error('[callbackQuerySubscriptionCancel] No group');
     await ctx.reply('Failed to cancel subscription. Please try again later.');
     return;
   }
@@ -83,14 +93,14 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
   ctx.session.plan = group.plan as 'free' | 'basic' | 'premium';
 
   if (!group.plan) {
-    ctx.logger.error(
+    logger.error(
       '[callbackQuerySubscriptionCancel] No plan, but user trying to cancel subscription',
       {
         groupId: group.id,
       },
     );
 
-    await generateAnswer(ctx, {
+    await generateAnswer({
       messages: [
         {
           role: 'user',
@@ -107,7 +117,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
     return;
   }
 
-  const lastPayment = await ctx.prisma.payment.findFirst({
+  const lastPayment = await prisma.payment.findFirst({
     where: {
       groupId: group.id,
       subscriptionExpirationDate: {
@@ -120,7 +130,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
   });
 
   if (!lastPayment) {
-    ctx.logger.error('[callbackQuerySubscriptionCancel] No last payment, but group has a plan', {
+    logger.error('[callbackQuerySubscriptionCancel] No last payment, but group has a plan', {
       groupId: group.id,
       groupPlan: group.plan,
     });
@@ -135,7 +145,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
     true,
   );
 
-  await ctx.prisma.group.update({
+  await prisma.group.update({
     where: {
       id: group.id,
     },
@@ -147,7 +157,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
 
   ctx.session.plan = 'free';
 
-  await generateAnswer(ctx, {
+  await generateAnswer({
     messages: [
       {
         role: 'user',

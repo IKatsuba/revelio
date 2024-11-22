@@ -1,8 +1,11 @@
 import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
 
 export async function help(ctx: BotContext) {
-  await generateAnswer(ctx, {
+  const env = injectEnv();
+
+  await generateAnswer({
     messages: [
       {
         role: 'user',
@@ -18,7 +21,7 @@ Give just user plan description and how to upgrade (/billing command).`,
           helpMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
 Current plan: ${ctx.session.plan ?? 'Unknown'}
 Plan description:
-${getPlansDescription(ctx.env)}
+${getPlansDescription(env)}
 
 Help message:
 ${helpText}

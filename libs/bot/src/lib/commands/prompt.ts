@@ -2,11 +2,15 @@ import { Document, PhotoSize } from '@grammyjs/types';
 import { trace } from '@opentelemetry/api';
 import { convertToCoreMessages, CoreMessage } from 'ai';
 
-import { BotContext } from '@revelio/bot-utils';
+import { BotContext, injectBotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { generateAnswer } from '@revelio/llm';
+import { injectLogger } from '@revelio/logger';
 
 export async function prompt(ctx: BotContext) {
-  ctx.logger.debug('Prompt command');
+  const logger = injectLogger();
+
+  logger.debug('Prompt command');
 
   await ctx.replyWithChatAction('typing');
 
@@ -44,7 +48,7 @@ export async function prompt(ctx: BotContext) {
             },
             {
               type: 'image' as const,
-              image: await getPhotoUrl(ctx, photo),
+              image: await getPhotoUrl(photo),
             },
           ],
         },
@@ -56,7 +60,7 @@ export async function prompt(ctx: BotContext) {
         },
       ]);
 
-  await generateAnswer(ctx, { messages });
+  await generateAnswer({ messages });
 }
 
 async function getPhoto(ctx: BotContext) {
@@ -85,10 +89,14 @@ async function getPhoto(ctx: BotContext) {
   return photo;
 }
 
-async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
+async function getPhotoUrl(photo: PhotoSize | Document) {
+  const logger = injectLogger();
+  const env = injectEnv();
+  const ctx = injectBotContext();
+
   const fileDescription = await ctx.api.getFile(photo.file_id);
 
-  const telegramFileUrl = `${ctx.env.TELEGRAM_API_URL}/file/bot${ctx.env.BOT_TOKEN}/${fileDescription.file_path}`;
+  const telegramFileUrl = `${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileDescription.file_path}`;
 
   const formData = new FormData();
   formData.append('url', telegramFileUrl);
@@ -101,11 +109,11 @@ async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
   formData.append('requireSignedURLs', 'false');
 
   const response = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
+    `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
     {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${ctx.env.CLOUDFLARE_IMAGE_API_TOKEN}`,
+        Authorization: `Bearer ${env.CLOUDFLARE_IMAGE_API_TOKEN}`,
       },
       body: formData,
     },
@@ -120,7 +128,7 @@ async function getPhotoUrl(ctx: BotContext, photo: PhotoSize | Document) {
   };
 
   if (!success) {
-    ctx.logger.error('Failed to upload image to Cloudflare', { errors });
+    logger.error('Failed to upload image to Cloudflare', { errors });
     trace.getActiveSpan()?.recordException(errors.join('. '));
     throw new Error(errors.join(', '));
   }

@@ -1,11 +1,12 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
-import { BotContext } from '@revelio/bot-utils';
+import { injectBotContext } from '@revelio/bot-utils';
 
-import { createVectorStore } from '../vector-store';
+import { injectVectorStore } from '../vector-store';
 
-export function addToMemoryToolFactory(ctx: BotContext) {
+export function addToMemoryToolFactory() {
+  const ctx = injectBotContext();
   return tool({
     description: 'add some data to semantically store. Add something to memory only if asked',
     parameters: z.object({
@@ -20,7 +21,7 @@ export function addToMemoryToolFactory(ctx: BotContext) {
         return 'No message_id found';
       }
 
-      const namespace = createVectorStore(ctx).namespace(ctx.chatId.toString());
+      const namespace = injectVectorStore().namespace(ctx.chatId.toString());
 
       return namespace.upsert({
         id: ctx.message.message_id,
@@ -33,7 +34,9 @@ export function addToMemoryToolFactory(ctx: BotContext) {
   });
 }
 
-export function getFromMemoryToolFactory(ctx: BotContext) {
+export function getFromMemoryToolFactory() {
+  const ctx = injectBotContext();
+
   return tool({
     description:
       'get some data from semantically store. Try to get something from memory only if asked',
@@ -45,7 +48,7 @@ export function getFromMemoryToolFactory(ctx: BotContext) {
         return 'No chatId found';
       }
 
-      const namespace = createVectorStore(ctx).namespace(ctx.chatId.toString());
+      const namespace = injectVectorStore().namespace(ctx.chatId.toString());
 
       return namespace.query({
         data: context,

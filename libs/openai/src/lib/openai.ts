@@ -1,22 +1,39 @@
-import { createOpenAI } from '@ai-sdk/openai';
-import { Context } from 'hono';
+import { createOpenAI, OpenAIProvider } from '@ai-sdk/openai';
 import OpenAI from 'openai';
 
-import { BotContext } from '@revelio/bot-utils';
-import { getEnv } from '@revelio/env';
+import { createInjectionToken, factoryProvider, inject, provide } from '@revelio/di';
+import { injectEnv } from '@revelio/env';
 
-export function createOpenAIClient(c: Context) {
-  const env = getEnv(c);
+provide(
+  OpenAI,
+  factoryProvider(() => {
+    const env = injectEnv();
 
-  return new OpenAI({
-    apiKey: env.OPENAI_API_KEY,
-    baseURL: env.OPENAI_API_URL,
-  });
+    return new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      baseURL: env.OPENAI_API_URL,
+    });
+  }),
+);
+
+export function injectOpenAI(): OpenAI {
+  return inject(OpenAI);
 }
 
-export function createOpenaiProvider(ctx: BotContext) {
-  return createOpenAI({
-    baseURL: ctx.env.OPENAI_API_URL,
-    apiKey: ctx.env.OPENAI_API_KEY,
-  });
+const OPENAI_API_PROVIDER = createInjectionToken<OpenAIProvider>();
+
+provide(
+  OPENAI_API_PROVIDER,
+  factoryProvider(() => {
+    const env = injectEnv();
+
+    return createOpenAI({
+      baseURL: env.OPENAI_API_URL,
+      apiKey: env.OPENAI_API_KEY,
+    });
+  }),
+);
+
+export function injectOpenaiProvider() {
+  return inject(OPENAI_API_PROVIDER);
 }

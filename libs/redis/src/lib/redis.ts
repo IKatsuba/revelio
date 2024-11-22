@@ -1,10 +1,9 @@
 import { Redis } from '@upstash/redis/cloudflare';
-import { Context } from 'hono';
 
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 
-export function createRedisClient(c: Context) {
-  const env = getEnv(c);
+export function injectRedisClient() {
+  const env = injectEnv();
 
   return new Redis({
     url: env.UPSTASH_REDIS_URL,

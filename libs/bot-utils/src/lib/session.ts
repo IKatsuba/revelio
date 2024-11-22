@@ -1,14 +1,13 @@
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import { Redis } from '@upstash/redis/cloudflare';
 import { enhanceStorage, session } from 'grammy';
-import { Context } from 'hono';
 
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 
 import { SessionData } from './context';
 
-function createSessionStorage(c: Context) {
-  const env = getEnv(c);
+function createSessionStorage() {
+  const env = injectEnv();
 
   const sessionRedis = new Redis({
     url: env.UPSTASH_REDIS_URL,
@@ -26,11 +25,10 @@ export function getSessionKey(chatId?: number) {
 }
 
 export async function setSession(
-  c: Context,
   chatId: number,
   data: SessionData | ((sessionData: SessionData) => SessionData | void),
 ) {
-  const sessionStorage = createSessionStorage(c);
+  const sessionStorage = createSessionStorage();
 
   const fn = typeof data === 'function' ? data : (session: SessionData) => session;
   const session =
@@ -43,8 +41,8 @@ export async function setSession(
   return session;
 }
 
-export async function getSession(c: Context, chatId: number): Promise<SessionData> {
-  const sessionStorage = createSessionStorage(c);
+export async function getSession(chatId: number): Promise<SessionData> {
+  const sessionStorage = createSessionStorage();
   return (await sessionStorage.read(getSessionKey(chatId))) ?? getInitialSessionData();
 }
 
@@ -54,9 +52,9 @@ export function getInitialSessionData(): SessionData {
   };
 }
 
-export const sessionMiddleware = (c: Context) =>
+export const sessionMiddleware = () =>
   session({
-    storage: createSessionStorage(c),
+    storage: createSessionStorage(),
     getSessionKey: (ctx) => getSessionKey(ctx.chatId),
     initial: () => getInitialSessionData(),
   });

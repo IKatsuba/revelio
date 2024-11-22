@@ -1,10 +1,9 @@
-import { Context } from 'grammy';
+import { injectBotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 
 export class Analytics {
-  constructor(
-    private cfAnalytics: AnalyticsEngineDataset,
-    private ctx: Context,
-  ) {}
+  private cfAnalytics = injectEnv().analytics;
+  private ctx = injectBotContext();
 
   track(event: string) {
     this.cfAnalytics.writeDataPoint({

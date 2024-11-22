@@ -1,10 +1,15 @@
 import { Middleware } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer, transcribe } from '@revelio/llm';
+import { injectLogger } from '@revelio/logger';
 
 export function transcribeMiddleware(): Middleware<BotContext> {
   return async (ctx: BotContext, next) => {
+    const logger = injectLogger();
+    const env = injectEnv();
+
     await ctx.replyWithChatAction('typing');
 
     const file =
@@ -16,13 +21,13 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     }
 
     if (!ctx.chatId) {
-      ctx.logger.error('No chatId found');
+      logger.error('No chatId found');
       await ctx.reply('Failed to transcribe audio');
       return;
     }
 
     if (file.file_size && file.file_size > 20 * 1024 * 1024) {
-      await generateAnswer(ctx, {
+      await generateAnswer({
         messages: [
           {
             role: 'user',
@@ -39,7 +44,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     }
 
     if (file.duration > 60) {
-      await generateAnswer(ctx, {
+      await generateAnswer({
         messages: [
           {
             role: 'user',
@@ -60,11 +65,8 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     const fileDescription = await ctx.api.getFile(file.file_id);
 
     ctx.transcription = await transcribe(
-      ctx,
       file.file_unique_id,
-      await fetch(
-        `${ctx.env.TELEGRAM_API_URL}/file/bot${ctx.env.BOT_TOKEN}/${fileDescription.file_path}`,
-      ),
+      await fetch(`${env.TELEGRAM_API_URL}/file/bot${env.BOT_TOKEN}/${fileDescription.file_path}`),
     );
 
     await next();

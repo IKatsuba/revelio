@@ -1,9 +1,15 @@
 import { InlineKeyboard } from 'grammy';
 
-import { BotContext } from '@revelio/bot-utils';
+import { injectBotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
+import { injectLogger } from '@revelio/logger';
 
-export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
-  ctx.logger.info('[billing] create sessions');
+export async function createKeyboardWithPaymentLinks() {
+  const logger = injectLogger();
+  const env = injectEnv();
+  const ctx = injectBotContext();
+
+  logger.info('[billing] create sessions');
 
   const links = await Promise.all(
     ['Basic', 'Premium'].map(async (name) => {
@@ -18,7 +24,7 @@ export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
           [
             {
               label: name,
-              amount: name === 'Basic' ? ctx.env.BASIC_PLAN_PRICE : ctx.env.PREMIUM_PLAN_PRICE,
+              amount: name === 'Basic' ? env.BASIC_PLAN_PRICE : env.PREMIUM_PLAN_PRICE,
             },
           ],
           {
@@ -33,7 +39,7 @@ export async function createKeyboardWithPaymentLinks(ctx: BotContext) {
 
   for (const [name, url] of links) {
     keyboard.url(
-      `${name} — ⭐️${name === 'Basic' ? ctx.env.BASIC_PLAN_PRICE : ctx.env.PREMIUM_PLAN_PRICE}`,
+      `${name} — ⭐️${name === 'Basic' ? env.BASIC_PLAN_PRICE : env.PREMIUM_PLAN_PRICE}`,
       url,
     );
   }

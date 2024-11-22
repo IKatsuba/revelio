@@ -2,8 +2,15 @@ import { generateText as __generateText, CoreMessage } from 'ai';
 import { nanoid } from 'nanoid';
 
 import { createKeyboardWithPaymentLinks } from '@revelio/billing';
-import { BotContext, getPlansDescription, sendLongText } from '@revelio/bot-utils';
-import { createOpenaiProvider } from '@revelio/openai';
+import {
+  BotContext,
+  getPlansDescription,
+  injectBotContext,
+  sendLongText,
+} from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
+import { injectOpenaiProvider } from '@revelio/openai';
+import { injectRedisClient } from '@revelio/redis';
 
 import { generateImageFactory } from './tools/generate-image';
 import { getCryptoRate } from './tools/get-crypto-rate';
@@ -17,7 +24,6 @@ import { ttsFactory } from './tools/tts';
 import { weatherToolFactory } from './tools/weather';
 
 export async function generateAnswer(
-  ctx: BotContext,
   {
     messages,
     system,
@@ -27,24 +33,27 @@ export async function generateAnswer(
   },
   other?: Parameters<BotContext['reply']>[1],
 ) {
-  const messageIds = await addToChatHistory(ctx, {
+  const ctx = injectBotContext();
+  const env = injectEnv();
+
+  const messageIds = await addToChatHistory({
     messages,
   });
 
-  const allMessages = await retrieveChatHistory(ctx, messageIds);
+  const allMessages = await retrieveChatHistory(messageIds);
 
   const tools = {
     getCryptoRate,
-    addToMemory: addToMemoryToolFactory(ctx),
-    getFromMemory: getFromMemoryToolFactory(ctx),
-    generateImage: generateImageFactory(ctx),
-    textToSpeech: ttsFactory(ctx),
-    setLanguage: setChatLanguageFactory(ctx),
-    ...moderateContentFactory(ctx),
-    ...reminderToolFactory(ctx),
-    ...getCurrentPlanToolFactory(ctx),
-    ...weatherToolFactory(ctx),
-    ...searchToolsFactory(ctx),
+    addToMemory: addToMemoryToolFactory(),
+    getFromMemory: getFromMemoryToolFactory(),
+    generateImage: generateImageFactory(),
+    textToSpeech: ttsFactory(),
+    setLanguage: setChatLanguageFactory(),
+    ...moderateContentFactory(),
+    ...reminderToolFactory(),
+    ...getCurrentPlanToolFactory(),
+    ...weatherToolFactory(),
+    ...searchToolsFactory(),
   };
 
   const chat: CoreMessage[] = [
@@ -52,7 +61,7 @@ export async function generateAnswer(
       role: 'system',
       content:
         system ||
-        `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(ctx.env)}\n` : ''}${ctx.env.ASSISTANT_PROMPT}
+        `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(env)}\n` : ''}${env.ASSISTANT_PROMPT}
 
 Current time: ${new Date().toISOString()}.
 Current plan: ${ctx.session.plan}
@@ -64,26 +73,26 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
   ];
 
   const result = await __generateText<typeof tools>({
-    model: createOpenaiProvider(ctx)(ctx.env.OPENAI_MODEL, {
+    model: injectOpenaiProvider()(env.OPENAI_MODEL, {
       structuredOutputs: true,
     }),
-    temperature: ctx.env.TEMPERATURE,
+    temperature: env.TEMPERATURE,
     messages: chat,
-    maxSteps: ctx.session.plan === 'free' ? 1 : ctx.env.MAX_STEPS,
+    maxSteps: ctx.session.plan === 'free' ? 1 : env.MAX_STEPS,
     experimental_continueSteps: true,
     tools: ctx.session.plan === 'free' ? ({} as typeof tools) : tools,
     experimental_telemetry: {
       isEnabled: true,
     },
-    maxTokens: ctx.env.MAX_TOKENS,
+    maxTokens: env.MAX_TOKENS,
   });
 
-  await addToChatHistory(ctx, {
+  await addToChatHistory({
     messages: result.response.messages,
   });
 
   const paymentKeyboard =
-    ctx.session.plan === 'free' ? await createKeyboardWithPaymentLinks(ctx) : undefined;
+    ctx.session.plan === 'free' ? await createKeyboardWithPaymentLinks() : undefined;
 
   await sendLongText(ctx, result.text, {
     reply_markup: paymentKeyboard,
@@ -113,14 +122,11 @@ function excludeToolResultIfItFirst(messages: CoreMessage[]): CoreMessage[] {
   return isToolResult ? messages.slice(1) : messages;
 }
 
-async function addToChatHistory(
-  ctx: BotContext,
-  {
-    messages,
-  }: {
-    messages?: Array<CoreMessage>;
-  },
-) {
+async function addToChatHistory({ messages }: { messages?: Array<CoreMessage> }) {
+  const ctx = injectBotContext();
+  const redis = injectRedisClient();
+  const env = injectEnv();
+
   if (!messages || messages.length === 0) {
     return [];
   }
@@ -130,7 +136,7 @@ async function addToChatHistory(
     message,
   ]);
 
-  const pipeline = ctx.redis.pipeline();
+  const pipeline = redis.pipeline();
 
   pipeline
     .rpush(`msg_list_${ctx.chatId}`, ...messagesWithId.map(([id]) => id))
@@ -142,10 +148,10 @@ async function addToChatHistory(
         };
       }, {}),
     )
-    .lrange(`msg_list_${ctx.chatId}`, -ctx.env.MAX_HISTORY_SIZE, -1);
+    .lrange(`msg_list_${ctx.chatId}`, -env.MAX_HISTORY_SIZE, -1);
 
   for (const [id] of messagesWithId) {
-    pipeline.expire(id, ctx.env.MAX_HISTORY_MESSAGE_TTL);
+    pipeline.expire(id, env.MAX_HISTORY_MESSAGE_TTL);
   }
 
   const [, , messageIds] = await pipeline.exec<[unknown, unknown, string[]]>();
@@ -153,12 +159,14 @@ async function addToChatHistory(
   return messageIds;
 }
 
-async function retrieveChatHistory(ctx: BotContext, messageIds?: string[]) {
+async function retrieveChatHistory(messageIds?: string[]) {
+  const redis = injectRedisClient();
+
   if (!messageIds || messageIds.length === 0) {
     return [];
   }
 
-  const messages = await ctx.redis.mget<CoreMessage[]>(messageIds);
+  const messages = await redis.mget<CoreMessage[]>(messageIds);
 
   return messages.filter((msg) => !!msg);
 }

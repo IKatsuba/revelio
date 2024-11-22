@@ -1,14 +1,14 @@
 import { BaselimeLogger } from '@baselime/edge-logger';
 import { trace } from '@opentelemetry/api';
-import { Context as GrammyContext } from 'grammy';
-import { Context } from 'hono';
 
+import { injectBotContext } from '@revelio/bot-utils';
+import { inject, injectHonoContext } from '@revelio/di';
 import { getEnv } from '@revelio/env';
 
 export class WorkerLogger extends BaselimeLogger {
-  private readonly additionalFields: { chatId: number; user: number; username: string };
+  constructor() {
+    const c = injectHonoContext();
 
-  constructor(c: Context, ctx?: GrammyContext) {
     super({
       ctx: c.executionCtx,
       apiKey: c.env.BASELIME_API_KEY,
@@ -18,8 +18,12 @@ export class WorkerLogger extends BaselimeLogger {
       requestId: c.req.header('cf-ray'),
       isLocalDev: getEnv(c).NODE_ENV === 'development',
     });
+  }
 
-    this.additionalFields = {
+  get additionalFields() {
+    const ctx = injectBotContext();
+
+    return {
       user: ctx?.from?.id,
       username: ctx?.from?.username,
       chatId: ctx?.chatId,
@@ -59,14 +63,6 @@ export class WorkerLogger extends BaselimeLogger {
   }
 }
 
-let _logger: WorkerLogger | null = null;
-
-export function createLogger(c: Context, ctx?: GrammyContext): WorkerLogger {
-  if (_logger) {
-    return _logger;
-  }
-
-  _logger = new WorkerLogger(c, ctx);
-
-  return _logger;
+export function injectLogger(): WorkerLogger {
+  return inject(WorkerLogger);
 }

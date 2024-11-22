@@ -1,13 +1,18 @@
 import { CommandContext } from 'grammy';
 
 import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { injectPrisma } from '@revelio/prisma';
 
 export async function start(ctx: CommandContext<BotContext>) {
+  const prisma = injectPrisma();
+  const env = injectEnv();
+
   await ctx.replyWithChatAction('typing');
 
   if (ctx.from) {
-    await ctx.prisma.user.upsert({
+    await prisma.user.upsert({
       where: { id: ctx.from.id.toString() },
       create: {
         id: ctx.from.id.toString(),
@@ -18,7 +23,7 @@ export async function start(ctx: CommandContext<BotContext>) {
       },
     });
 
-    await ctx.prisma.group.upsert({
+    await prisma.group.upsert({
       where: { id: ctx.chatId.toString() },
       create: {
         id: ctx.chatId.toString(),
@@ -30,7 +35,7 @@ export async function start(ctx: CommandContext<BotContext>) {
       },
     });
 
-    await ctx.prisma.groupMember.upsert({
+    await prisma.groupMember.upsert({
       where: { userId_groupId: { userId: ctx.from.id.toString(), groupId: ctx.chatId.toString() } },
       create: {
         userId: ctx.from.id.toString(),
@@ -43,7 +48,7 @@ export async function start(ctx: CommandContext<BotContext>) {
     });
   }
 
-  await generateAnswer(ctx, {
+  await generateAnswer({
     messages: [
       {
         role: 'user',
@@ -59,7 +64,7 @@ Describe the plans, if it is unknown, show the user how to upgrade (/billing com
           startMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
 Current plan: ${ctx.session.plan ?? 'Unknown'}
 Plan description:
-${getPlansDescription(ctx.env)}
+${getPlansDescription(env)}
 
 Help message:
 ${helpText}

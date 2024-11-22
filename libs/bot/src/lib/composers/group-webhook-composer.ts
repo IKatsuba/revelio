@@ -2,6 +2,8 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Composer, Context } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
 import {
   billing,
@@ -21,9 +23,12 @@ groupWebhookComposer.on(
   'msg:new_chat_members:me',
   track('msg:new_chat_members:me'),
   async (ctx) => {
-    ctx.logger.info('Bot added to the new chat', { chatId: ctx.chat.id });
+    const logger = injectLogger();
+    const prisma = injectPrisma();
 
-    await ctx.prisma.group.upsert({
+    logger.info('Bot added to the new chat', { chatId: ctx.chat.id });
+
+    await prisma.group.upsert({
       where: { id: ctx.chat.id.toString() },
       create: {
         id: ctx.chat.id.toString(),
@@ -38,7 +43,7 @@ groupWebhookComposer.on(
     const admins = await ctx.getChatAdministrators();
 
     for (const admin of admins) {
-      await ctx.prisma.groupMember.upsert({
+      await prisma.groupMember.upsert({
         where: {
           userId_groupId: { userId: admin.user.id.toString(), groupId: ctx.chat.id.toString() },
         },

@@ -1,9 +1,13 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
-import { BotContext, getPlansDescription } from '@revelio/bot-utils';
+import { getPlansDescription, injectBotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 
-export function getCurrentPlanToolFactory(ctx: BotContext) {
+export function getCurrentPlanToolFactory() {
+  const ctx = injectBotContext();
+  const env = injectEnv();
+
   return {
     getCurrentPlan: tool({
       description: 'get the current plan of the user.',
@@ -17,7 +21,7 @@ export function getCurrentPlanToolFactory(ctx: BotContext) {
 
         return {
           plan: ctx.session.plan,
-          plansDescription: getPlansDescription(ctx.env),
+          plansDescription: getPlansDescription(env),
         };
       },
     }),

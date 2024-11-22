@@ -3,17 +3,17 @@ import { createFactory } from 'hono/factory';
 
 import { initWebhookBot } from '@revelio/bot';
 import { getEnv } from '@revelio/env';
-import { createLogger } from '@revelio/logger';
+import { injectLogger } from '@revelio/logger';
 
 const factory = createFactory();
 
 export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => {
-  const logger = createLogger(c);
+  const logger = injectLogger();
 
   const body = await c.req.json();
 
   try {
-    const bot = await initWebhookBot(c);
+    const bot = await initWebhookBot();
 
     logger.info('bot.handleUpdate');
 
@@ -38,7 +38,7 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
 
 export function validateWebhook() {
   return factory.createMiddleware(async (c, next) => {
-    const logger = createLogger(c);
+    const logger = injectLogger();
 
     logger.info('validateWebhook');
 

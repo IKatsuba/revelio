@@ -4,12 +4,17 @@ import { parseDate } from 'chrono-node';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import { BotContext, telegramify } from '@revelio/bot-utils';
+import { injectBotContext, telegramify } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
-function createClient(ctx: BotContext) {
+function createClient() {
+  const env = injectEnv();
+
   return new Client({
-    token: ctx.env.QSTASH_TOKEN,
-    baseUrl: ctx.env.QSTASH_URL,
+    token: env.QSTASH_TOKEN,
+    baseUrl: env.QSTASH_URL,
     retry: {
       retries: 6,
       backoff: (retry_count) => Math.exp(retry_count) * 50,
@@ -17,7 +22,12 @@ function createClient(ctx: BotContext) {
   });
 }
 
-export function reminderToolFactory(ctx: BotContext) {
+export function reminderToolFactory() {
+  const logger = injectLogger();
+  const ctx = injectBotContext();
+  const env = injectEnv();
+  const prisma = injectPrisma();
+
   return {
     createReminder: tool({
       description: 'create a reminder then notify the user.',
@@ -45,7 +55,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        ctx.logger.info('Creating reminder', { message, time, timezone });
+        logger.info('Creating reminder', { message, time, timezone });
 
         const date = parseDate(time, {
           timezone,
@@ -62,8 +72,8 @@ export function reminderToolFactory(ctx: BotContext) {
 
         const id = nanoid();
 
-        const { messageId } = await createClient(ctx).publishJSON({
-          url: ctx.env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
+        const { messageId } = await createClient().publishJSON({
+          url: env.REMINDERS_AFTER_NOTIFY_CALLBACK_URL,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -75,7 +85,7 @@ export function reminderToolFactory(ctx: BotContext) {
           notBefore: Math.floor(date.getTime() / 1000),
         });
 
-        await ctx.prisma.reminder.create({
+        await prisma.reminder.create({
           data: {
             id,
             messageId,
@@ -111,7 +121,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await ctx.prisma.reminder.findMany({
+        const reminders = await prisma.reminder.findMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -139,7 +149,7 @@ export function reminderToolFactory(ctx: BotContext) {
         id: z.string().describe('the id of the reminder to delete'),
       }),
       async execute({ id }) {
-        const result = await ctx.prisma.reminder.update({
+        const result = await prisma.reminder.update({
           where: {
             id,
           },
@@ -151,7 +161,7 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await createClient(ctx).messages.delete(result.messageId);
+        await createClient().messages.delete(result.messageId);
 
         return {
           status: 'success',
@@ -176,7 +186,7 @@ export function reminderToolFactory(ctx: BotContext) {
           };
         }
 
-        const reminders = await ctx.prisma.reminder.findMany({
+        const reminders = await prisma.reminder.findMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -187,7 +197,7 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await ctx.prisma.reminder.updateMany({
+        await prisma.reminder.updateMany({
           where: {
             groupId: ctx.chatId.toString(),
             userId: ctx.from.id.toString(),
@@ -198,9 +208,7 @@ export function reminderToolFactory(ctx: BotContext) {
           },
         });
 
-        await createClient(ctx).messages.deleteMany(
-          reminders.map((reminder) => reminder.messageId),
-        );
+        await createClient().messages.deleteMany(reminders.map((reminder) => reminder.messageId));
 
         return {
           status: 'success',

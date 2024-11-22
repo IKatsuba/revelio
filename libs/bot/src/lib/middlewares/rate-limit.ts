@@ -2,6 +2,7 @@ import { Algorithm, Ratelimit } from '@upstash/ratelimit';
 import { Middleware } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
+import { injectRedisClient } from '@revelio/redis';
 import { formatSeconds } from '@revelio/utils';
 
 export function rateLimit({
@@ -22,7 +23,7 @@ export function rateLimit({
     }
 
     const rateLimit = new Ratelimit({
-      redis: ctx.redis,
+      redis: injectRedisClient(),
       limiter: limiter[ctx.session.plan ?? 'free'] ?? limiter.free,
       analytics: true,
       prefix: `rate-limit:${name}`,

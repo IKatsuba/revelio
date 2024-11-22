@@ -1,11 +1,13 @@
 import { createAISDKTools } from '@agentic/ai-sdk';
 import { WeatherClient } from '@agentic/weather';
 
-import { BotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 
-export function weatherToolFactory(ctx: BotContext) {
+export function weatherToolFactory() {
+  const env = injectEnv();
+
   const weather = new WeatherClient({
-    apiKey: ctx.env.WEATHER_API_KEY,
+    apiKey: env.WEATHER_API_KEY,
   });
 
   return createAISDKTools(weather);

@@ -1,9 +1,11 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
-import { BotContext } from '@revelio/bot-utils';
+import { injectBotContext } from '@revelio/bot-utils';
 
-export function setChatLanguageFactory(ctx: BotContext) {
+export function setChatLanguageFactory() {
+  const ctx = injectBotContext();
+
   return tool({
     description: 'Set chat language',
     parameters: z.object({

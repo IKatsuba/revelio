@@ -1,11 +1,9 @@
-import { BotContext } from '@revelio/bot-utils';
+import { injectOpenAI } from '@revelio/openai';
 
-export async function moderate(
-  ctx: BotContext,
-  text: string,
-  { signal }: { signal?: AbortSignal } = {},
-) {
-  return ctx.openai.moderations.create(
+export async function moderate(text: string, { signal }: { signal?: AbortSignal } = {}) {
+  const openai = injectOpenAI();
+
+  return openai.moderations.create(
     {
       model: 'omni-moderation-latest',
       input: text,

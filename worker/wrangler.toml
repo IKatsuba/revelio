@@ -16,6 +16,11 @@ binding = "revelioDB"
 database_name = "revelio-db"
 database_id = "28350fc4-5854-4748-b42c-ffa92d28ddec"
 
+[[d1_databases]]
+binding = "revelioMessagesDB"
+database_name = "revelio-messages"
+database_id = "5ffea1fe-4c83-40dc-93f3-c54810ba2051"
+
 [vars]
 BOT_WEBHOOK_URL="https://revelio.katsuba.workers.dev/api/tg/webhook"
 CLOUDFLARE_ACCOUNT_ID="53683e9c95b74c0aae7b4b9821b8c53f"

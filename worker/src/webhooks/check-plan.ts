@@ -4,19 +4,19 @@ import { Bot } from 'grammy';
 import { createFactory } from 'hono/factory';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
-import { getEnv } from '@revelio/env';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
-import { createLogger } from '@revelio/logger';
-import { createPrisma } from '@revelio/prisma';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
 import { qstashVerify } from './qstash-verify';
 
 const factory = createFactory();
 
 export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c) => {
-  const env = getEnv(c);
-  const logger = createLogger(c);
-  const prisma = createPrisma(c);
+  const env = injectEnv();
+  const logger = injectLogger();
+  const prisma = injectPrisma();
 
   try {
     const { update } = (await c.req.json()) as {
@@ -28,7 +28,7 @@ export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c
         apiRoot: env.TELEGRAM_API_URL,
       },
     });
-    bot.use(sessionMiddleware(c));
+    bot.use(sessionMiddleware());
 
     bot.on('message:successful_payment', async (ctx) => {
       await ctx.replyWithChatAction('typing');
@@ -56,7 +56,7 @@ export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c
 
         ctx.session.plan = 'free';
 
-        await generateAnswer(ctx, {
+        await generateAnswer({
           messages: [
             ...createToolMessages({
               toolName: 'checkPayment',

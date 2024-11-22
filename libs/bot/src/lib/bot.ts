@@ -1,18 +1,17 @@
 import { Bot, Context } from 'grammy';
-import { Context as HonoContext } from 'hono';
 
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
-import { getEnv } from '@revelio/env';
-import { createLogger } from '@revelio/logger';
+import { injectEnv } from '@revelio/env';
+import { injectLogger } from '@revelio/logger';
 
 import { billingComposer } from './composers/billing-composer';
 import { groupWebhookComposer } from './composers/group-webhook-composer';
 import { privateWebhookComposer } from './composers/private-webhook-composer';
 import { configureBot } from './middlewares/configure';
 
-export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
-  const env = getEnv(c);
-  const logger = createLogger(c);
+export async function initWebhookBot(): Promise<Bot<BotContext>> {
+  const env = injectEnv();
+  const logger = injectLogger();
   const bot = new Bot<BotContext>(env.BOT_TOKEN, {
     client: {
       apiRoot: env.TELEGRAM_API_URL,
@@ -43,8 +42,8 @@ export async function initWebhookBot(c: HonoContext): Promise<Bot<BotContext>> {
           },
   });
 
-  bot.use(configureBot(c));
-  bot.use(sessionMiddleware(c));
+  bot.use(configureBot());
+  bot.use(sessionMiddleware());
 
   bot.use(billingComposer);
 

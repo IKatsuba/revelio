@@ -6,13 +6,13 @@ import { Context } from 'hono';
 import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
 import { getEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
-import { createLogger } from '@revelio/logger';
-import { createPrisma } from '@revelio/prisma';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
 export async function remindersAfterNotify(c: Context) {
   const env = getEnv(c);
-  const prisma = createPrisma(c);
-  const logger = createLogger(c);
+  const prisma = injectPrisma();
+  const logger = injectLogger();
   try {
     const { id, update, text } = (await c.req.json()) as {
       id: string;
@@ -34,13 +34,12 @@ export async function remindersAfterNotify(c: Context) {
         apiRoot: env.TELEGRAM_API_URL,
       },
     });
-    bot.use(sessionMiddleware(c));
+    bot.use(sessionMiddleware());
 
     bot.on('message', async (ctx) => {
       await ctx.replyWithChatAction('typing');
 
       await generateAnswer(
-        ctx,
         {
           messages: [
             ...createToolMessages({

@@ -4,7 +4,8 @@ import { tool } from 'ai';
 import ky from 'ky';
 import { z } from 'zod';
 
-import { BotContext } from '@revelio/bot-utils';
+import { injectBotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 
 class XJinaClient extends JinaClient {
   kyFactCheck: KyInstance;
@@ -44,11 +45,14 @@ class XJinaClient extends JinaClient {
   }
 }
 
-export function searchToolsFactory(ctx: BotContext) {
+export function searchToolsFactory() {
+  const env = injectEnv();
+  const ctx = injectBotContext();
+
   const jinaApi = ky.extend({
     timeout: 1000 * 60 * 5,
     headers: {
-      Authorization: `Bearer ${ctx.env.JINA_API_KEY}`,
+      Authorization: `Bearer ${env.JINA_API_KEY}`,
     },
   });
 
@@ -61,10 +65,10 @@ export function searchToolsFactory(ctx: BotContext) {
         query: z.string(),
       }),
       async execute({ query }) {
-        const response = await fetch(`${ctx.env.PERPLEXITY_API_URL}/chat/completions`, {
+        const response = await fetch(`${env.PERPLEXITY_API_URL}/chat/completions`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${ctx.env.PERPLEXITY_API_KEY}`,
+            Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

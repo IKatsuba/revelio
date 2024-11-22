@@ -1,17 +1,17 @@
-import { BotContext } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
+import { injectOpenAI } from '@revelio/openai';
 
-export async function generateImage(
-  ctx: BotContext,
-  prompt: string,
-  { signal }: { signal?: AbortSignal } = {},
-) {
-  const result = await ctx.openai.images.generate(
+export async function generateImage(prompt: string, { signal }: { signal?: AbortSignal } = {}) {
+  const openai = injectOpenAI();
+  const env = injectEnv();
+
+  const result = await openai.images.generate(
     {
       prompt,
       n: 1,
-      model: ctx.env.IMAGE_MODEL,
-      quality: ctx.env.IMAGE_QUALITY,
-      size: ctx.env.IMAGE_SIZE,
+      model: env.IMAGE_MODEL,
+      quality: env.IMAGE_QUALITY,
+      size: env.IMAGE_SIZE,
     },
     {
       signal,

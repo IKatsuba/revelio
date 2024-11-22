@@ -2,12 +2,17 @@ import { Client } from '@upstash/qstash';
 import { Composer } from 'grammy';
 
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
+import { injectEnv } from '@revelio/env';
 import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { injectLogger } from '@revelio/logger';
+import { injectPrisma } from '@revelio/prisma';
 
-function createClient(ctx: BotContext) {
+function createClient() {
+  const env = injectEnv();
+
   return new Client({
-    token: ctx.env.QSTASH_TOKEN,
-    baseUrl: ctx.env.QSTASH_URL,
+    token: env.QSTASH_TOKEN,
+    baseUrl: env.QSTASH_URL,
     retry: {
       retries: 3,
       backoff: (retry_count) => Math.exp(retry_count) * 50,
@@ -25,7 +30,7 @@ billingComposer.on('pre_checkout_query', async (ctx) => {
   if (hasActivePlan) {
     await ctx.replyWithChatAction('typing');
 
-    await generateAnswer(ctx, {
+    await generateAnswer({
       messages: [
         ...createToolMessages({
           toolName: 'subscribeToNewPlan',
@@ -39,28 +44,32 @@ billingComposer.on('pre_checkout_query', async (ctx) => {
 });
 
 billingComposer.on('message:successful_payment', async (ctx) => {
+  const prisma = injectPrisma();
+  const logger = injectLogger();
+  const env = injectEnv();
+
   await ctx.replyWithChatAction('typing');
 
   const successfulPayment = ctx.message.successful_payment;
 
   if (!successfulPayment) {
-    ctx.logger.error('No successful_payment in message');
+    logger.error('No successful_payment in message');
     return;
   }
 
   const plan = successfulPayment.invoice_payload as 'basic' | 'premium' | 'free';
 
-  if (!(await ctx.prisma.user.findFirst({ where: { id: ctx.from.id.toString() } }))) {
+  if (!(await prisma.user.findFirst({ where: { id: ctx.from.id.toString() } }))) {
     const chatMember = await ctx.getChatMember(ctx.from.id);
 
-    await ctx.prisma.user.create({
+    await prisma.user.create({
       data: {
         id: ctx.from.id.toString(),
         username: ctx.from.username,
       },
     });
 
-    await ctx.prisma.groupMember.create({
+    await prisma.groupMember.create({
       data: {
         userId: ctx.from.id.toString(),
         groupId: ctx.chat.id.toString(),
@@ -69,7 +78,7 @@ billingComposer.on('message:successful_payment', async (ctx) => {
     });
   }
 
-  await ctx.prisma.payment.create({
+  await prisma.payment.create({
     data: {
       totalAmount: successfulPayment.total_amount,
       currency: successfulPayment.currency,
@@ -82,7 +91,7 @@ billingComposer.on('message:successful_payment', async (ctx) => {
     },
   });
 
-  await ctx.prisma.group.update({
+  await prisma.group.update({
     where: {
       id: ctx.chat.id.toString(),
     },
@@ -94,20 +103,20 @@ billingComposer.on('message:successful_payment', async (ctx) => {
 
   ctx.session.plan = plan;
 
-  await generateAnswer(ctx, {
+  await generateAnswer({
     messages: [
       ...createToolMessages({
         toolName: 'updateBillingPlan',
         result: {
-          plansDescription: getPlansDescription(ctx.env),
+          plansDescription: getPlansDescription(env),
           result: `User ${ctx.from.username} has successfully subscribed to the ${plan} plan.`,
         },
       }),
     ],
   });
 
-  await createClient(ctx).publishJSON({
-    url: ctx.env.CHECK_PLAN_CALLBACK_URL,
+  await createClient().publishJSON({
+    url: env.CHECK_PLAN_CALLBACK_URL,
     headers: {
       'Content-Type': 'application/json',
     },
