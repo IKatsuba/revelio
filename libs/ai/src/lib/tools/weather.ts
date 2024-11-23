@@ -1,6 +1,6 @@
-import { createAISDKTools } from '@agentic/ai-sdk';
 import { WeatherClient } from '@agentic/weather';
 import { tool } from '@langchain/core/tools';
+import ky from 'ky';
 import { z } from 'zod';
 
 import { injectEnv } from '@revelio/env';
@@ -12,6 +12,9 @@ export function weatherToolFactory() {
 
       const weather = new WeatherClient({
         apiKey: env.WEATHER_API_KEY,
+        ky: ky.extend({
+          fetch: (...args) => fetch(...args),
+        }),
       });
 
       return weather.getCurrentWeather({ q });

@@ -54,6 +54,7 @@ export function searchToolsFactory() {
     headers: {
       Authorization: `Bearer ${env.JINA_API_KEY}`,
     },
+    fetch: (...args) => fetch(...args),
   });
 
   const jinaClient = new XJinaClient(jinaApi);
@@ -155,7 +156,7 @@ export function searchToolsFactory() {
       },
       {
         name: 'readUrl',
-        description: 'Read a URL',
+        description: 'Load and read a URL and return the content or a screenshot',
         schema: z.object({
           url: z.string(),
           returnFormat: z.enum(['text', 'html', 'markdown', 'screenshot']),

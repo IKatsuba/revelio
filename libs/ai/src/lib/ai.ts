@@ -1,4 +1,10 @@
-import { HumanMessage, SystemMessage, trimMessages } from '@langchain/core/messages';
+import { SystemMessage, trimMessages } from '@langchain/core/messages';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  MessagesPlaceholder,
+} from '@langchain/core/prompts';
 import { RunnableWithMessageHistory } from '@langchain/core/runnables';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { ChatOpenAI } from '@langchain/openai';
@@ -23,6 +29,25 @@ export async function promptMessage() {
   const ctx = injectBotContext();
 
   const chatHistory = injectMessageHistory();
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      'system',
+      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(env)}\n` : ''}${env.ASSISTANT_PROMPT}
+
+Current time: ${new Date().toISOString()}.
+Current plan: ${ctx.session.plan}
+Current chat: ${ctx.chat?.title ?? 'Unknown'}
+Current chat language: ${ctx.session.language ?? 'Unknown'}
+`,
+    ],
+    new MessagesPlaceholder('history'),
+    HumanMessagePromptTemplate.fromTemplate([
+      {
+        text: '{question}',
+      },
+    ]),
+  ]);
 
   const llm = new ChatOpenAI(
     {
@@ -49,15 +74,6 @@ export async function promptMessage() {
       ttsFactory(),
       weatherToolFactory(),
     ],
-    messageModifier: new SystemMessage(
-      `${ctx.session.plan === 'free' ? `Always add text in the start about upgrade to paid plan. Answer as short as you can. Plan descriptions: ${getPlansDescription(env)}\n` : ''}${env.ASSISTANT_PROMPT}
-
-Current time: ${new Date().toISOString()}.
-Current plan: ${ctx.session.plan}
-Current chat: ${ctx.chat?.title ?? 'Unknown'}
-Current chat language: ${ctx.session.language ?? 'Unknown'}
-`,
-    ),
   });
 
   const trimmer = trimMessages({
@@ -67,16 +83,29 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     includeSystem: true,
   });
 
-  const chain = trimmer.pipe((messages) => ({ messages })).pipe(agent);
+  const chain = prompt
+    .pipe(({ messages }) => messages)
+    .pipe(trimmer)
+    .pipe((messages) => ({ messages }))
+    .pipe(agent)
+    .pipe(({ messages }) =>
+      messages.length === 0 ? new SystemMessage('No response') : messages.at(-1),
+    )
+    .pipe(new StringOutputParser());
 
   const chainWithHistory = new RunnableWithMessageHistory({
     runnable: chain,
     getMessageHistory: () => chatHistory,
+    inputMessagesKey: 'question',
+    historyMessagesKey: 'history',
   });
 
-  const res = await chainWithHistory.invoke([new HumanMessage(ctx.message.text)], {
-    configurable: { sessionId: ctx.chatId.toString() },
-  });
-
-  return res.messages.at(-1).content;
+  return chainWithHistory.invoke(
+    {
+      question: ctx.message.text,
+    },
+    {
+      configurable: { sessionId: ctx.chatId.toString() },
+    },
+  );
 }

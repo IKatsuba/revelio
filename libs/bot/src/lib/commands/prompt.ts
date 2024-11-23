@@ -2,7 +2,7 @@ import { Document, PhotoSize } from '@grammyjs/types';
 import { trace } from '@opentelemetry/api';
 
 import { promptMessage } from '@revelio/ai';
-import { BotContext, injectBotContext } from '@revelio/bot-utils';
+import { BotContext, injectBotContext, telegramify } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
 
@@ -36,7 +36,9 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  await ctx.reply(await promptMessage());
+  await ctx.reply(telegramify(await promptMessage()), {
+    parse_mode: 'MarkdownV2',
+  });
 
   // const messages: CoreMessage[] = photo
   //   ? [
