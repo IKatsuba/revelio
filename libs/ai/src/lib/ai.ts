@@ -9,7 +9,13 @@ import { RunnableWithMessageHistory } from '@langchain/core/runnables';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { ChatOpenAI } from '@langchain/openai';
 
-import { getPlansDescription, injectBotContext } from '@revelio/bot-utils';
+import { createKeyboardWithPaymentLinks } from '@revelio/billing';
+import {
+  BotContext,
+  getPlansDescription,
+  injectBotContext,
+  sendLongText,
+} from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 
 import { injectMessageHistory } from './history';
@@ -24,7 +30,11 @@ import { setChatLanguageFactory } from './tools/set-chat-language';
 import { ttsFactory } from './tools/tts';
 import { weatherToolFactory } from './tools/weather';
 
-export async function promptMessage() {
+export async function promptMessage({
+  replyOptions,
+}: {
+  replyOptions?: Parameters<BotContext['reply']>[1];
+} = {}) {
   const env = injectEnv();
   const ctx = injectBotContext();
 
@@ -42,11 +52,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
 `,
     ],
     new MessagesPlaceholder('history'),
-    HumanMessagePromptTemplate.fromTemplate([
-      {
-        text: '{question}',
-      },
-    ]),
+    HumanMessagePromptTemplate.fromTemplate('{question}'),
   ]);
 
   const llm = new ChatOpenAI(
@@ -100,12 +106,21 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     historyMessagesKey: 'history',
   });
 
-  return chainWithHistory.invoke(
+  const aiAnswer = await chainWithHistory.invoke(
     {
-      question: ctx.message.text,
+      question: ctx.prompt,
+      photoUrl: ctx.photoUrl,
     },
     {
       configurable: { sessionId: ctx.chatId.toString() },
     },
   );
+
+  const paymentKeyboard =
+    ctx.session.plan === 'free' ? await createKeyboardWithPaymentLinks() : undefined;
+
+  await sendLongText(ctx, aiAnswer, {
+    reply_markup: paymentKeyboard,
+    ...(replyOptions ?? {}),
+  });
 }

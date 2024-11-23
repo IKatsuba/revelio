@@ -29,4 +29,6 @@ export function provideBotContext(ctx: BotContext): void {
 export type BotContext = Context &
   SessionFlavor<SessionData> & {
     transcription?: string;
+    photoUrl?: string;
+    prompt?: string;
   };

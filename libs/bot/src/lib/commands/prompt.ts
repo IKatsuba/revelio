@@ -2,7 +2,7 @@ import { Document, PhotoSize } from '@grammyjs/types';
 import { trace } from '@opentelemetry/api';
 
 import { promptMessage } from '@revelio/ai';
-import { BotContext, injectBotContext, telegramify } from '@revelio/bot-utils';
+import { BotContext, injectBotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
 
@@ -13,7 +13,7 @@ export async function prompt(ctx: BotContext) {
 
   await ctx.replyWithChatAction('typing');
 
-  const prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
+  ctx.prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
   const photo = ctx.session.plan === 'free' ? null : await getPhoto(ctx);
 
   if (!prompt && !photo) {
@@ -36,9 +36,11 @@ export async function prompt(ctx: BotContext) {
     return;
   }
 
-  await ctx.reply(telegramify(await promptMessage()), {
-    parse_mode: 'MarkdownV2',
-  });
+  if (photo) {
+    ctx.photoUrl = (await getPhotoUrl(photo)).toString();
+  }
+
+  await promptMessage();
 
   // const messages: CoreMessage[] = photo
   //   ? [
