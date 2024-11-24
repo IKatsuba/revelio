@@ -1,11 +1,6 @@
-import { SystemMessage, trimMessages } from '@langchain/core/messages';
+import { HumanMessage, trimMessages } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import {
-  ChatPromptTemplate,
-  HumanMessagePromptTemplate,
-  MessagesPlaceholder,
-} from '@langchain/core/prompts';
-import { RunnableWithMessageHistory } from '@langchain/core/runnables';
+import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { ChatOpenAI } from '@langchain/openai';
 
@@ -52,7 +47,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
 `,
     ],
     new MessagesPlaceholder('history'),
-    HumanMessagePromptTemplate.fromTemplate('{question}'),
+    new MessagesPlaceholder('question'),
   ]);
 
   const llm = new ChatOpenAI(
@@ -82,34 +77,45 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
     ],
   });
 
-  const trimmer = trimMessages({
-    maxTokens: 20000,
-    strategy: 'last',
-    tokenCounter: llm,
-    includeSystem: true,
-  });
-
   const chain = prompt
-    .pipe(({ messages }) => messages)
-    .pipe(trimmer)
-    .pipe((messages) => ({ messages }))
+    .pipe(async ({ messages, ...other }) => ({
+      messages: await trimMessages(messages, {
+        maxTokens: 20000,
+        strategy: 'last',
+        tokenCounter: llm,
+        includeSystem: true,
+      }),
+      ...other,
+    }))
     .pipe(agent)
-    .pipe(({ messages }) =>
-      messages.length === 0 ? new SystemMessage('No response') : messages.at(-1),
-    )
+    .pipe(async ({ messages }) => {
+      await chatHistory.addMessages(messages.slice(1));
+      return { messages };
+    })
+    .pipe(({ messages }) => messages.at(-1))
     .pipe(new StringOutputParser());
 
-  const chainWithHistory = new RunnableWithMessageHistory({
-    runnable: chain,
-    getMessageHistory: () => chatHistory,
-    inputMessagesKey: 'question',
-    historyMessagesKey: 'history',
-  });
-
-  const aiAnswer = await chainWithHistory.invoke(
+  const aiAnswer = await chain.invoke(
     {
-      question: ctx.prompt,
-      photoUrl: ctx.photoUrl,
+      history: await chatHistory.getMessages(),
+      question: new HumanMessage(
+        ctx.photoUrl
+          ? {
+              content: [
+                {
+                  type: 'text',
+                  text: ctx.prompt,
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: ctx.photoUrl,
+                  },
+                },
+              ],
+            }
+          : ctx.prompt,
+      ),
     },
     {
       configurable: { sessionId: ctx.chatId.toString() },
