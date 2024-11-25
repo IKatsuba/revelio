@@ -87,6 +87,30 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
       }),
       ...other,
     }))
+    .pipe(({ messages, ...other }) => {
+      if (!messages.length) {
+        return {
+          messages,
+          ...other,
+        };
+      }
+
+      if (messages.at(0).getType() === 'tool') {
+        return {
+          messages: messages.slice(1),
+          ...other,
+        };
+      }
+
+      if (messages.at(0).getType() === 'system' && messages.at(1).getType() === 'tool') {
+        messages.splice(1, 1);
+      }
+
+      return {
+        messages,
+        ...other,
+      };
+    })
     .pipe(agent)
     .pipe(async ({ messages }) => {
       await chatHistory.addMessages(messages.slice(1));

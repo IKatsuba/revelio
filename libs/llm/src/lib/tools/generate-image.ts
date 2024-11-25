@@ -50,7 +50,6 @@ export function generateImageFactory() {
 
       return {
         result: 'Image generated and sent',
-        prompt,
       };
     },
   });

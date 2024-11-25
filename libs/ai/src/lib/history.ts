@@ -150,7 +150,7 @@ export class CloudflareD1MessageHistory extends BaseListChatMessageHistory {
     const query = `SELECT *
                    FROM ${this.tableName}
                    WHERE session_id = ?
-                   ORDER BY created_at DESC
+                   ORDER BY created_at
                    LIMIT 100;`;
     const rawStoredMessages = await this.database.prepare(query).bind(this.sessionId).all();
     const storedMessagesObject = rawStoredMessages.results as unknown as selectStoredMessagesDTO[];
