@@ -2,7 +2,7 @@ import { Document, PhotoSize } from '@grammyjs/types';
 import { HumanMessage } from '@langchain/core/messages';
 import { trace } from '@opentelemetry/api';
 
-import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
+import { createHumanMessage, messageTemplate, runAgentAndReply } from '@revelio/agent';
 import { BotContext, injectBotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
@@ -55,6 +55,42 @@ export async function prompt(ctx: BotContext) {
           },
         },
       ],
+    });
+  }
+
+  if (ctx.message.reply_to_message) {
+    const repliedMsgText = await messageTemplate.format({
+      username: ctx.message.reply_to_message.from?.username ?? 'Unknown',
+      firstName: ctx.message.reply_to_message.from?.first_name ?? 'Unknown',
+      lastName: ctx.message.reply_to_message.from?.last_name ?? 'Unknown',
+      userId: ctx.message.reply_to_message.from?.id ?? 'Unknown',
+      messageId: ctx.message.reply_to_message.message_id ?? 'Unknown',
+      messageText: ctx.message.reply_to_message.text ?? 'Unknown',
+    });
+
+    const originMsgText = await messageTemplate.format({
+      username: ctx.from?.username ?? 'Unknown',
+      firstName: ctx.from?.first_name ?? 'Unknown',
+      lastName: ctx.from?.last_name ?? 'Unknown',
+      userId: ctx.from?.id ?? 'Unknown',
+      messageId: ctx.message?.message_id ?? 'Unknown',
+      messageText: messagePrompt,
+    });
+
+    const repliedContent = {
+      type: 'text',
+      text: `---\n## Replied message\n\n${repliedMsgText}${
+        ctx.message.quote ? `\n\nUser quoted just this part:\n${ctx.message.quote.text}` : ''
+      }`,
+    };
+
+    const originalMsgContent = {
+      type: 'text',
+      text: `${originMsgText}\n---\nThis message is a reply to the message with id ${ctx.message.reply_to_message.message_id}`,
+    };
+
+    ctx.prompt = new HumanMessage({
+      content: [originalMsgContent, repliedContent],
     });
   }
 
@@ -136,21 +172,4 @@ async function getPhotoUrl(photo: PhotoSize | Document) {
   }
 
   return new URL(result.variants[0]);
-}
-
-function getHumanMessageMetadata(ctx: BotContext): string {
-  return `Username: ${ctx.from?.username ?? 'Unknown'}
-User first name: ${ctx.from?.first_name ?? 'Unknown'}
-User second name: ${ctx.from?.last_name ?? 'Unknown'}
-User id: ${ctx.from?.id ?? 'Unknown'}
-Message id: ${ctx.message?.message_id ?? 'Unknown'}
-${
-  ctx.message?.reply_to_message
-    ? `---
-Reply to message id: ${ctx.message.reply_to_message.message_id}
-`
-    : ''
-}
----
-Message text from user:`;
 }

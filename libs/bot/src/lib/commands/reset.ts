@@ -1,10 +1,10 @@
+import { injectMessageHistory } from '@revelio/agent';
 import { BotContext } from '@revelio/bot-utils';
-import { injectRedisClient } from '@revelio/redis';
 
 export async function reset(ctx: BotContext) {
-  const redis = injectRedisClient();
+  const history = injectMessageHistory();
 
-  await redis.del(`msg_list_${ctx.chatId}`);
+  await history.clear();
 
   await ctx.reply('Conversation reset');
 }

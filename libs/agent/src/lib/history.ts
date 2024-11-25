@@ -218,9 +218,9 @@ export class CloudflareD1MessageHistory extends BaseListChatMessageHistory {
     await this.ensureTable();
 
     const query = `DELETE
-                   FROM ?
+                   FROM ${this.tableName}
                    WHERE session_id = ? `;
-    await this.database.prepare(query).bind(this.tableName, this.sessionId).all();
+    await this.database.prepare(query).bind(this.sessionId).run();
   }
 
   /**

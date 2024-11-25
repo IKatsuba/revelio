@@ -1,5 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import { Composer } from 'grammy';
+import { Composer, matchFilter } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
 
@@ -12,6 +12,7 @@ import { help } from '../commands/help';
 import { prompt } from '../commands/prompt';
 import { reset } from '../commands/reset';
 import { start } from '../commands/start';
+import { forwardOrigin } from '../handlers/forward-origin';
 import { paywall } from '../middlewares/paywall';
 import { rateLimit } from '../middlewares/rate-limit';
 import { track } from '../middlewares/track';
@@ -34,26 +35,30 @@ privateWebhookComposer.callbackQuery(
   callbackQuerySubscriptionCancel,
 );
 
-privateWebhookComposer.on(
-  [
-    'message:text',
-    'message:photo',
-    'message:document',
-    'message:voice',
-    'message:audio',
-    'message:video_note',
-    'message:video',
-  ],
-  track('message:text'),
-  paywall,
-  rateLimit({
-    limiter: {
-      free: Ratelimit.fixedWindow(10, '1d'),
-      basic: Ratelimit.fixedWindow(100, '1d'),
-      premium: Ratelimit.fixedWindow(500, '1d'),
-    },
-    name: 'text',
-  }),
-  transcribeMiddleware(),
-  prompt,
-);
+privateWebhookComposer
+  // Ignore messages that are forwarded from other chats
+  // TODO: Remove this once we have a better solution
+  .drop(matchFilter('message:forward_origin'))
+  .on(
+    [
+      'message:text',
+      'message:photo',
+      'message:document',
+      'message:voice',
+      'message:audio',
+      'message:video_note',
+      'message:video',
+    ],
+    track('message:text'),
+    paywall,
+    rateLimit({
+      limiter: {
+        free: Ratelimit.fixedWindow(10, '1d'),
+        basic: Ratelimit.fixedWindow(100, '1d'),
+        premium: Ratelimit.fixedWindow(500, '1d'),
+      },
+      name: 'text',
+    }),
+    transcribeMiddleware(),
+  )
+  .branch(matchFilter('message:forward_origin'), forwardOrigin, prompt);
