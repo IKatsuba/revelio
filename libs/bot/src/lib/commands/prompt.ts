@@ -41,31 +41,6 @@ export async function prompt(ctx: BotContext) {
   }
 
   await promptMessage();
-
-  // const messages: CoreMessage[] = photo
-  //   ? [
-  //       {
-  //         role: 'user' as const,
-  //         content: [
-  //           {
-  //             type: 'text' as const,
-  //             text: `${getMessageHeader(ctx)}\n${prompt ?? 'What’s in this image?'}`,
-  //           },
-  //           {
-  //             type: 'image' as const,
-  //             image: await getPhotoUrl(photo),
-  //           },
-  //         ],
-  //       },
-  //     ]
-  //   : convertToCoreMessages([
-  //       {
-  //         role: 'user',
-  //         content: `${getMessageHeader(ctx)}\n${prompt ?? ''}`,
-  //       },
-  //     ]);
-  //
-  // await generateAnswer({ messages });
 }
 
 async function getPhoto(ctx: BotContext) {

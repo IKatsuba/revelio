@@ -1,8 +1,10 @@
-import { InlineKeyboard } from 'grammy';
+import { HumanMessage } from '@langchain/core/messages';
+import { nanoid } from 'nanoid';
 
+import { promptMessage } from '@revelio/ai';
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createToolMessages } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 import { injectPrisma } from '@revelio/prisma';
 
@@ -22,46 +24,35 @@ export async function billing(ctx: BotContext) {
   if (ctx.session.plan && ctx.session.plan !== 'free') {
     logger.info('[billing] Already subscribed');
 
-    await generateAnswer(
-      {
-        messages: [
-          {
-            role: 'user',
-            content: '/billing',
-          },
-          ...createToolMessages({
-            toolName: 'getCurrentPlan',
-            result: {
-              plan: ctx.session.plan,
-              plansDescription: getPlansDescription(env),
-            },
-          }),
-        ],
-      },
-      {
-        reply_markup: new InlineKeyboard().text('Cancel subscription', 'subscription:cancel'),
-      },
-    );
+    const id = nanoid();
+
+    ctx.prompt = [
+      new HumanMessage('/billing'),
+      ...createToolMessages({
+        toolName: 'getCurrentPlan',
+        result: {
+          plan: ctx.session.plan,
+          plansDescription: getPlansDescription(env),
+        },
+      }),
+    ];
+
+    await promptMessage();
 
     return;
   }
 
   logger.info('[billing] reply');
 
-  await generateAnswer({
-    messages: [
-      {
-        role: 'user',
-        content: '/plans',
+  ctx.prompt = [
+    new HumanMessage('/plans'),
+    ...createToolMessages({
+      toolName: 'getPlans',
+      result: {
+        plansDescription: getPlansDescription(env),
       },
-      ...createToolMessages({
-        toolName: 'getPlans',
-        result: {
-          plansDescription: getPlansDescription(env),
-        },
-      }),
-    ],
-  });
+    }),
+  ];
 }
 
 export async function callbackQuerySubscriptionFree(ctx: BotContext) {
@@ -100,20 +91,18 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
       },
     );
 
-    await generateAnswer({
-      messages: [
-        {
-          role: 'user',
-          content: '/cancel_subscription',
+    ctx.prompt = [
+      new HumanMessage('/cancel_subscription'),
+      ...createToolMessages({
+        toolName: 'cancelSubscription',
+        result: {
+          error: 'Did not find any active subscription',
         },
-        ...createToolMessages({
-          toolName: 'cancelSubscription',
-          result: {
-            error: 'Did not find any active subscription',
-          },
-        }),
-      ],
-    });
+      }),
+    ];
+
+    await promptMessage();
+
     return;
   }
 
@@ -157,18 +146,15 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
 
   ctx.session.plan = 'free';
 
-  await generateAnswer({
-    messages: [
-      {
-        role: 'user',
-        content: '/cancel_subscription',
+  ctx.prompt = [
+    new HumanMessage('/cancel_subscription'),
+    ...createToolMessages({
+      toolName: 'cancelSubscription',
+      result: {
+        result: 'Subscription canceled',
       },
-      ...createToolMessages({
-        toolName: 'cancelSubscription',
-        result: {
-          result: 'Subscription canceled',
-        },
-      }),
-    ],
-  });
+    }),
+  ];
+
+  await promptMessage();
 }

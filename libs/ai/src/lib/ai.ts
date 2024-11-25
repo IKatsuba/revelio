@@ -122,24 +122,27 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
   const aiAnswer = await chain.invoke(
     {
       history: await chatHistory.getMessages(),
-      question: new HumanMessage(
-        ctx.photoUrl
-          ? {
-              content: [
-                {
-                  type: 'text',
-                  text: ctx.prompt,
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: ctx.photoUrl,
-                  },
-                },
-              ],
-            }
+      question:
+        typeof ctx.prompt === 'string'
+          ? new HumanMessage(
+              ctx.photoUrl
+                ? {
+                    content: [
+                      {
+                        type: 'text',
+                        text: ctx.prompt,
+                      },
+                      {
+                        type: 'image_url',
+                        image_url: {
+                          url: ctx.photoUrl,
+                        },
+                      },
+                    ],
+                  }
+                : ctx.prompt,
+            )
           : ctx.prompt,
-      ),
     },
     {
       configurable: { sessionId: ctx.chatId.toString() },

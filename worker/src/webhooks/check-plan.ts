@@ -3,9 +3,10 @@ import { trace } from '@opentelemetry/api';
 import { Bot } from 'grammy';
 import { createFactory } from 'hono/factory';
 
-import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
+import { promptMessage } from '@revelio/ai';
+import { BotContext, configureBot, sessionMiddleware } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createToolMessages } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 import { injectPrisma } from '@revelio/prisma';
 
@@ -28,6 +29,7 @@ export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c
         apiRoot: env.TELEGRAM_API_URL,
       },
     });
+    bot.use(configureBot());
     bot.use(sessionMiddleware());
 
     bot.on('message:successful_payment', async (ctx) => {
@@ -56,17 +58,16 @@ export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c
 
         ctx.session.plan = 'free';
 
-        await generateAnswer({
-          messages: [
-            ...createToolMessages({
-              toolName: 'checkPayment',
-              result: {
-                error:
-                  'Future payment not found. Please check your subscription. Now you on free plan.',
-              },
-            }),
-          ],
+        ctx.prompt = createToolMessages({
+          toolName: 'checkPayment',
+          result: {
+            error:
+              'Future payment not found. Please check your subscription. Now you on free plan.',
+          },
         });
+
+        await promptMessage();
+
         return;
       }
     });

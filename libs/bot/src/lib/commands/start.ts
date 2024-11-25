@@ -1,8 +1,10 @@
+import { HumanMessage } from '@langchain/core/messages';
 import { CommandContext } from 'grammy';
 
+import { promptMessage } from '@revelio/ai';
 import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createToolMessages } from '@revelio/llm';
 import { injectPrisma } from '@revelio/prisma';
 
 export async function start(ctx: CommandContext<BotContext>) {
@@ -48,20 +50,16 @@ export async function start(ctx: CommandContext<BotContext>) {
     });
   }
 
-  await generateAnswer({
-    messages: [
-      {
-        role: 'user',
-        content: '/start',
-      },
-      ...createToolMessages({
-        toolName: 'startMsg',
-        result: {
-          system: `This is the hello message to user.
+  ctx.prompt = [
+    new HumanMessage('/start'),
+    ...createToolMessages({
+      toolName: 'startMsg',
+      result: {
+        system: `This is the hello message to user.
 You need to replace this with the actual message you want to show to the user.
 Add more information about the bot and how to use it. Describe your tooling and how to use it.
 Describe the plans, if it is unknown, show the user how to upgrade (/billing command).`,
-          startMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
+        startMsg: `Current user language: ${ctx.session.language ?? ctx.from?.language_code ?? 'Unknown'}
 Current plan: ${ctx.session.plan ?? 'Unknown'}
 Plan description:
 ${getPlansDescription(env)}
@@ -69,8 +67,9 @@ ${getPlansDescription(env)}
 Help message:
 ${helpText}
 `,
-        },
-      }),
-    ],
-  });
+      },
+    }),
+  ];
+
+  await promptMessage();
 }

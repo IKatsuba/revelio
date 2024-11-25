@@ -1,13 +1,12 @@
 import { Bot, Context } from 'grammy';
 
-import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
+import { BotContext, configureBot, sessionMiddleware } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
 
 import { billingComposer } from './composers/billing-composer';
 import { groupWebhookComposer } from './composers/group-webhook-composer';
 import { privateWebhookComposer } from './composers/private-webhook-composer';
-import { configureBot } from './middlewares/configure';
 
 export async function initWebhookBot(): Promise<Bot<BotContext>> {
   const env = injectEnv();

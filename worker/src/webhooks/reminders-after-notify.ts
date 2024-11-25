@@ -3,9 +3,10 @@ import { trace } from '@opentelemetry/api';
 import { Bot } from 'grammy';
 import { Context } from 'hono';
 
-import { BotContext, sessionMiddleware } from '@revelio/bot-utils';
+import { promptMessage } from '@revelio/ai';
+import { BotContext, configureBot, sessionMiddleware } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createToolMessages } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 import { injectPrisma } from '@revelio/prisma';
 
@@ -34,30 +35,28 @@ export async function remindersAfterNotify(c: Context) {
         apiRoot: env.TELEGRAM_API_URL,
       },
     });
+    bot.use(configureBot());
     bot.use(sessionMiddleware());
 
     bot.on('message', async (ctx) => {
       await ctx.replyWithChatAction('typing');
 
-      await generateAnswer(
-        {
-          messages: [
-            ...createToolMessages({
-              toolName: 'sendReminder',
-              result: {
-                reminderText: text,
-                originalMessage: update,
-              },
-            }),
-          ],
+      ctx.prompt = createToolMessages({
+        toolName: 'sendReminder',
+        result: {
+          reminderText: text,
+          originalMessage: update,
         },
-        {
+      });
+
+      await promptMessage({
+        replyOptions: {
           reply_parameters: {
             message_id: ctx.message.message_id,
           },
           parse_mode: 'MarkdownV2',
         },
-      );
+      });
     });
 
     await bot.init();

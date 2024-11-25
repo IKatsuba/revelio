@@ -1,8 +1,10 @@
+import { HumanMessage } from '@langchain/core/messages';
 import { Middleware } from 'grammy';
 
+import { promptMessage } from '@revelio/ai';
 import { BotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer, transcribe } from '@revelio/llm';
+import { createToolMessages, transcribe } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 
 export function transcribeMiddleware(): Middleware<BotContext> {
@@ -27,37 +29,33 @@ export function transcribeMiddleware(): Middleware<BotContext> {
     }
 
     if (file.file_size && file.file_size > 20 * 1024 * 1024) {
-      await generateAnswer({
-        messages: [
-          {
-            role: 'user',
-            content: 'Some audio file',
+      ctx.prompt = [
+        new HumanMessage('Some audio file'),
+        ...createToolMessages({
+          toolName: 'transcribe',
+          result: {
+            error: `This audio file is too large to transcribe. Please try with a file that is less than 20 MB.`,
           },
-          ...createToolMessages({
-            toolName: 'transcribe',
-            result: {
-              error: `This audio file is too large to transcribe. Please try with a file that is less than 20 MB.`,
-            },
-          }),
-        ],
-      });
+        }),
+      ];
+
+      await promptMessage();
+
+      return;
     }
 
     if (file.duration > 60) {
-      await generateAnswer({
-        messages: [
-          {
-            role: 'user',
-            content: 'Some audio file',
+      ctx.prompt = [
+        new HumanMessage('Some audio file'),
+        ...createToolMessages({
+          toolName: 'transcribe',
+          result: {
+            error: `This audio file is too long to transcribe. Please try with a file that is less than 60 seconds long.`,
           },
-          ...createToolMessages({
-            toolName: 'transcribe',
-            result: {
-              error: `This audio file is too long to transcribe. Please try with a file that is less than 60 seconds long.`,
-            },
-          }),
-        ],
-      });
+        }),
+      ];
+
+      await promptMessage();
 
       return;
     }

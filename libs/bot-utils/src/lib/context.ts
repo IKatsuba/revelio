@@ -1,3 +1,4 @@
+import { BaseMessage } from '@langchain/core/messages';
 import { Context, SessionFlavor } from 'grammy';
 
 import { createInjectionToken, factoryProvider, inject, provide } from '@revelio/di';
@@ -30,5 +31,5 @@ export type BotContext = Context &
   SessionFlavor<SessionData> & {
     transcription?: string;
     photoUrl?: string;
-    prompt?: string;
+    prompt?: string | BaseMessage | BaseMessage[];
   };

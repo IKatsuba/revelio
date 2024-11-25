@@ -1,9 +1,10 @@
 import { Client } from '@upstash/qstash';
 import { Composer } from 'grammy';
 
+import { promptMessage } from '@revelio/ai';
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
-import { createToolMessages, generateAnswer } from '@revelio/llm';
+import { createToolMessages } from '@revelio/llm';
 import { injectLogger } from '@revelio/logger';
 import { injectPrisma } from '@revelio/prisma';
 
@@ -30,16 +31,14 @@ billingComposer.on('pre_checkout_query', async (ctx) => {
   if (hasActivePlan) {
     await ctx.replyWithChatAction('typing');
 
-    await generateAnswer({
-      messages: [
-        ...createToolMessages({
-          toolName: 'subscribeToNewPlan',
-          result: {
-            error: 'You already have an active subscription. Cancel it first.',
-          },
-        }),
-      ],
+    ctx.prompt = createToolMessages({
+      toolName: 'subscribeToNewPlan',
+      result: {
+        error: 'You already have an active subscription. Cancel it first.',
+      },
     });
+
+    await promptMessage();
   }
 });
 
@@ -103,17 +102,15 @@ billingComposer.on('message:successful_payment', async (ctx) => {
 
   ctx.session.plan = plan;
 
-  await generateAnswer({
-    messages: [
-      ...createToolMessages({
-        toolName: 'updateBillingPlan',
-        result: {
-          plansDescription: getPlansDescription(env),
-          result: `User ${ctx.from.username} has successfully subscribed to the ${plan} plan.`,
-        },
-      }),
-    ],
+  ctx.prompt = createToolMessages({
+    toolName: 'updateBillingPlan',
+    result: {
+      plansDescription: getPlansDescription(env),
+      result: `User ${ctx.from.username} has successfully subscribed to the ${plan} plan.`,
+    },
   });
+
+  await promptMessage();
 
   await createClient().publishJSON({
     url: env.CHECK_PLAN_CALLBACK_URL,

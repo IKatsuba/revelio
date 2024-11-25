@@ -1,3 +1,4 @@
+export * from './lib/configure';
 export * from './lib/context';
 export * from './lib/session';
 export * from './lib/telegramify';
