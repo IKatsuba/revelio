@@ -1,7 +1,4 @@
-import { HumanMessage } from '@langchain/core/messages';
-import { nanoid } from 'nanoid';
-
-import { promptMessage } from '@revelio/ai';
+import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -24,10 +21,8 @@ export async function billing(ctx: BotContext) {
   if (ctx.session.plan && ctx.session.plan !== 'free') {
     logger.info('[billing] Already subscribed');
 
-    const id = nanoid();
-
     ctx.prompt = [
-      new HumanMessage('/billing'),
+      await createHumanMessage('/billing'),
       ...createToolMessages({
         toolName: 'getCurrentPlan',
         result: {
@@ -37,7 +32,7 @@ export async function billing(ctx: BotContext) {
       }),
     ];
 
-    await promptMessage();
+    await runAgentAndReply();
 
     return;
   }
@@ -45,7 +40,7 @@ export async function billing(ctx: BotContext) {
   logger.info('[billing] reply');
 
   ctx.prompt = [
-    new HumanMessage('/plans'),
+    await createHumanMessage('/plans'),
     ...createToolMessages({
       toolName: 'getPlans',
       result: {
@@ -92,7 +87,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
     );
 
     ctx.prompt = [
-      new HumanMessage('/cancel_subscription'),
+      await createHumanMessage('/cancel_subscription'),
       ...createToolMessages({
         toolName: 'cancelSubscription',
         result: {
@@ -101,7 +96,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
       }),
     ];
 
-    await promptMessage();
+    await runAgentAndReply();
 
     return;
   }
@@ -147,7 +142,7 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
   ctx.session.plan = 'free';
 
   ctx.prompt = [
-    new HumanMessage('/cancel_subscription'),
+    await createHumanMessage('/cancel_subscription'),
     ...createToolMessages({
       toolName: 'cancelSubscription',
       result: {
@@ -156,5 +151,5 @@ export async function callbackQuerySubscriptionCancel(ctx: BotContext) {
     }),
   ];
 
-  await promptMessage();
+  await runAgentAndReply();
 }

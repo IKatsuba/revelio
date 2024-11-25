@@ -31,5 +31,5 @@ export type BotContext = Context &
   SessionFlavor<SessionData> & {
     transcription?: string;
     photoUrl?: string;
-    prompt?: string | BaseMessage | BaseMessage[];
+    prompt?: BaseMessage | BaseMessage[];
   };

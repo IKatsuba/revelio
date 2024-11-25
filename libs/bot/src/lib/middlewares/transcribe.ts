@@ -1,7 +1,6 @@
-import { HumanMessage } from '@langchain/core/messages';
 import { Middleware } from 'grammy';
 
-import { promptMessage } from '@revelio/ai';
+import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
 import { BotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages, transcribe } from '@revelio/llm';
@@ -30,7 +29,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
 
     if (file.file_size && file.file_size > 20 * 1024 * 1024) {
       ctx.prompt = [
-        new HumanMessage('Some audio file'),
+        await createHumanMessage('Some audio file'),
         ...createToolMessages({
           toolName: 'transcribe',
           result: {
@@ -39,14 +38,14 @@ export function transcribeMiddleware(): Middleware<BotContext> {
         }),
       ];
 
-      await promptMessage();
+      await runAgentAndReply();
 
       return;
     }
 
     if (file.duration > 60) {
       ctx.prompt = [
-        new HumanMessage('Some audio file'),
+        await createHumanMessage('Some audio file'),
         ...createToolMessages({
           toolName: 'transcribe',
           result: {
@@ -55,7 +54,7 @@ export function transcribeMiddleware(): Middleware<BotContext> {
         }),
       ];
 
-      await promptMessage();
+      await runAgentAndReply();
 
       return;
     }

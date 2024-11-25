@@ -1,7 +1,6 @@
-import { HumanMessage } from '@langchain/core/messages';
 import { CommandContext } from 'grammy';
 
-import { promptMessage } from '@revelio/ai';
+import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
 import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -51,7 +50,7 @@ export async function start(ctx: CommandContext<BotContext>) {
   }
 
   ctx.prompt = [
-    new HumanMessage('/start'),
+    await createHumanMessage('/start'),
     ...createToolMessages({
       toolName: 'startMsg',
       result: {
@@ -71,5 +70,5 @@ ${helpText}
     }),
   ];
 
-  await promptMessage();
+  await runAgentAndReply();
 }

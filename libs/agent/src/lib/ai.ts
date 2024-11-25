@@ -1,4 +1,4 @@
-import { HumanMessage, trimMessages } from '@langchain/core/messages';
+import { trimMessages } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
@@ -25,7 +25,7 @@ import { setChatLanguageFactory } from './tools/set-chat-language';
 import { ttsFactory } from './tools/tts';
 import { weatherToolFactory } from './tools/weather';
 
-export async function promptMessage({
+export async function runAgentAndReply({
   replyOptions,
 }: {
   replyOptions?: Parameters<BotContext['reply']>[1];
@@ -122,27 +122,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
   const aiAnswer = await chain.invoke(
     {
       history: await chatHistory.getMessages(),
-      question:
-        typeof ctx.prompt === 'string'
-          ? new HumanMessage(
-              ctx.photoUrl
-                ? {
-                    content: [
-                      {
-                        type: 'text',
-                        text: ctx.prompt,
-                      },
-                      {
-                        type: 'image_url',
-                        image_url: {
-                          url: ctx.photoUrl,
-                        },
-                      },
-                    ],
-                  }
-                : ctx.prompt,
-            )
-          : ctx.prompt,
+      question: ctx.prompt,
     },
     {
       configurable: { sessionId: ctx.chatId.toString() },

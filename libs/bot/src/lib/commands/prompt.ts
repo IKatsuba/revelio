@@ -1,7 +1,8 @@
 import { Document, PhotoSize } from '@grammyjs/types';
+import { HumanMessage } from '@langchain/core/messages';
 import { trace } from '@opentelemetry/api';
 
-import { promptMessage } from '@revelio/ai';
+import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
 import { BotContext, injectBotContext } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { injectLogger } from '@revelio/logger';
@@ -13,10 +14,12 @@ export async function prompt(ctx: BotContext) {
 
   await ctx.replyWithChatAction('typing');
 
-  ctx.prompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
+  const messagePrompt = ctx.message?.text || ctx.message?.caption || ctx.transcription;
+  ctx.prompt = await createHumanMessage(messagePrompt ?? '');
+
   const photo = ctx.session.plan === 'free' ? null : await getPhoto(ctx);
 
-  if (!prompt && !photo) {
+  if (!messagePrompt && !photo) {
     await ctx.reply('Please provide a prompt');
     return;
   }
@@ -38,9 +41,24 @@ export async function prompt(ctx: BotContext) {
 
   if (photo) {
     ctx.photoUrl = (await getPhotoUrl(photo)).toString();
+
+    ctx.prompt = new HumanMessage({
+      content: [
+        {
+          type: 'text',
+          text: ctx.prompt.content,
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: ctx.photoUrl,
+          },
+        },
+      ],
+    });
   }
 
-  await promptMessage();
+  await runAgentAndReply();
 }
 
 async function getPhoto(ctx: BotContext) {
@@ -120,7 +138,7 @@ async function getPhotoUrl(photo: PhotoSize | Document) {
   return new URL(result.variants[0]);
 }
 
-function getMessageHeader(ctx: BotContext): string {
+function getHumanMessageMetadata(ctx: BotContext): string {
   return `Username: ${ctx.from?.username ?? 'Unknown'}
 User first name: ${ctx.from?.first_name ?? 'Unknown'}
 User second name: ${ctx.from?.last_name ?? 'Unknown'}

@@ -1,7 +1,7 @@
 import { Client } from '@upstash/qstash';
 import { Composer } from 'grammy';
 
-import { promptMessage } from '@revelio/ai';
+import { runAgentAndReply } from '@revelio/agent';
 import { BotContext, getPlansDescription } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -38,7 +38,7 @@ billingComposer.on('pre_checkout_query', async (ctx) => {
       },
     });
 
-    await promptMessage();
+    await runAgentAndReply();
   }
 });
 
@@ -110,7 +110,7 @@ billingComposer.on('message:successful_payment', async (ctx) => {
     },
   });
 
-  await promptMessage();
+  await runAgentAndReply();
 
   await createClient().publishJSON({
     url: env.CHECK_PLAN_CALLBACK_URL,

@@ -1,7 +1,7 @@
 {
-  "name": "ai",
+  "name": "agent",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/ai/src",
+  "sourceRoot": "libs/agent/src",
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project ai --web",

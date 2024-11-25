@@ -47,11 +47,13 @@ export function getFromMemoryToolFactory() {
 
       const namespace = injectVectorStore().namespace(ctx.chatId.toString());
 
-      return namespace.query({
+      const result = await namespace.query({
         data: context,
         includeMetadata: true,
         topK: 1,
       });
+
+      return result.map((r) => r.metadata.value);
     },
     {
       name: 'getFromMemory',

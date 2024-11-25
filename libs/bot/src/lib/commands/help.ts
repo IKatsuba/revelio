@@ -1,6 +1,4 @@
-import { HumanMessage } from '@langchain/core/messages';
-
-import { promptMessage } from '@revelio/ai';
+import { createHumanMessage, runAgentAndReply } from '@revelio/agent';
 import { BotContext, getPlansDescription, helpText } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -11,7 +9,7 @@ export async function help(ctx: BotContext) {
   const env = injectEnv();
 
   ctx.prompt = [
-    new HumanMessage('/help'),
+    await createHumanMessage('/help'),
     ...createToolMessages({
       toolName: 'help',
       result: {
@@ -31,5 +29,5 @@ ${helpText}
     }),
   ];
 
-  await promptMessage();
+  await runAgentAndReply();
 }

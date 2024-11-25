@@ -3,7 +3,7 @@ import { trace } from '@opentelemetry/api';
 import { Bot } from 'grammy';
 import { createFactory } from 'hono/factory';
 
-import { promptMessage } from '@revelio/ai';
+import { runAgentAndReply } from '@revelio/agent';
 import { BotContext, configureBot, sessionMiddleware } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -66,7 +66,7 @@ export const checkPlanHandlers = factory.createHandlers(qstashVerify(), async (c
           },
         });
 
-        await promptMessage();
+        await runAgentAndReply();
 
         return;
       }

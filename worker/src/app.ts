@@ -6,7 +6,7 @@ import { runInContext, runInContextMiddleware } from '@revelio/di';
 
 import '@revelio/logger';
 
-import { provideMessageHistory } from '@revelio/ai';
+import { provideMessageHistory } from '@revelio/agent';
 import { provideAnalytics } from '@revelio/analytics';
 import { provideEnv } from '@revelio/env';
 import { provideVectorStore } from '@revelio/llm';

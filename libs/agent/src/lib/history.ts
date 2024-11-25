@@ -106,40 +106,6 @@ export class CloudflareD1MessageHistory extends BaseListChatMessageHistory {
   }
 
   /**
-   * Private method to ensure that the necessary table exists in the
-   * Cloudflare D1 database before performing any operations. If the table
-   * does not exist, it is created.
-   * @returns Promise that resolves to void.
-   */
-  private async ensureTable(): Promise<void> {
-    if (this.tableInitialized) {
-      return;
-    }
-
-    const query = `CREATE TABLE IF NOT EXISTS ${this.tableName}
-                   (
-                     id                TEXT PRIMARY KEY,
-                     session_id        TEXT,
-                     type              TEXT,
-                     content           TEXT,
-                     role              TEXT,
-                     name              TEXT,
-                     tool_call_id      TEXT,
-                     additional_kwargs TEXT,
-                     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                   );`;
-    await this.database.prepare(query).bind().all();
-
-    const idIndexQuery = `CREATE INDEX IF NOT EXISTS id_index ON ${this.tableName} (id);`;
-    await this.database.prepare(idIndexQuery).bind().all();
-
-    const sessionIdIndexQuery = `CREATE INDEX IF NOT EXISTS session_id_index ON ${this.tableName} (session_id);`;
-    await this.database.prepare(sessionIdIndexQuery).bind().all();
-
-    this.tableInitialized = true;
-  }
-
-  /**
    * Method to retrieve all messages from the Cloudflare D1 database for the
    * current session.
    * @returns Promise that resolves to an array of BaseMessage objects.
@@ -255,5 +221,39 @@ export class CloudflareD1MessageHistory extends BaseListChatMessageHistory {
                    FROM ?
                    WHERE session_id = ? `;
     await this.database.prepare(query).bind(this.tableName, this.sessionId).all();
+  }
+
+  /**
+   * Private method to ensure that the necessary table exists in the
+   * Cloudflare D1 database before performing any operations. If the table
+   * does not exist, it is created.
+   * @returns Promise that resolves to void.
+   */
+  private async ensureTable(): Promise<void> {
+    if (this.tableInitialized) {
+      return;
+    }
+
+    const query = `CREATE TABLE IF NOT EXISTS ${this.tableName}
+                   (
+                     id                TEXT PRIMARY KEY,
+                     session_id        TEXT,
+                     type              TEXT,
+                     content           TEXT,
+                     role              TEXT,
+                     name              TEXT,
+                     tool_call_id      TEXT,
+                     additional_kwargs TEXT,
+                     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                   );`;
+    await this.database.prepare(query).bind().all();
+
+    const idIndexQuery = `CREATE INDEX IF NOT EXISTS id_index ON ${this.tableName} (id);`;
+    await this.database.prepare(idIndexQuery).bind().all();
+
+    const sessionIdIndexQuery = `CREATE INDEX IF NOT EXISTS session_id_index ON ${this.tableName} (session_id);`;
+    await this.database.prepare(sessionIdIndexQuery).bind().all();
+
+    this.tableInitialized = true;
   }
 }

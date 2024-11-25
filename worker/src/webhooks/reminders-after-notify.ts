@@ -3,7 +3,7 @@ import { trace } from '@opentelemetry/api';
 import { Bot } from 'grammy';
 import { Context } from 'hono';
 
-import { promptMessage } from '@revelio/ai';
+import { runAgentAndReply } from '@revelio/agent';
 import { BotContext, configureBot, sessionMiddleware } from '@revelio/bot-utils';
 import { injectEnv } from '@revelio/env';
 import { createToolMessages } from '@revelio/llm';
@@ -49,7 +49,7 @@ export async function remindersAfterNotify(c: Context) {
         },
       });
 
-      await promptMessage({
+      await runAgentAndReply({
         replyOptions: {
           reply_parameters: {
             message_id: ctx.message.message_id,
