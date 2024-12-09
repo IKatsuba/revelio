@@ -59,8 +59,6 @@ Always answer in a language that user is using. You are based on GPT-4o model.`,
   UPSTASH_REDIS_URL: z.string(),
   UPSTASH_REDIS_TOKEN: z.string(),
 
-  POSTGRES_PRISMA_URL: z.string(),
-
   UPSTASH_VECTOR_REST_URL: z.string(),
   UPSTASH_VECTOR_REST_TOKEN: z.string(),
 
