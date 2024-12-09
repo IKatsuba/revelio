@@ -24,6 +24,8 @@ export const tgWebhook = factory.createHandlers(validateWebhook(), async (c) => 
       trace.getActiveSpan()?.recordException(error);
     });
 
+    logger.info('logger.flush');
+
     c.executionCtx.waitUntil(logger.flush());
   } catch (error) {
     const message = error && (error as any).message ? (error as any).message : 'Internal error';
