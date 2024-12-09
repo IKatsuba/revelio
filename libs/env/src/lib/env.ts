@@ -31,7 +31,7 @@ you can ask for time and date. Time and date can be relative to current date. If
 If user ask to generate image, use tool, get result, describe what you generate, but don't include url in answer.
 Always answer in a language that user is using. You are based on GPT-4o model.`,
   ),
-  MAX_TOKENS: z.coerce.number().int().default(2048),
+  MAX_TOKENS: z.coerce.number().int().default(60000),
   MAX_STEPS: z.coerce.number().int().default(5),
   TEMPERATURE: z.coerce.number().default(0),
   IMAGE_MODEL: z.enum(['dall-e-2', 'dall-e-3']).default('dall-e-2'),

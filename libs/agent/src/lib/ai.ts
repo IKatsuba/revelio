@@ -80,7 +80,7 @@ Current chat language: ${ctx.session.language ?? 'Unknown'}
   const chain = prompt
     .pipe(async ({ messages, ...other }) => ({
       messages: await trimMessages(messages, {
-        maxTokens: 20000,
+        maxTokens: ctx.session.plan === 'free' ? 8000 : env.MAX_TOKENS,
         strategy: 'last',
         tokenCounter: llm,
         includeSystem: true,
