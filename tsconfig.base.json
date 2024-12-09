@@ -26,7 +26,7 @@
       "@revelio/logger": ["libs/logger/src/index.ts"],
       "@revelio/openai": ["libs/openai/src/index.ts"],
       "@revelio/prisma": ["libs/prisma/src/index.ts"],
-      "@revelio/redis": ["libs/redis/src/index.ts"],
+      "@revelio/upstash": ["libs/upstash/src/index.ts"],
       "@revelio/utils": ["libs/utils/src/index.ts"]
     }
   },

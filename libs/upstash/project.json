@@ -1,7 +1,7 @@
 {
   "name": "redis",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/redis/src",
+  "sourceRoot": "libs/upstash/src",
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project redis --web",

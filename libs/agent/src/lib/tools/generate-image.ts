@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { injectBotContext } from '@revelio/bot-utils';
 import { generateImage as openAIGenerateImage } from '@revelio/llm';
-import { injectRedisClient } from '@revelio/redis';
+import { injectRedisClient } from '@revelio/upstash';
 import { formatSeconds } from '@revelio/utils';
 
 export function generateImageFactory() {

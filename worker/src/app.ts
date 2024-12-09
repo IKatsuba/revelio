@@ -13,6 +13,7 @@ import { provideVectorStore } from '@revelio/llm';
 import { injectLogger, provideLogger } from '@revelio/logger';
 import { provideOpenAI, provideOpenaiProvider } from '@revelio/openai';
 import { providePrisma } from '@revelio/prisma';
+import { provideReceiver, provideRedisClient, provideWorkflowClient } from '@revelio/upstash';
 
 import { checkPlanHandlers } from './webhooks/check-plan';
 import { qstashVerify } from './webhooks/qstash-verify';
@@ -31,6 +32,9 @@ app.use(
     provideOpenaiProvider();
     providePrisma();
     provideMessageHistory();
+    provideRedisClient();
+    provideReceiver();
+    provideWorkflowClient();
 
     await next();
   }),

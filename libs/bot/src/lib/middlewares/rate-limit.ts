@@ -2,7 +2,7 @@ import { Algorithm, Ratelimit } from '@upstash/ratelimit';
 import { Middleware } from 'grammy';
 
 import { BotContext } from '@revelio/bot-utils';
-import { injectRedisClient } from '@revelio/redis';
+import { injectRedisClient } from '@revelio/upstash';
 import { formatSeconds } from '@revelio/utils';
 
 export function rateLimit({

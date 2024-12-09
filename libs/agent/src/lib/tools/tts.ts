@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { injectBotContext } from '@revelio/bot-utils';
 import { textToSpeech } from '@revelio/llm';
-import { injectRedisClient } from '@revelio/redis';
+import { injectRedisClient } from '@revelio/upstash';
 import { formatSeconds } from '@revelio/utils';
 
 export function ttsFactory() {
