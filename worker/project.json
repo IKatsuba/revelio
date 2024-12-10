@@ -6,14 +6,14 @@
   "tags": [],
   "targets": {
     "serve": {
-      "executor": "@naxodev/nx-cloudflare:serve",
+      "executor": "@nxcf/plugin:serve",
       "options": {
         "port": 3000
       },
       "dependsOn": ["revelio:prisma:generate"]
     },
     "deploy": {
-      "executor": "@naxodev/nx-cloudflare:deploy",
+      "executor": "@nxcf/plugin:deploy",
       "options": {
         "outdir": "dist/apps/worker"
       }

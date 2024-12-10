@@ -16,15 +16,6 @@
   },
   "plugins": [
     {
-      "plugin": "@nx/next/plugin",
-      "options": {
-        "startTargetName": "start",
-        "buildTargetName": "build",
-        "devTargetName": "dev",
-        "serveStaticTargetName": "serve-static"
-      }
-    },
-    {
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
@@ -37,17 +28,7 @@
       }
     }
   ],
-  "generators": {
-    "@nx/next": {
-      "application": {
-        "style": "css",
-        "linter": "eslint"
-      }
-    },
-    "@nx/react": {
-      "library": {}
-    }
-  },
+  "generators": {},
   "targetDefaults": {
     "@nx/esbuild:esbuild": {
       "cache": true,
