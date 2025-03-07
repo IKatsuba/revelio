@@ -1,0 +1,22 @@
+{
+  "name": "worker",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "worker/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "@nxcf/plugin:serve",
+      "options": {
+        "port": 3000
+      },
+      "dependsOn": ["revelio:prisma:generate"]
+    },
+    "deploy": {
+      "executor": "@nxcf/plugin:deploy",
+      "options": {
+        "outdir": "dist/apps/worker"
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "bot-utils",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/bot-utils/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project bot-utils --web",
+  "targets": {}
+}

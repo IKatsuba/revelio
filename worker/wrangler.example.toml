@@ -1,0 +1,32 @@
+name = "revelio"
+compatibility_date = "2024-11-06"
+compatibility_flags = ["nodejs_compat"]
+main = "src/index.ts"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[analytics_engine_datasets]]
+binding = "analytics"
+dataset = "revelio-counts"
+
+[[d1_databases]]
+binding = "revelioDB"
+database_name = "revelio-db"
+database_id = "<id>"
+
+[[d1_databases]]
+binding = "revelioMessagesDB"
+database_name = "revelio-messages"
+database_id = "<id>"
+
+[vars]
+BASE_URL = ""
+CLOUDFLARE_ACCOUNT_ID = ""
+OPENAI_API_URL = ""
+PERPLEXITY_API_URL = ""
+QSTASH_URL = ""
+UPSTASH_REDIS_URL = ""
+UPSTASH_VECTOR_REST_URL = ""
+NODE_ENV = "production"

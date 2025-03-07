@@ -1,0 +1,59 @@
+{
+  "name": "revelio",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "nx serve worker",
+            "prefix": "[bot]"
+          },
+          {
+            "command": "nx bind:webhook",
+            "prefix": "[bind-webhook]"
+          }
+        ],
+        "parallel": true
+      }
+    },
+    "bind:webhook": {
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/bind-webhook.ts",
+      "envFile": ".env"
+    },
+    "bot:logout": {
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/logout.ts",
+      "envFile": ".env"
+    },
+    "tunnel": {
+      "command": "cloudflared tunnel --url http://localhost:3000"
+    },
+    "migrations:apply": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler d1 migrations apply revelio-db --local",
+        "cwd": "worker"
+      }
+    },
+    "migrations:apply:remote": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler d1 migrations apply revelio-db --remote",
+        "cwd": "worker"
+      }
+    },
+    "migrations:create": {
+      "command": "tsx --tsconfig ./scripts/tsconfig.json ./scripts/src/create-migration.ts",
+      "envFile": ".env"
+    },
+    "wrangler": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx wrangler",
+        "cwd": "worker"
+      }
+    }
+  }
+}

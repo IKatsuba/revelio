@@ -1,0 +1,93 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id
+
+  username String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groupMemberships GroupMember[]
+  reminders        Reminder[]
+  payment          Payment[]
+}
+
+model Group {
+  id   String @id
+  type String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan                    String  @default("free")
+  telegramPaymentChargeId String?
+
+  members   GroupMember[]
+  reminders Reminder[]
+  payments  Payment[]
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  currency    String
+  totalAmount Int
+
+  invoicePayload String
+
+  subscriptionExpirationDate DateTime
+
+  isFirstRecurring Boolean
+
+  telegramPaymentChargeId String
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
+
+  createdAt DateTime @default(now())
+
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId String?
+}
+
+model GroupMember {
+  role     String
+  joinedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  @@id([userId, groupId])
+}
+
+model Reminder {
+  id String @id @default(uuid())
+
+  messageId String @unique
+
+  message   String
+  remindAt  DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  timezone  String
+
+  status String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+}

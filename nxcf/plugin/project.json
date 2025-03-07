@@ -1,0 +1,41 @@
+{
+  "name": "nxcf-plugin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "nxcf/plugin/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/nxcf/plugin",
+        "main": "nxcf/plugin/src/index.ts",
+        "tsConfig": "nxcf/plugin/tsconfig.lib.json",
+        "assets": [
+          "nxcf/plugin/*.md",
+          {
+            "input": "./nxcf/plugin/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./nxcf/plugin/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./nxcf/plugin",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./nxcf/plugin",
+            "glob": "executors.json",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}

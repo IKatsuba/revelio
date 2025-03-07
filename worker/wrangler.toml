@@ -1,0 +1,32 @@
+name = "revelio"
+compatibility_date = "2024-11-06"
+compatibility_flags = ["nodejs_compat"]
+main = "src/index.ts"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[analytics_engine_datasets]]
+binding = "analytics"
+dataset = "revelio-counts"
+
+[[d1_databases]]
+binding = "revelioDB"
+database_name = "revelio-db"
+database_id = "28350fc4-5854-4748-b42c-ffa92d28ddec"
+
+[[d1_databases]]
+binding = "revelioMessagesDB"
+database_name = "revelio-messages"
+database_id = "5ffea1fe-4c83-40dc-93f3-c54810ba2051"
+
+[vars]
+BASE_URL = "https://revelio.katsuba.workers.dev"
+CLOUDFLARE_ACCOUNT_ID = "53683e9c95b74c0aae7b4b9821b8c53f"
+OPENAI_API_URL = "https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b8c53f/revelio-prod/openai"
+PERPLEXITY_API_URL = "https://gateway.ai.cloudflare.com/v1/53683e9c95b74c0aae7b4b9821b8c53f/revelio-prod/perplexity-ai"
+QSTASH_URL = "https://qstash.upstash.io"
+UPSTASH_REDIS_URL = "https://settled-skylark-22019.upstash.io"
+UPSTASH_VECTOR_REST_URL = "https://known-lamb-99258-eu1-vector.upstash.io"
+NODE_ENV = "production"
