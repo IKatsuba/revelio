@@ -44,7 +44,7 @@
     "chrono-node": "^2.7.7",
     "grammy": "1.32.0",
     "hono": "^4.4.9",
-    "langchain": "^0.3.6",
+    "langchain": "^0.3.37",
     "nanoid": "^5.0.8",
     "openai": "^4.68.4",
     "react": "18.3.1",
